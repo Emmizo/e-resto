@@ -128,7 +128,7 @@
                                             <h2 class="font-dmsans fw-bold medium text-dark-v2 mb-1">Create New Account</h2>
                                             <p class="font-dmsans fw-normal text-dark-v2 lh-base pb-2">Already have an account? Click on the Sign In tab.</p>
                                         </div>
-                                        <form action="" method="POST" enctype="multipart/form-data" id="registerForm">
+                                        <form action="{{ route('signup-post') }}" method="POST" enctype="multipart/form-data" id="registerForm">
                                             @csrf
                                             <div class="row">
                                                 <div class="col-md-6">
@@ -244,13 +244,13 @@
                                                             <input type="url" class="form-control rounded-3" id="restaurantWebsite" name="restaurant[website]" placeholder="Enter Restaurant Website">
                                                         </div>
                                                     </div>
-                                                    <div class="col-md-6">
+                                                    <div class="col-md-12">
                                                         <div class="form-group m-0 mb-3">
                                                             <label for="cuisineType" class="form-label">Cuisine Type</label>
                                                             <input type="text" class="form-control rounded-3" id="cuisineType" name="restaurant[cuisine_type]" placeholder="Enter Cuisine Type">
                                                         </div>
                                                     </div>
-                                                    <div class="col-md-6">
+                                                    <div class="col-md-12">
                                                         <div class="form-group m-0 mb-3">
                                                             <label for="priceRange" class="form-label">Price Range</label>
                                                             <select class="form-select rounded-3" id="priceRange" name="restaurant[price_range]">
@@ -304,7 +304,8 @@
     <!-- Required JS Files -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
-
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     <!-- JavaScript for conditional display of restaurant fields -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -532,7 +533,100 @@ if (document.readyState === 'loading') {
             loginTab.classList.remove('active');
         });
     }
+
 });
+// Add this to the existing JavaScript section
+$(document).ready(function() {
+    // Profile picture preview
+    $('#profilePicture').on('change', function(evt) {
+        const [file] = this.files;
+        if (file) {
+            let preview = $('#profilePreviewImg');
+            if (!preview.length) {
+                $('#profilePicture').parent().append('<img id="profilePreviewImg" class="img-thumbnail mt-2" style="max-height: 150px;">');
+                preview = $('#profilePreviewImg');
+            }
+            preview.attr('src', URL.createObjectURL(file));
+        }
+    });
+
+    // Restaurant image preview
+    $('#restaurantImage').on('change', function(evt) {
+        const [file] = this.files;
+        if (file) {
+            let preview = $('#restaurantPreviewImg');
+            if (!preview.length) {
+                $('#restaurantImage').parent().append('<img id="restaurantPreviewImg" class="img-thumbnail mt-2" style="max-height: 150px;">');
+                preview = $('#restaurantPreviewImg');
+            }
+            preview.attr('src', URL.createObjectURL(file));
+        }
+    });
+
+    // Phone number mask
+    $('#phoneNumber, #restaurantPhone').mask('(000) 000-0000');
+
+    // Form validation
+    $('#registerForm').validate({
+        rules: {
+            first_name: { required: true },
+            last_name: { required: true },
+            email: { required: true, email: true },
+            phone_number: { minlength: 14 },
+            password: { required: true, minlength: 8 },
+            password_confirmation: { required: true, equalTo: "#registerPassword" },
+            profile_picture: { extension: "jpeg,jpg,png", maxsize: 5242880 },
+            role: { required: true },
+            "restaurant[name]": {
+                required: function() { return $('input[name="role"]:checked').val() === 'restaurant_owner'; }
+            },
+            "restaurant[address]": {
+                required: function() { return $('input[name="role"]:checked').val() === 'restaurant_owner'; }
+            },
+            "restaurant[phone_number]": {
+                required: function() { return $('input[name="role"]:checked').val() === 'restaurant_owner'; },
+                minlength: 14
+            },
+            "restaurant[image]": { extension: "jpeg,jpg,png", maxsize: 5242880 }
+        },
+        messages: {
+            first_name: { required: "Please enter your first name" },
+            last_name: { required: "Please enter your last name" },
+            email: { required: "Please enter an email address", email: "Please enter a valid email address" },
+            phone_number: { minlength: "Please enter a valid phone number" },
+            password: { required: "Please enter a password", minlength: "Password must be at least 8 characters" },
+            password_confirmation: { required: "Please confirm your password", equalTo: "Passwords do not match" },
+            profile_picture: { extension: "Please upload jpg, jpeg, or png files only", maxsize: "File size must be less than 5 MB" },
+            role: { required: "Please select a role" },
+            "restaurant[name]": { required: "Please enter restaurant name" },
+            "restaurant[address]": { required: "Please enter restaurant address" },
+            "restaurant[phone_number]": { required: "Please enter restaurant phone number", minlength: "Please enter a valid phone number" },
+            "restaurant[image]": { extension: "Please upload jpg, jpeg, or png files only", maxsize: "File size must be less than 5 MB" }
+        },
+        errorElement: 'span',
+        errorPlacement: function(error, element) {
+            error.addClass('invalid-feedback');
+            element.closest('.form-group').append(error);
+        },
+        highlight: function(element) {
+            $(element).addClass('is-invalid');
+        },
+        unhighlight: function(element) {
+            $(element).removeClass('is-invalid');
+        },
+        submitHandler: function(form) {
+            $(form).find('button[type="submit"]').prop('disabled', false);
+            form.submit();
+        }
+    });
+});
+
+// Function to reset the form
+function resetForm() {
+    document.getElementById("registerForm").reset();
+    $('#profilePreviewImg, #restaurantPreviewImg').attr('src', '');
+}
+
     </script>
 
     <style>
