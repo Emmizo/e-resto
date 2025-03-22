@@ -197,68 +197,68 @@
                                                     <div class="col-md-12">
                                                         <div class="form-group m-0 mb-3">
                                                             <label for="restaurantName" class="form-label">Restaurant Name <span class="asterik">*</span></label>
-                                                            <input type="text" class="form-control rounded-3" id="restaurantName" name="restaurant[name]" placeholder="Enter Restaurant Name">
+                                                            <input type="text" class="form-control rounded-3" id="restaurantName" name="restaurant_name" placeholder="Enter Restaurant Name">
                                                         </div>
                                                     </div>
                                                     <div class="col-md-12">
                                                         <div class="form-group m-0 mb-3">
-                                                            <label for="restaurantDescription" class="form-label">Description</label>
-                                                            <textarea class="form-control rounded-3" id="restaurantDescription" name="restaurant[description]" rows="3" placeholder="Enter Restaurant Description"></textarea>
+                                                            <label for="restaurantDescription" class="form-label">Description<span class="asterik">*</span></label>
+                                                            <textarea class="form-control rounded-3" id="restaurantDescription" name="restaurant_description" rows="3" placeholder="Enter Restaurant Description"></textarea>
                                                         </div>
                                                     </div>
                                                     <div class="col-md-12">
                                                         <div class="form-group m-0 mb-3">
                                                             <label for="restaurantAddress" class="form-label">Address <span class="asterik">*</span></label>
-                                                            <input type="text" class="form-control rounded-3" id="restaurantAddress" name="restaurant[address]" placeholder="Enter Restaurant Address">
+                                                            <input type="text" class="form-control rounded-3" id="restaurantAddress" name="restaurant_address" placeholder="Enter Restaurant Address">
                                                         </div>
                                                     </div>
                                                     <div class="row">
                                                         <div class="col-md-6">
                                                             <div class="form-group m-0 mb-3">
-                                                                <label for="restaurantLongitude" class="form-label">Longitude</label>
-                                                                <input type="text" class="form-control rounded-3" id="restaurantLongitude" name="restaurant[longitude]" placeholder="Enter Longitude">
+                                                                <label for="restaurantLongitude" class="form-label">Longitude<span class="asterik">*</span></label>
+                                                                <input type="text" class="form-control rounded-3" id="restaurantLongitude" name="restaurant_longitude" placeholder="Enter Longitude">
                                                             </div>
                                                         </div>
                                                         <div class="col-md-6">
                                                             <div class="form-group m-0 mb-3">
-                                                                <label for="restaurantLatitude" class="form-label">Latitude</label>
-                                                                <input type="text" class="form-control rounded-3" id="restaurantLatitude" name="restaurant[latitude]" placeholder="Enter Latitude">
+                                                                <label for="restaurantLatitude" class="form-label">Latitude<span class="asterik">*</span></label>
+                                                                <input type="text" class="form-control rounded-3" id="restaurantLatitude" name="restaurant_latitude" placeholder="Enter Latitude">
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div class="col-md-12">
                                                         <div class="form-group m-0 mb-3">
                                                             <label for="restaurantPhone" class="form-label">Restaurant Phone <span class="asterik">*</span></label>
-                                                            <input type="tel" class="form-control rounded-3" id="restaurantPhone" name="restaurant[phone_number]" placeholder="Enter Restaurant Phone">
+                                                            <input type="tel" class="form-control rounded-3" id="restaurantPhone" name="restaurant_phone_number" placeholder="Enter Restaurant Phone">
                                                         </div>
                                                     </div>
                                                     <div class="col-md-12">
                                                         <div class="form-group m-0 mb-3">
-                                                            <label for="restaurantEmail" class="form-label">Restaurant Email</label>
-                                                            <input type="email" class="form-control rounded-3" id="restaurantEmail" name="restaurant[email]" placeholder="Enter Restaurant Email">
+                                                            <label for="restaurantEmail" class="form-label">Restaurant Email<span class="asterik">*</span></label>
+                                                            <input type="email" class="form-control rounded-3" id="restaurantEmail" name="restaurant_email" placeholder="Enter Restaurant Email">
                                                         </div>
                                                     </div>
                                                     <div class="col-md-12">
                                                         <div class="form-group m-0 mb-3">
                                                             <label for="restaurantWebsite" class="form-label">Website</label>
-                                                            <input type="url" class="form-control rounded-3" id="restaurantWebsite" name="restaurant[website]" placeholder="Enter Restaurant Website">
+                                                            <input type="url" class="form-control rounded-3" id="restaurantWebsite" name="restaurant_website_" placeholder="Enter Restaurant Website">
                                                         </div>
                                                     </div>
                                                     <div class="col-md-12">
                                                         <div class="form-group m-0 mb-3">
                                                             <label for="cuisineType" class="form-label">Cuisine Type</label>
-                                                            <input type="text" class="form-control rounded-3" id="cuisineType" name="restaurant[cuisine_type]" placeholder="Enter Cuisine Type">
+                                                            <input type="text" class="form-control rounded-3" id="cuisineType" name="restaurant_cuisine_type" placeholder="Enter Cuisine Type">
                                                         </div>
                                                     </div>
                                                     <div class="col-md-12">
                                                         <div class="form-group m-0 mb-3">
                                                             <label for="priceRange" class="form-label">Price Range</label>
-                                                            <select class="form-select rounded-3" id="priceRange" name="restaurant[price_range]">
+                                                            <select class="form-select rounded-3" id="priceRange" name="restaurant_price_range">
                                                                 <option value="">Select Price Range</option>
-                                                                <option value="$">$ (Inexpensive)</option>
-                                                                <option value="$$">$$ (Moderate)</option>
-                                                                <option value="$$$">$$$ (Expensive)</option>
-                                                                <option value="$$$$">$$$$ (Very Expensive)</option>
+                                                                <option value="500-5000">RWF 500 - 5,000 (Budget)</option>
+                                                                <option value="5000-15000">RWF 5,000 - 15,000 (Moderate)</option>
+                                                                <option value="15000-30000">RWF 15,000 - 30,000 (Expensive)</option>
+                                                                <option value="30000+">RWF 30,000+ (Luxury)</option>
                                                             </select>
                                                         </div>
                                                     </div>
@@ -306,6 +306,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
     <!-- JavaScript for conditional display of restaurant fields -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -569,39 +570,98 @@ $(document).ready(function() {
     // Form validation
     $('#registerForm').validate({
         rules: {
-            first_name: { required: true },
-            last_name: { required: true },
-            email: { required: true, email: true },
-            phone_number: { minlength: 14 },
-            password: { required: true, minlength: 8 },
-            password_confirmation: { required: true, equalTo: "#registerPassword" },
-            profile_picture: { extension: "jpeg,jpg,png", maxsize: 5242880 },
-            role: { required: true },
-            "restaurant[name]": {
-                required: function() { return $('input[name="role"]:checked').val() === 'restaurant_owner'; }
+            first_name: {
+                required: true,
+             },
+            last_name: {
+                required: true,
+             },
+            email: {
+                 required: true,
+                  email: true,
+                 },
+            phone_number: {
+                required: true,
+                 minlength: 14,
+                 },
+            password: {
+                required: true,
+                minlength: 8
             },
-            "restaurant[address]": {
-                required: function() { return $('input[name="role"]:checked').val() === 'restaurant_owner'; }
+            password_confirmation: {
+                required: true,
+                equalTo: "#registerPassword",
+             },
+            profile_picture: {
+                extension: "jpeg,jpg,png",
+                 maxsize: 5242880,
+                 },
+            role: {
+                required: true,
+             },
+            "restaurant_name": {
+                required: true,
             },
-            "restaurant[phone_number]": {
-                required: function() { return $('input[name="role"]:checked').val() === 'restaurant_owner'; },
+            "restaurant_description": {
+                required: true,
+            },
+            "restaurant_address": {
+                required:true,
+            },
+            "restaurant_phone_number": {
+                required: true,
                 minlength: 14
             },
-            "restaurant[image]": { extension: "jpeg,jpg,png", maxsize: 5242880 }
+            "restaurant_image": {
+                extension: "jpeg,jpg,png",
+                 maxsize: 5242880
+                }
         },
         messages: {
-            first_name: { required: "Please enter your first name" },
-            last_name: { required: "Please enter your last name" },
-            email: { required: "Please enter an email address", email: "Please enter a valid email address" },
-            phone_number: { minlength: "Please enter a valid phone number" },
-            password: { required: "Please enter a password", minlength: "Password must be at least 8 characters" },
-            password_confirmation: { required: "Please confirm your password", equalTo: "Passwords do not match" },
-            profile_picture: { extension: "Please upload jpg, jpeg, or png files only", maxsize: "File size must be less than 5 MB" },
-            role: { required: "Please select a role" },
-            "restaurant[name]": { required: "Please enter restaurant name" },
-            "restaurant[address]": { required: "Please enter restaurant address" },
-            "restaurant[phone_number]": { required: "Please enter restaurant phone number", minlength: "Please enter a valid phone number" },
-            "restaurant[image]": { extension: "Please upload jpg, jpeg, or png files only", maxsize: "File size must be less than 5 MB" }
+            first_name: {
+                required: "Please enter your first name",
+            },
+            last_name: {
+                required: "Please enter your last name",
+             },
+            email: {
+                required: "Please enter an email address",
+                email: "Please enter a valid email address",
+             },
+            phone_number: {
+                minlength: "Please enter a valid phone number",
+             },
+            password: {
+                required: "Please enter a password",
+                 minlength: "Password must be at least 8 characters" },
+            password_confirmation: {
+                required: "Please confirm your password",
+                equalTo: "Passwords do not match",
+             },
+            profile_picture: {
+                 extension: "Please upload jpg, jpeg, or png files only",
+                  maxsize: "File size must be less than 5 MB",
+                 },
+            role: {
+                required: "Please select a role",
+             },
+            "restaurant_name": {
+                required: "Please enter restaurant name",
+             },
+             "restaurant_description": {
+                required: "Please enter restaurant description",
+             },
+            "restaurant_address": {
+                required: "Please enter restaurant address",
+             },
+            "restaurant_phone_number": {
+                required: "Please enter restaurant phone number",
+                 minlength: "Please enter a valid phone number",
+                 },
+            "restaurant_image": {
+                extension: "Please upload jpg, jpeg, or png files only",
+                 maxsize: "File size must be less than 5 MB",
+                 }
         },
         errorElement: 'span',
         errorPlacement: function(error, element) {
