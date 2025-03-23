@@ -5,12 +5,18 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\EventsController;
 
+/* Logout */
+Route::get('/logout', function () {
+    \Auth::logout();
+    return redirect(route('login'));
+})->name('logout');
+
 Route::group([ 'middleware' => ['auth','nocache'],'namespace' => 'App\Http\Controllers'], function () {
     Route::get('/dashboard', 'DashboardController@index')->name('dashboard');
 });
 Route::get('/', [AuthController::class,'index'])->name('login');
 Route::any('/login', [AuthController::class,'login'])->name('admin-login-post');
-Route::post('/signup', [AuthController::class,'signUp'])->name('signup-post');
+Route::post('/signup', [AuthController::class,'signUp'])->name('signup');
 Route::get('/forgot-password', [AuthController::class,'forgotPassword'])->name('forgot-password');
 Route::post('/forgot-password', [AuthController::class,'store'])->name('forgot-password-post');
 Route::get('/reset-password/{token}', [AuthController::class,'viewReset'])->name('reset-password');

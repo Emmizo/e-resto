@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('phone_number')->nullable();
             $table->string('profile_picture')->nullable();
             $table->json('preferences')->nullable();
+            $table->integer('status')->default(1);
             $table->rememberToken();
             $table->timestamps();
 

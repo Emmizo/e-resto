@@ -97,10 +97,19 @@
                                     <span>Email</span>
                                 </th>
                                 <th>
-                                    <span>Chapter</span>
+                                    <span>User number</span>
                                 </th>
                                 <th>
-                                    <span>Company</span>
+                                    <span>Restaurant name</span>
+                                </th>
+                                <th>
+                                    <span>Phone number</span>
+                                </th>
+                                <th>
+                                    <span>Email</span>
+                                </th>
+                                <th>
+                                    <span>Address</span>
                                 </th>
                                 <th>
                                     <span>Role</span>
@@ -109,7 +118,7 @@
                                     <span>Registered At</span>
                                 </th>
                                 <th>
-                                    <span>Source</span>
+                                    <span>Web url</span>
                                 </th>
                                 <th>
                                     <span>Request</span>
@@ -123,27 +132,39 @@
                             </tr>
                         </thead>
                         <tbody>
+                            @foreach ($users as $user)
+
+
                             <tr>
                                 <td>
-                                    <span>Alex Hamilton</span>
+                                    <span>{{$user->first_name.' '.$user->last_name}}</span>
                                 </td>
                                 <td>
-                                    <span>alexhamil123@gmail.com</span>
+                                    <span>{{ $user->email }}</span>
                                 </td>
                                 <td>
-                                    <span>American Line Builders</span>
+                                    <span>{{ $user->number_phone }}</span>
                                 </td>
                                 <td>
-                                    <span>Backbone Power Systems</span>
+                                    <span>{{ $user->restaurant_name}}</span>
                                 </td>
                                 <td>
-                                    <span>User</span>
+                                    <span>{{ $user->restaurant_phone}}</span>
                                 </td>
                                 <td>
-                                    <span>09/28/2024</span>
+                                    <span>{{ $user->restaurant_email}}</span>
                                 </td>
                                 <td>
-                                    <span>Website</span>
+                                    <span>{{ $user->restaurant_address}}</span>
+                                </td>
+                                <td>
+                                    <span>{{ $user->restaurant_position}}</span>
+                                </td>
+                                <td>
+                                    <span>{{ $user->created_at}}</span>
+                                </td>
+                                <td>
+                                    <span>{{ $user->website??''}}</span>
                                 </td>
                                 <td>
                                     <div class="request-select normal-select">
@@ -179,230 +200,7 @@
                                     </div>
                                 </td>
                             </tr>
-                            <tr>
-                                <td>
-                                    <span>Jenifer Thomas</span>
-                                </td>
-                                <td>
-                                    <span>jenith2355@gmail.com</span>
-                                </td>
-                                <td>
-                                    <span>Southern Eastern Line</span>
-                                </td>
-                                <td>
-                                    <span>New River Electrical Corp.</span>
-                                </td>
-                                <td>
-                                    <span>User</span>
-                                </td>
-                                <td>
-                                    <span>09/17/2024</span>
-                                </td>
-                                <td>
-                                    <span>Website</span>
-                                </td>
-                                <td>
-                                    <div class="request-select normal-select">
-                                        <select class="form-select" aria-label="Request">
-                                            <option selected disabled>Please Select</option>
-                                            <option value="welcome">Send a Welcome Email</option>
-                                            <option value="reset_password">Send Reset Password Link</option>
-                                        </select>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="toggle-switch d-flex align-items-center">
-                                        <div class="toggle-button toggle-front d-flex align-items-center position-relative">
-                                            <label for="status2" class="form-check-label font-dmsans text-primary-v1 visually-hidden">Status</label>
-                                            <label class="switch">
-                                                <input type="checkbox" id="status2">
-                                                <span class="slider"></span>
-                                                <span class="active font-dmsans fw-medium">Active</span>
-                                                <span class="inactive font-dmsans fw-medium">Inactive</span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="action-cell text-center">
-                                    <div class="action-col position-relative d-inline-block">
-                                        <a href="javascript:;" class="p-1" data-bs-toggle="popover" data-bs-placement="top">
-                                            <svg class="action-icon cursor-pointer" width="20" height="4" viewBox="0 0 20 4" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M10 0C11.1046 0 12 0.89543 12 2C12 3.10457 11.1046 4 10 4C8.89543 4 8 3.10457 8 2C8 0.89543 8.89543 0 10 0Z" fill="#2D264B"/>
-                                                <path d="M2 -4.76837e-07C3.10457 -4.76837e-07 4 0.89543 4 2C4 3.10457 3.10457 4 2 4C0.89543 4 0 3.10457 0 2C0 0.89543 0.89543 -4.76837e-07 2 -4.76837e-07Z" fill="#2D264B"/>
-                                                <path d="M18 2.38419e-07C19.1046 2.38419e-07 20 0.895431 20 2C20 3.10457 19.1046 4 18 4C16.8954 4 16 3.10457 16 2C16 0.895431 16.8954 2.38419e-07 18 2.38419e-07Z" fill="#2D264B"/>
-                                            </svg>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <span>David Miller</span>
-                                </td>
-                                <td>
-                                    <span>dmiller09@gmail.com</span>
-                                </td>
-                                <td>
-                                    <span>Southern Eastern Line</span>
-                                </td>
-                                <td>
-                                    <span>PAR Electrical contractor</span>
-                                </td>
-                                <td>
-                                    <span>User</span>
-                                </td>
-                                <td>
-                                    <span>09/17/2024</span>
-                                </td>
-                                <td>
-                                    <span>Website</span>
-                                </td>
-                                <td>
-                                    <div class="request-select normal-select">
-                                        <select class="form-select" aria-label="Request">
-                                            <option selected disabled>Please Select</option>
-                                            <option value="welcome">Send a Welcome Email</option>
-                                            <option value="reset_password">Send Reset Password Link</option>
-                                        </select>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="toggle-switch d-flex align-items-center">
-                                        <div class="toggle-button toggle-front d-flex align-items-center position-relative">
-                                            <label for="status3" class="form-check-label font-dmsans text-primary-v1 visually-hidden">Status</label>
-                                            <label class="switch">
-                                                <input type="checkbox" id="status3" checked>
-                                                <span class="slider"></span>
-                                                <span class="active font-dmsans fw-medium">Active</span>
-                                                <span class="inactive font-dmsans fw-medium">Inactive</span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="action-cell text-center">
-                                    <div class="action-col position-relative d-inline-block">
-                                        <a href="javascript:;" class="p-1" data-bs-toggle="popover" data-bs-placement="top">
-                                            <svg class="action-icon cursor-pointer" width="20" height="4" viewBox="0 0 20 4" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M10 0C11.1046 0 12 0.89543 12 2C12 3.10457 11.1046 4 10 4C8.89543 4 8 3.10457 8 2C8 0.89543 8.89543 0 10 0Z" fill="#2D264B"/>
-                                                <path d="M2 -4.76837e-07C3.10457 -4.76837e-07 4 0.89543 4 2C4 3.10457 3.10457 4 2 4C0.89543 4 0 3.10457 0 2C0 0.89543 0.89543 -4.76837e-07 2 -4.76837e-07Z" fill="#2D264B"/>
-                                                <path d="M18 2.38419e-07C19.1046 2.38419e-07 20 0.895431 20 2C20 3.10457 19.1046 4 18 4C16.8954 4 16 3.10457 16 2C16 0.895431 16.8954 2.38419e-07 18 2.38419e-07Z" fill="#2D264B"/>
-                                            </svg>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <span>John doe</span>
-                                </td>
-                                <td>
-                                    <span>foxdoejohn@gmail.com</span>
-                                </td>
-                                <td>
-                                    <span>Missouri Valley Line</span>
-                                </td>
-                                <td>
-                                    <span>R/S Electric Utility Services</span>
-                                </td>
-                                <td>
-                                    <span>User</span>
-                                </td>
-                                <td>
-                                    <span>09/18/2024</span>
-                                </td>
-                                <td>
-                                    <span>Website</span>
-                                </td>
-                                <td>
-                                    <div class="request-select normal-select">
-                                        <select class="form-select" aria-label="Request">
-                                            <option selected disabled>Please Select</option>
-                                            <option value="welcome">Send a Welcome Email</option>
-                                            <option value="reset_password">Send Reset Password Link</option>
-                                        </select>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="toggle-switch d-flex align-items-center">
-                                        <div class="toggle-button toggle-front d-flex align-items-center position-relative">
-                                            <label for="status4" class="form-check-label font-dmsans text-primary-v1 visually-hidden">Status</label>
-                                            <label class="switch">
-                                                <input type="checkbox" id="status4" checked>
-                                                <span class="slider"></span>
-                                                <span class="active font-dmsans fw-medium">Active</span>
-                                                <span class="inactive font-dmsans fw-medium">Inactive</span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="action-cell text-center">
-                                    <div class="action-col position-relative d-inline-block">
-                                        <a href="javascript:;" class="p-1" data-bs-toggle="popover" data-bs-placement="top">
-                                            <svg class="action-icon cursor-pointer" width="20" height="4" viewBox="0 0 20 4" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M10 0C11.1046 0 12 0.89543 12 2C12 3.10457 11.1046 4 10 4C8.89543 4 8 3.10457 8 2C8 0.89543 8.89543 0 10 0Z" fill="#2D264B"/>
-                                                <path d="M2 -4.76837e-07C3.10457 -4.76837e-07 4 0.89543 4 2C4 3.10457 3.10457 4 2 4C0.89543 4 0 3.10457 0 2C0 0.89543 0.89543 -4.76837e-07 2 -4.76837e-07Z" fill="#2D264B"/>
-                                                <path d="M18 2.38419e-07C19.1046 2.38419e-07 20 0.895431 20 2C20 3.10457 19.1046 4 18 4C16.8954 4 16 3.10457 16 2C16 0.895431 16.8954 2.38419e-07 18 2.38419e-07Z" fill="#2D264B"/>
-                                            </svg>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <span>Anderson</span>
-                                </td>
-                                <td>
-                                    <span>andy8909@gmail.com</span>
-                                </td>
-                                <td>
-                                    <span>Missouri Valley Line</span>
-                                </td>
-                                <td>
-                                    <span>MP Systems-PieperLine</span>
-                                </td>
-                                <td>
-                                    <span>User</span>
-                                </td>
-                                <td>
-                                    <span>09/12/2024</span>
-                                </td>
-                                <td>
-                                    <span>Website</span>
-                                </td>
-                                <td>
-                                    <div class="request-select normal-select">
-                                        <select class="form-select" aria-label="Request">
-                                            <option selected disabled>Please Select</option>
-                                            <option value="welcome">Send a Welcome Email</option>
-                                            <option value="reset_password">Send Reset Password Link</option>
-                                        </select>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="toggle-switch d-flex align-items-center">
-                                        <div class="toggle-button toggle-front d-flex align-items-center position-relative">
-                                            <label for="status5" class="form-check-label font-dmsans text-primary-v1 visually-hidden">Status</label>
-                                            <label class="switch">
-                                                <input type="checkbox" id="status5">
-                                                <span class="slider"></span>
-                                                <span class="active font-dmsans fw-medium">Active</span>
-                                                <span class="inactive font-dmsans fw-medium">Inactive</span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="action-cell text-center">
-                                    <div class="action-col position-relative d-inline-block">
-                                        <a href="javascript:;" class="p-1" data-bs-toggle="popover" data-bs-placement="top">
-                                            <svg class="action-icon cursor-pointer" width="20" height="4" viewBox="0 0 20 4" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M10 0C11.1046 0 12 0.89543 12 2C12 3.10457 11.1046 4 10 4C8.89543 4 8 3.10457 8 2C8 0.89543 8.89543 0 10 0Z" fill="#2D264B"/>
-                                                <path d="M2 -4.76837e-07C3.10457 -4.76837e-07 4 0.89543 4 2C4 3.10457 3.10457 4 2 4C0.89543 4 0 3.10457 0 2C0 0.89543 0.89543 -4.76837e-07 2 -4.76837e-07Z" fill="#2D264B"/>
-                                                <path d="M18 2.38419e-07C19.1046 2.38419e-07 20 0.895431 20 2C20 3.10457 19.1046 4 18 4C16.8954 4 16 3.10457 16 2C16 0.895431 16.8954 2.38419e-07 18 2.38419e-07Z" fill="#2D264B"/>
-                                            </svg>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
+                            @endforeach
                         </tbody>
                     </table>
                 </div>
@@ -757,3 +555,13 @@
         </div>
     </div>
 </div>
+{{-- @section('script')
+<script src="{{asset('assets/js/jquery.min.js')}}"></script>
+    <script src="{{asset('assets/js/bootstrap.bundle.min.js')}}"></script>
+    <script src="{{asset('assets/js/jquery.dataTables.min.js')}}"></script>
+    <script src="{{asset('assets/js/main.js')}}"></script>
+    <script src="{{ asset('assets/js/bootstrapValidator.min.js') }}"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="{{ asset('assets/js/slick.js') }}" type="text/javascript" charset="utf-8"></script>
+<script src="{{ asset('assets/js/script.js') }}"></script>
+@endsection --}}

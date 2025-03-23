@@ -12,7 +12,7 @@
         var siteUrl = "{{ url('/') }}";
         var csrf_token = "{{ csrf_token() }}";
     </script>
-    <title>{{ (isset($title)) ? $title.' - ' : '' }} {{ config('app.name', 'Parish') }}</title>
+    <title>{{ (isset($title)) ? $title.' - ' : '' }} {{ config('app.name', 'RestoFinder') }}</title>
 
     @include('layouts.header')
     <style type="text/css">
@@ -33,6 +33,6 @@
             <div class="loader"></div>
         </div>
     </div> --}}
-    {{-- @include('layouts.footer') --}}
+    @include('layouts.footer')
 </body>
 </html>

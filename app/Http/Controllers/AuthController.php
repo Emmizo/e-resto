@@ -7,6 +7,7 @@ use App\Models\Restaurant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Auth;
 
 class AuthController extends Controller
 {
@@ -68,33 +69,47 @@ class AuthController extends Controller
             'restaurant_address' => 'required|string',
             'restaurant_longitude' => 'nullable|numeric',
             'restaurant_latitude' => 'nullable|numeric',
-            'restaurant_phone' => 'required|string|max:20',
+            'restaurant_phone_number' => 'required|string|max:20',
             'restaurant_email' => 'required|email|max:255',
             'restaurant_website' => 'nullable|url',
-            'restaurant_opening_hours' => 'required|string',
+            'restaurant_opening_hours' => 'nullable|string',
             'restaurant_cuisine_type' => 'required|string',
             'restaurant_price_range' => 'required|string',
             'restaurant_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
+            return response()->json([
+                'status' => 422, // Validation error status code
+                'errors' => $validator->errors(), // Validation errors
+                'message' => 'Validation failed. Please check your input.', // Optional message
+            ], 422);
         }
 
         // Handle profile picture upload
-        $profilePicturePath = null;
-        if ($request->hasFile('profile_picture')) {
-            $profilePicturePath = $request->file('profile_picture')->store('profile_pictures', 'public');
-        }
 
+        if($request->profile_picture) {
+            $directory = public_path().'/users_pic';
+            if (!is_dir($directory)) {
+                mkdir($directory);
+                chmod($directory, 0777);
+            }
+            $imageName = strtotime(date('Y-m-d H:i:s')) . '-' . str_replace(' ', '-', $request->file('profile_picture')->getClientOriginalName());
+            $request->file('profile_picture')->move($directory, $imageName);
+            $profilePicturePath  = 'users_pic/'.$imageName;
+        }
         // Handle restaurant image upload
-        $restaurantImagePath = null;
-        if ($request->hasFile('restaurant_image')) {
-            $restaurantImagePath = $request->file('restaurant_image')->store('restaurant_images', 'public');
-        }
 
+        if($request->restaurant_image) {
+            $directory = public_path().'/restaurant_pic';
+            if (!is_dir($directory)) {
+                mkdir($directory);
+                chmod($directory, 0777);
+            }
+            $imageName = strtotime(date('Y-m-d H:i:s')) . '-' . str_replace(' ', '-', $request->file('restaurant_image')->getClientOriginalName());
+            $request->file('restaurant_image')->move($directory, $imageName);
+            $restaurantImagePath  = 'restaurant_pic/'.$imageName;
+        }
         // Create the user
         $user = User::create([
             'first_name' => $request->first_name,
@@ -114,7 +129,7 @@ class AuthController extends Controller
             'address' => $request->restaurant_address,
             'longitude' => $request->restaurant_longitude,
             'latitude' => $request->restaurant_latitude,
-            'phone_number' => $request->restaurant_phone,
+            'phone_number' => $request->restaurant_phone_number,
             'email' => $request->restaurant_email,
             'website' => $request->restaurant_website,
             'opening_hours' => $request->restaurant_opening_hours,
@@ -128,8 +143,8 @@ class AuthController extends Controller
         // Auto-login the user
         auth()->login($user);
 
-        return redirect()->route('dashboard')
-            ->with('success', 'Registration successful! Your restaurant will be reviewed by our team.');
+        return response()->json(["msg" =>'success','status'=>201],201);
+
     }
 
     /**
@@ -137,19 +152,37 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
+        try{
 
-        if (auth()->attempt($credentials)) {
-            $request->session()->regenerate();
-            return redirect()->intended('dashboard');
+            $validator = Validator::make($request->all(),[
+                'email' => 'required|email',
+                'password' => 'required',
+            ]
+        );
+
+            $credentials = $request->only('email', 'password');
+
+
+            if (Auth::attempt($credentials)) {
+                if(Auth::user()->status == 1){
+
+                    return response()->json(["msg" =>'success','status'=>201],201);
+
+                }else{
+                    return response()->json(["msg" =>'fail','status'=>401],401);
+                }
+
         }
+        else{
+                $request->session()->flash('error', "Login details are not valid");
+                return redirect(route('login'));
+            }
 
-        return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
-        ])->onlyInput('email');
+        }
+        catch(Exception $e)
+        {
+
+        }
     }
 
     /**
