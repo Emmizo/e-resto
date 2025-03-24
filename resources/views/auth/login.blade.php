@@ -114,7 +114,7 @@
                                                 </div>
                                                 <div class="col-md-12">
                                                     <div class="m-0 mb-3 text-end">
-                                                        <a href="{{route('forgot')}}" class="font-dmsans fw-medium small text-secondary position-relative d-inline-block" title="Forgot Password?">Forgot Password?</a>
+                                                        <a href="{{route('forgot-password')}}" class="font-dmsans fw-medium small text-secondary position-relative d-inline-block" title="Forgot Password?">Forgot Password?</a>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-12">

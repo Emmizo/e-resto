@@ -77,7 +77,16 @@
                                 <div class="login-heading mb-4">
                                     <h2 class="font-dmsans fw-bold medium text-dark-v2 mb-1">Forget Password</h2>
                                 </div>
-                                <form  method="POST" action="{{ route('forgot-password-post') }}">
+                                @if (session()->has('error'))
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {!! session('error') !!}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            @endif
+                                <form  method="POST" action="" id="forgot-form">
+
                                     <div class="row">
                                         <div class="col-md-12">
                                             <div class="form-group m-0 mb-3">
@@ -119,3 +128,136 @@
         </div>
     </div>
   </body>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
+
+<script>
+    //login
+$('#forgot-form').validate({
+    rules: {
+
+        email: {
+            required: true,
+            email: true,
+        },
+
+
+
+
+    },
+    messages: {
+
+        email: {
+            required: "Please enter an email address",
+            email: "Please enter a valid email address",
+        }
+
+    },
+    errorElement: 'span',
+    errorPlacement: function(error, element) {
+        error.addClass('invalid-feedback');
+        element.closest('.form-group').append(error);
+    },
+    highlight: function(element) {
+        $(element).addClass('is-invalid');
+    },
+    unhighlight: function(element) {
+        $(element).removeClass('is-invalid');
+    },
+        // Add submit handler to prevent default form submission and handle via AJAX
+        submitHandler: function(form, e) {
+        e.preventDefault();
+
+        var form_data = new FormData();
+
+
+                $('#forgot-form input').each(function(i, e) {
+                var getID = $(this).attr('id');
+                var name = $(this).attr('name');
+                form_data.append(name, $("#" + getID).val());
+                });
+
+
+
+        // Set up CSRF token
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
+        // Make AJAX request
+        $.ajax({
+            url: "{{ route('forgot-password-post') }}", // Use form action or fallback
+            type: "POST",
+            dataType: "json",
+            data: form_data,
+
+            cache: false,
+            contentType: false,
+            processData: false,
+
+            beforeSend: function() {
+                $('#send_btn').html("<i class='fa fa-spin fa-spinner'></i> Submit");
+                $('#loader').show();
+                $('#send_btn').prop('disabled', true);
+                $('.alert-dismissible').hide(); // Hide any previous alerts
+            },
+            success: function(result) {
+                console.log(result.status);
+
+                if (result.status == '201') {
+                    // Show success message before redirect
+                    $('.alert-dismissible').removeClass('alert-danger').addClass('alert-success');
+                    $('.alert-dismissible').html('logged in successful! Redirecting to dashboard...');
+                    $('.alert-dismissible').show();
+
+                    // Redirect after a short delay
+                    setTimeout(function() {
+                        // window.location.href = result.redirect || '/login';
+                    }, 1500);
+                } else {
+                    // Show error message
+                    $('.alert-dismissible').removeClass('alert-success').addClass('alert-danger');
+                    $('.alert-dismissible').html(result.message || 'An error occurred. Please try again.');
+                    $('.alert-dismissible').show();
+
+                    // Reset button
+                    $('#send_btn2').html("Register");
+                    $('#loader').hide();
+                    $('#send_btn2').prop('disabled', false);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error(xhr.responseText);
+
+                // Handle validation errors from Laravel
+                if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                    var errorMessages = '';
+                    $.each(xhr.responseJSON.errors, function(field, errors) {
+                        errorMessages += errors.join('<br>') + '<br>';
+                    });
+
+                    $('.alert-dismissible').removeClass('alert-success').addClass('alert-danger');
+                    $('.alert-dismissible').html(errorMessages);
+                } else {
+                    // Generic error message
+                    $('.alert-dismissible').removeClass('alert-success').addClass('alert-danger');
+                    $('.alert-dismissible').html('An error occurred: ' + (xhr.responseJSON ? xhr.responseJSON.message : error));
+                }
+
+                $('.alert-dismissible').show();
+                $('#send_btn2').html("Register");
+                $('#loader').hide();
+                $('#send_btn2').prop('disabled', false);
+            }
+        });
+
+        return false; // Prevent default form submission
+    }
+});
+
+</script>

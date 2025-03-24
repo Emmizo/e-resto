@@ -6,8 +6,8 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Event;
-use App\Events\Login;
-// use App\Listeners\LoginSuccessful;
+
+
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -20,18 +20,16 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
-       /*  'App\Events\ResetPasswordEvent' => [
+        'App\Events\ResetPasswordEvent' => [
             'App\Listeners\ResetPasswordListener',
-        ], */
+        ],
         'App\Events\UserRegisteredEvent' => [
             'App\Listeners\UserRegisteredListener',
         ],
-        /* 'App\Events\ResetCreateEvent' => [
+        'App\Events\ResetCreateEvent' => [
             'App\Listeners\ResetListener',
-        ], */
-        /* Login::class => [
-            LoginSuccessful::class,
-        ] */
+        ],
+
     ];
 
     /**
