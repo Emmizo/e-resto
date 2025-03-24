@@ -8,7 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Auth;
-
+use App\Events\NewUserCreatedEvent;
+use Str;
 class AuthController extends Controller
 {
     /**
@@ -59,7 +60,7 @@ class AuthController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
+
             'phone_number' => 'required|string|max:20',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
 
@@ -85,9 +86,9 @@ class AuthController extends Controller
                 'message' => 'Validation failed. Please check your input.', // Optional message
             ], 422);
         }
-
+        $password = Str::random(8);
         // Handle profile picture upload
-
+        $encryptpassword = Hash::make($password);
         if($request->profile_picture) {
             $directory = public_path().'/users_pic';
             if (!is_dir($directory)) {
@@ -115,7 +116,8 @@ class AuthController extends Controller
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => $encryptpassword,
+            'plain_password' => $password,
             'role' => 'restaurant_owner', // Set default role
             'phone_number' => $request->phone_number,
             'profile_picture' => $profilePicturePath,
@@ -139,7 +141,7 @@ class AuthController extends Controller
             'owner_id' => $user->id,
             'is_approved' => false, // Default to not approved
         ]);
-
+        event(new NewUserCreatedEvent($user));
         // Auto-login the user
         auth()->login($user);
 

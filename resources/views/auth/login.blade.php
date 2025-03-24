@@ -166,18 +166,7 @@
                                                         <input type="tel" class="form-control rounded-3" id="phoneNumber" name="phone_number" placeholder="Enter Phone Number" required>
                                                     </div>
                                                 </div>
-                                                <div class="col-md-12">
-                                                    <div class="form-group m-0 mb-3">
-                                                        <label for="registerPassword" class="form-label">Password <span class="asterik">*</span></label>
-                                                        <input type="password" class="form-control rounded-3" id="password" name="password" placeholder="Enter Password" required>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-12">
-                                                    <div class="form-group m-0 mb-3">
-                                                        <label for="confirmPassword" class="form-label">Confirm Password <span class="asterik">*</span></label>
-                                                        <input type="password" class="form-control rounded-3" id="confirmPassword" name="password_confirmation" placeholder="Confirm Password" required>
-                                                    </div>
-                                                </div>
+
 
                                                 <div class="col-md-12">
                                                     <div class="form-group m-0 mb-3">
@@ -624,14 +613,7 @@ $('#registerForm').validate({
             required: true,
             minlength: 14,
         },
-        password: {
-            required: true,
-            minlength: 8
-        },
-        password_confirmation: {
-            required: true,
-            equalTo: "#password",
-        },
+
         profile_picture: {
             extension: "jpeg,jpg,png",
             maxsize: 5242880,
@@ -686,14 +668,7 @@ $('#registerForm').validate({
             required: "Please enter a phone number",
             minlength: "Please enter a valid phone number",
         },
-        password: {
-            required: "Please enter a password",
-            minlength: "Password must be at least 8 characters"
-        },
-        password_confirmation: {
-            required: "Please confirm your password",
-            equalTo: "Passwords do not match",
-        },
+
         profile_picture: {
             extension: "Please upload jpg, jpeg, or png files only",
             maxsize: "File size must be less than 5 MB",

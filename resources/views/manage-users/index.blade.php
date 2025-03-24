@@ -143,7 +143,7 @@
                                     <span>{{ $user->email }}</span>
                                 </td>
                                 <td>
-                                    <span>{{ $user->number_phone }}</span>
+                                    <span>{{ $user->phone_number }}</span>
                                 </td>
                                 <td>
                                     <span>{{ $user->restaurant_name}}</span>
@@ -158,7 +158,7 @@
                                     <span>{{ $user->restaurant_address}}</span>
                                 </td>
                                 <td>
-                                    <span>{{ $user->restaurant_position}}</span>
+                                    <span>{{ $user->restaurant_position?? Str::title(str_replace('_', ' ',$user->role))}}</span>
                                 </td>
                                 <td>
                                     <span>{{ $user->created_at}}</span>
