@@ -151,7 +151,7 @@ class AuthController extends Controller
             'owner_id' => $user->id,
             'is_approved' => false, // Default to not approved
         ]);
-        event(new NewUserCreatedEvent($user, $password));
+        event(new NewUserCreatedEvent($user));
         // Auto-login the user
         auth()->login($user);
 

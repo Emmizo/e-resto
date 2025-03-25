@@ -27,12 +27,7 @@
 <body>
 
     @yield('content')
-    <!-- Loader -->
-    {{-- <div class="loader-block position-fixed w-100 h-100 start-0 top-0">
-        <div class="d-flex align-items-center justify-content-center w-100 h-100">
-            <div class="loader"></div>
-        </div>
-    </div> --}}
+
     @include('layouts.footer')
 </body>
 </html>

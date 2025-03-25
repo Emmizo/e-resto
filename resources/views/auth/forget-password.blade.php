@@ -220,7 +220,7 @@ $('#forgot-form').validate({
                 }
             },
             error: function(xhr, status, error) {
-                console.error(xhr.responseText);
+                console.log(xhr.responseJSON);
 
                 // Handle validation errors from Laravel
                 if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {

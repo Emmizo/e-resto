@@ -2,8 +2,13 @@
     <!-- Sidebar -->
     <aside class="sidebar position-fixed top-0 start-0 h-100 p-3" id="sidebar">
         <div class="sidebar-header mb-5 text-center">
+
             <a href="{{ route('dashboard') }}" class="sidebar-header-logo" title="District 10">
-                <img src="assets/images/logo.png" alt="District 10" width="61" height="86" class="sidebar-header-logo-img">
+                @if(auth()->user()->role=="admin")
+                <img src="assets/images/logo.png " alt="District 10" width="61" height="86" class="sidebar-header-logo-img">
+                @else
+                <img src="{{$data['users']->restaurant_logo}}" alt="District 10" width="61" height="86" class="sidebar-header-logo-img">
+                @endif
             </a>
         </div>
         <div class="sidebar-menu-items custom-scroll-content h-100" id="sidebar-menu">

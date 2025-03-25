@@ -37,5 +37,6 @@ Route::group(['prefix' => '/users', 'middleware' => ['auth','nocache'],'namespac
 
 Route::group([ 'middleware' => ['auth','nocache']], function () {
 Route::get('/manage-users', [UserController::class, 'index'])->name('manage-users');
+Route::post('/create-employee', [UserController::class, 'createEmployee'])->name('create-employee');
 Route::get('/manage-events', [EventsController::class, 'index'])->name('manage-events');
 });
