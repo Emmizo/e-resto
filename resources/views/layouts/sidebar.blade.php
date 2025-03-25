@@ -2,7 +2,7 @@
     <!-- Sidebar -->
     <aside class="sidebar position-fixed top-0 start-0 h-100 p-3" id="sidebar">
         <div class="sidebar-header mb-5 text-center">
-            <a href="javascript:;" class="sidebar-header-logo" title="District 10">
+            <a href="{{ route('dashboard') }}" class="sidebar-header-logo" title="District 10">
                 <img src="assets/images/logo.png" alt="District 10" width="61" height="86" class="sidebar-header-logo-img">
             </a>
         </div>

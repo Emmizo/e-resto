@@ -18,7 +18,9 @@
                     <div class="user-profile-details d-flex align-items-center pe-3 pe-sm-4">
                         <div class="user-image me-2">
                             <figure class="m-0">
+
                                 <img src="{{ !empty(Auth::user()->profile_picture) ? URL::asset(Auth::user()->profile_picture) : asset('/users_pic/1114160.png') }}" alt="Profile Image" width="38" height="38" class="img-fluid rounded-3">
+
                             </figure>
                         </div>
                         <div class="user-details ps-1">
