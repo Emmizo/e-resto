@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Restaurant;
+use Spatie\Permission\Models\Permission;
 
 class UserController extends Controller
 {
@@ -13,6 +14,7 @@ class UserController extends Controller
      */
     public function index()
     {
+        $permissions = Permission::get();
         $users = User::leftJoin('restaurants', function($join) {
             $join->on('users.id', '=', 'restaurants.owner_id');
         })
@@ -43,7 +45,7 @@ class UserController extends Controller
         })
         ->get();
 
-    return view('manage-users.index', ['users' => $users]);
+    return view('manage-users.index', compact( 'users', 'permissions'));
         //
     }
 
