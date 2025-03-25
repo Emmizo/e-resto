@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Validator;
 use Auth;
 use App\Events\NewUserCreatedEvent;
 use Str;
-
+use App\Events\WelcomeEmailEvent;
 use Exception;
 use Password;
 use App\Events\ResetPasswordEvent;
@@ -306,6 +306,40 @@ class AuthController extends Controller
         {
 
         }
+    }
+
+    public function welcomeEmail(Request $request){
+        $users = User::leftJoin('restaurants', function($join) {
+            $join->on('users.id', '=', 'restaurants.owner_id');
+        })
+        ->leftJoin('restaurant_employees', function($join) {
+            $join->on('restaurant_employees.restaurant_id', '=', 'restaurants.id')
+                 ->on('restaurant_employees.user_id', '=', 'users.id');
+        })
+        ->select(
+            'users.*',
+            'restaurants.name as restaurant_name',
+            'restaurants.address as restaurant_address',
+            'restaurants.phone_number as restaurant_phone',
+            'restaurants.email as restaurant_email',
+            'restaurants.website',
+            'restaurant_employees.position as employee_role',
+            \DB::raw('CASE WHEN users.id = restaurants.owner_id THEN "Owner" ELSE "" END as is_owner')
+        )
+        ->when(auth()->user()->role !== 'admin', function ($query) {
+            $query->where(function ($q) {
+                if (auth()->user()->role === 'restaurant_owner') {
+                    // Display only employees of the owner's restaurant
+                    $q->where('restaurants.owner_id', auth()->user()->id);
+                } else {
+                    // Employees should only see their own data
+                    $q->where('restaurant_employees.user_id', auth()->user()->id);
+                }
+            });
+        })->where('users.email',$request->email)
+        ->first();
+        event(new WelcomeEmailEvent($users));
+        return response()->json(["msg" =>'success reset link sent','status'=>201],201);
     }
    /**
      * This function is used to send link on email

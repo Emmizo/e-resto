@@ -29,6 +29,9 @@ class EventServiceProvider extends ServiceProvider
         'App\Events\ResetCreateEvent' => [
             'App\Listeners\ResetListener',
         ],
+        'App\Events\WelcomeEmailEvent' => [
+            'App\Listeners\WelcomeEmailListener',
+        ],
 
     ];
 

@@ -168,10 +168,10 @@
                                 </td>
                                 <td>
                                     <div class="request-select normal-select">
-                                        <select class="form-select" aria-label="Request">
+                                        <select class="form-select" aria-label="Request" id="requestType">
                                             <option selected disabled>Please Select</option>
-                                            <option value="welcome">Send a Welcome Email</option>
-                                            <option value="reset_password">Send Reset Password Link</option>
+                                            <option value="{{ $user->email }}" >Send a Welcome Email</option>
+                                            <option value="{{ $user->email }}">Send Reset Password Link</option>
                                         </select>
                                     </div>
                                 </td>
@@ -555,13 +555,208 @@
         </div>
     </div>
 </div>
-{{-- @section('script')
-<script src="{{asset('assets/js/jquery.min.js')}}"></script>
-    <script src="{{asset('assets/js/bootstrap.bundle.min.js')}}"></script>
-    <script src="{{asset('assets/js/jquery.dataTables.min.js')}}"></script>
-    <script src="{{asset('assets/js/main.js')}}"></script>
-    <script src="{{ asset('assets/js/bootstrapValidator.min.js') }}"></script>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="{{ asset('assets/js/slick.js') }}" type="text/javascript" charset="utf-8"></script>
-<script src="{{ asset('assets/js/script.js') }}"></script>
-@endsection --}}
+
+<!-- Welcome email User Modal -->
+<div class="modal fade" id="welcomeEmail" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="deleteUserLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h1 class="modal-title fs-5 font-dmsans fw-bold text-primary-v1" id="deleteUserLabel">Send Welcome Email</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-form">
+                    <div class="row">
+                        <form action="" method="POST" id="welcomeEmailForm">
+                        <div class="col-md-12 text-center">
+                            <p class="font-dmsans text-primary-v1 medium mb-4">Are you sure you want to sent welcome wish to ?</p>
+                            <input type="hidden" name="email" value="" id="welcomeEmailId">
+                            <div class="footer-btns">
+                                <button type="submit" class="btn btn-primary btn-small fw-semibold text-uppercase rounded-3">Yes</button>
+                                <button type="button" class="btn btn-outline btn-small fw-semibold text-uppercase rounded-3 border border-grey-v1" data-bs-dismiss="modal">No</button>
+                            </div>
+                        </div>
+                    </form>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 justify-content-start pt-0">
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Reset password email User Modal -->
+<div class="modal fade" id="resetEmail" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="deleteUserLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h1 class="modal-title fs-5 font-dmsans fw-bold text-primary-v1" id="deleteUserLabel">Send reset password link</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-form">
+                    <div class="row">
+                        <form action="" method="POST" id="resetPasswordForm">
+
+                        <div class="col-md-12 text-center">
+                            <p class="font-dmsans text-primary-v1 medium mb-4">Are you sure you want to send link to ?</p>
+                            <input type="hidden" name="email" value="" id="resetForEmail">
+                            <div class="footer-btns">
+                                <button type="submit" class="btn btn-primary btn-small fw-semibold text-uppercase rounded-3">Yes</button>
+                                <button type="button" class="btn btn-outline btn-small fw-semibold text-uppercase rounded-3 border border-grey-v1" data-bs-dismiss="modal">No</button>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 justify-content-start pt-0">
+            </div>
+        </div>
+    </div>
+</div>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+   $(document).ready(function() {
+    // Modal selection logic
+    $("#requestType").change(function() {
+        var selectedValue = $(this).val();
+        var selectedText = $(this).find("option:selected").text();
+
+        $(".modal").modal('hide');
+
+        if (selectedText === "Send a Welcome Email") {
+            $("#welcomeEmailId").val(selectedValue);
+            $("#welcomeEmail").modal('show');
+        } else if (selectedText === "Send Reset Password Link") {
+            $("#resetForEmail").val(selectedValue);
+            $("#resetEmail").modal('show');
+        }
+    });
+
+    // Form submission with validation
+    $("#resetPasswordForm").validate({
+        submitHandler: function(form) {
+            var form_data = new FormData(form); // Capture all form fields
+
+            // Set up CSRF token
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
+
+            // Make AJAX request
+            $.ajax({
+                url: "{{ route('forgot-password-post') }}",
+                type: "POST",
+                dataType: "json",
+                data: form_data,
+                cache: false,
+                contentType: false,
+                processData: false,
+
+                beforeSend: function() {
+                    $('#send_btn').html("<i class='fa fa-spin fa-spinner'></i> Submit");
+                    $('#loader').show();
+                    $('#send_btn').prop('disabled', true);
+                    $('.alert-dismissible').hide();
+                },
+                success: function(result) {
+                    console.log(result.status);
+
+                    if (result.status == '201') {
+                        $('#message-container-login').html(
+                            '<div class="alert alert-success alert-dismissible">Logged In! <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>'
+                        );
+
+                        setTimeout(function() {
+                            window.location.href = result.redirect || '/manage-users';
+                        }, 1500);
+                    } else {
+                        $('#message-container-login').html(
+                            '<div class="alert alert-danger alert-dismissible">' +
+                            (result.msg || 'An error occurred. Please try again.') +
+                            ' <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>'
+                        );
+
+                        $('#send_btn').html("Submit"); // Fixed to use same button ID
+                        $('#loader').hide();
+                        $('#send_btn').prop('disabled', false);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $('#message-container-login').html(
+                        '<div class="alert alert-danger alert-dismissible">Request failed. Please try again. <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>'
+                    );
+                    $('#send_btn').html("Submit");
+                    $('#loader').hide();
+                    $('#send_btn').prop('disabled', false);
+                }
+            });
+        }
+    });
+
+    $("#welcomeEmailForm").validate({
+        submitHandler: function(form) {
+            var form_data = new FormData(form); // Capture all form fields
+
+            // Set up CSRF token
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
+
+            // Make AJAX request
+            $.ajax({
+                url: "{{ route('welcome-post') }}",
+                type: "POST",
+                dataType: "json",
+                data: form_data,
+                cache: false,
+                contentType: false,
+                processData: false,
+
+                beforeSend: function() {
+                    $('#send_btn').html("<i class='fa fa-spin fa-spinner'></i> Submit");
+                    $('#loader').show();
+                    $('#send_btn').prop('disabled', true);
+                    $('.alert-dismissible').hide();
+                },
+                success: function(result) {
+                    console.log(result.status);
+
+                    if (result.status == '201') {
+                        $('#message-container-login').html(
+                            '<div class="alert alert-success alert-dismissible">Logged In! <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>'
+                        );
+
+                        setTimeout(function() {
+                            window.location.href = result.redirect || '/manage-users';
+                        }, 1500);
+                    } else {
+                        $('#message-container-login').html(
+                            '<div class="alert alert-danger alert-dismissible">' +
+                            (result.msg || 'An error occurred. Please try again.') +
+                            ' <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>'
+                        );
+
+                        $('#send_btn').html("Submit"); // Fixed to use same button ID
+                        $('#loader').hide();
+                        $('#send_btn').prop('disabled', false);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $('#message-container-login').html(
+                        '<div class="alert alert-danger alert-dismissible">Request failed. Please try again. <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>'
+                    );
+                    $('#send_btn').html("Submit");
+                    $('#loader').hide();
+                    $('#send_btn').prop('disabled', false);
+                }
+            });
+        }
+    });
+});
+  </script>

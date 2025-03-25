@@ -27,7 +27,7 @@ class UserRegisteredListener
     public function handle(NewUserCreatedEvent $event): void
     {
         $info = $event->user;
-       
+
 
         $info['manage_user_link'] = route('manage-users');
         $mail = $info['email'];
@@ -37,6 +37,6 @@ class UserRegisteredListener
         $subject = "User Created Successfully";
         $token = app(PasswordBroker::class)->createToken(User::where('email', $mail)->first());
         $info['tokenUrl'] = url('/reset-password/'.$token.'?email='.$mail);
-        Mail::to($mails)->send(new userRegistered($subject, $info));
+        Mail::to($mails)->send(new UserRegistered($subject, $info));
     }
 }
