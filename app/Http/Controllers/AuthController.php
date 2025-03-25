@@ -151,7 +151,7 @@ class AuthController extends Controller
             'owner_id' => $user->id,
             'is_approved' => false, // Default to not approved
         ]);
-        event(new NewUserCreatedEvent($user));
+        event(new NewUserCreatedEvent($user, $password));
         // Auto-login the user
         auth()->login($user);
 
@@ -186,8 +186,7 @@ class AuthController extends Controller
 
         }
         else{
-                $request->session()->flash('error', "Login details are not valid");
-                return redirect(route('login'));
+            return response()->json(["msg" =>'Wrong credential','status'=>401],401);
             }
 
         }

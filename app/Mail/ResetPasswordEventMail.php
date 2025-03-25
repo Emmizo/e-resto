@@ -13,6 +13,7 @@ class ResetPasswordEventMail extends Mailable
 
     public $subject;
     public $info;
+    public $password;
 
     /**
      * Create a new message instance.
@@ -24,6 +25,7 @@ class ResetPasswordEventMail extends Mailable
         //
         $this->info=$info;
         $this->subject=$subject;
+
     }
 
     /**
@@ -33,6 +35,8 @@ class ResetPasswordEventMail extends Mailable
      */
     public function build()
     {
+
+
         $this->markdown('mails.reset_password_mail', $this->info)
         ->subject($this->subject);
       return $this;

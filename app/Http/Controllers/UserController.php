@@ -30,14 +30,16 @@ class UserController extends Controller
             'restaurant_employees.position as employee_role',
             \DB::raw('CASE WHEN users.id = restaurants.owner_id THEN "Owner" ELSE "" END as is_owner')
         )
-        ->where(function ($query) {
-            $userRole = auth()->user()->role;
-            if ($userRole == 'restaurant_owner') {
-                $query->where('restaurants.owner_id', auth()->user()->id) OR
-                $query->where('restaurant_employees.user_id', auth()->user()->id);
-            }else{
-                $query->where('restaurant_employees.user_id', auth()->user()->id);
-            }
+        ->when(auth()->user()->role !== 'admin', function ($query) {
+            $query->where(function ($q) {
+                if (auth()->user()->role === 'restaurant_owner') {
+                    // Display only employees of the owner's restaurant
+                    $q->where('restaurants.owner_id', auth()->user()->id);
+                } else {
+                    // Employees should only see their own data
+                    $q->where('restaurant_employees.user_id', auth()->user()->id);
+                }
+            });
         })
         ->get();
 

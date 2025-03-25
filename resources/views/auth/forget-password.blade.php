@@ -77,14 +77,7 @@
                                 <div class="login-heading mb-4">
                                     <h2 class="font-dmsans fw-bold medium text-dark-v2 mb-1">Forget Password</h2>
                                 </div>
-                                @if (session()->has('error'))
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    {!! session('error') !!}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-            @endif
+                                <div id="message-container"></div>
                                 <form  method="POST" action="" id="forgot-form">
 
                                     <div class="row">
@@ -95,7 +88,7 @@
                                             </div>
                                         </div>
                                         <div class="col-md-12">
-                                            <button type="submit" class="btn btn-primary btn-small fw-semibold text-uppercase rounded-3 w-100 text-center">
+                                            <button type="submit" class="btn btn-primary btn-small fw-semibold text-uppercase rounded-3 w-100 text-center" id="send_btn">
                                                 <span>Send Password Reset Link</span>
                                             </button>
                                         </div>
@@ -210,25 +203,20 @@ $('#forgot-form').validate({
                 console.log(result.status);
 
                 if (result.status == '201') {
-                    // Show success message before redirect
-                    $('.alert-dismissible').removeClass('alert-danger').addClass('alert-success');
-                    $('.alert-dismissible').html('logged in successful! Redirecting to dashboard...');
-                    $('.alert-dismissible').show();
+                    $('#message-container').html('<div class="alert alert-success alert-dismissible">Password reset link sent successfully! <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>');
+
 
                     // Redirect after a short delay
                     setTimeout(function() {
-                        // window.location.href = result.redirect || '/login';
+                         window.location.href = result.redirect || '/forgot-password';
                     }, 1500);
                 } else {
-                    // Show error message
-                    $('.alert-dismissible').removeClass('alert-success').addClass('alert-danger');
-                    $('.alert-dismissible').html(result.message || 'An error occurred. Please try again.');
-                    $('.alert-dismissible').show();
+                    $('#message-container').html('<div class="alert alert-danger alert-dismissible">' + (result.message || 'An error occurred. Please try again.') + ' <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>');
 
-                    // Reset button
-                    $('#send_btn2').html("Register");
-                    $('#loader').hide();
-                    $('#send_btn2').prop('disabled', false);
+        // Reset button
+        $('#send_btn').html("<span>Send Password Reset Link</span>");
+        $('#loader').hide();
+        $('#send_btn').prop('disabled', false);
                 }
             },
             error: function(xhr, status, error) {

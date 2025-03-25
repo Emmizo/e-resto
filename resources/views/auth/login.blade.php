@@ -94,9 +94,7 @@
                                             <h2 class="font-dmsans fw-bold medium text-dark-v2 mb-1">Sign in to your Account</h2>
                                             <p class="font-dmsans fw-normal text-dark-v2 lh-base pb-2">Are you a new user? Click on the Register tab to create your account.</p>
                                         </div>
-                                         @if (session()->has('error'))
-        <div class="alert msg alert-danger"> {!! session('error') !!} <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>
-    @endif
+                                        <div id="message-container-login"></div>
                                         <form action="" method="POST" id="loginForm" name="loginForm">
 
                                             <div class="row">
@@ -132,11 +130,7 @@
                                             <h2 class="font-dmsans fw-bold medium text-dark-v2 mb-1">Create New Account</h2>
                                             <p class="font-dmsans fw-normal text-dark-v2 lh-base pb-2">Already have an account? Click on the Sign In tab.</p>
                                         </div>
-                                        @if (session()->has('success'))
-    <div class="alert msg alert-success alert-dismissible"> {!! session('success') !!} <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>
-    @endif @if (session()->has('error'))
-        <div class="alert msg alert-danger"> {!! session('error') !!} <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>
-    @endif
+                                        <div id="message-container"></div>
                                         <form action=""  method="POST" enctype="multipart/form-data" id="registerForm" name="registerForm">
                                             {{-- @csrf --}}
                                             <div class="row">
@@ -774,10 +768,8 @@ $('#registerForm').validate({
                 console.log(result.status);
 
                 if (result.status == '201') {
-                    // Show success message before redirect
-                    $('.alert-dismissible').removeClass('alert-danger').addClass('alert-success');
-                    $('.alert-dismissible').html('Registration successful! Redirecting to dashboard...');
-                    $('.alert-dismissible').show();
+                    $('#message-container').html('<div class="alert alert-success alert-dismissible">Thank you for join us! <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>');
+
 
                     // Redirect after a short delay
                     setTimeout(function() {
@@ -785,10 +777,7 @@ $('#registerForm').validate({
                     }, 1500);
                 } else {
                     // Show error message
-                    $('.alert-dismissible').removeClass('alert-success').addClass('alert-danger');
-                    $('.alert-dismissible').html(result.message || 'An error occurred. Please try again.');
-                    $('.alert-dismissible').show();
-
+                    $('#message-container').html('<div class="alert alert-danger alert-dismissible">' + (result.message || 'An error occurred. Please try again.') + ' <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>');
                     // Reset button
                     $('#send_btn2').html("Register");
                     $('#loader').hide();
@@ -928,9 +917,8 @@ $('#loginForm').validate({
 
                 if (result.status == '201') {
                     // Show success message before redirect
-                    $('.alert-dismissible').removeClass('alert-danger').addClass('alert-success');
-                    $('.alert-dismissible').html('logged in successful! Redirecting to dashboard...');
-                    $('.alert-dismissible').show();
+                    $('#message-container-login').html('<div class="alert alert-success alert-dismissible">Logged In! <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>');
+
 
                     // Redirect after a short delay
                     setTimeout(function() {
@@ -938,9 +926,7 @@ $('#loginForm').validate({
                     }, 1500);
                 } else {
                     // Show error message
-                    $('.alert-dismissible').removeClass('alert-success').addClass('alert-danger');
-                    $('.alert-dismissible').html(result.message || 'An error occurred. Please try again.');
-                    $('.alert-dismissible').show();
+                    $('#message-container-login').html('<div class="alert alert-danger alert-dismissible">' + (result.msg || 'An error occurred. Please try again.') + ' <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>');
 
                     // Reset button
                     $('#send_btn2').html("Register");
@@ -949,8 +935,9 @@ $('#loginForm').validate({
                 }
             },
             error: function(xhr, status, error) {
-                console.error(xhr.responseText);
-
+                console.log(xhr.responseText);
+                var response = JSON.parse(xhr.responseText);
+                console.log(response.msg);
                 // Handle validation errors from Laravel
                 if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
                     var errorMessages = '';
@@ -958,12 +945,14 @@ $('#loginForm').validate({
                         errorMessages += errors.join('<br>') + '<br>';
                     });
 
-                    $('.alert-dismissible').removeClass('alert-success').addClass('alert-danger');
-                    $('.alert-dismissible').html(errorMessages);
+                    $('#message-container-login').html('<div class="alert alert-danger alert-dismissible">' + (response.msg || 'An error occurred. Please try again.') + ' <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>');
+
+
                 } else {
                     // Generic error message
-                    $('.alert-dismissible').removeClass('alert-success').addClass('alert-danger');
-                    $('.alert-dismissible').html('An error occurred: ' + (xhr.responseJSON ? xhr.responseJSON.message : error));
+                    $('#message-container-login').html('<div class="alert alert-danger alert-dismissible">' + (response.msg) + ' <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>');
+
+
                 }
 
                 $('.alert-dismissible').show();
