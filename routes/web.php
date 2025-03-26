@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\EventsController;
+use App\Http\Controllers\RoleController;
 
 /* Logout */
 Route::get('/logout', function () {
@@ -33,10 +34,17 @@ Route::group(['prefix' => '/users', 'middleware' => ['auth','nocache'],'namespac
     Route::get('edit-profile', 'UserController@editProfile')->name('manage-edit-profile');
 
 });
-
+// , 'restaurant.permission:mange-users'
+Route::group([
+    'middleware' => ['auth', 'nocache'],
+], function () {
+        Route::post('/create-employee', [UserController::class, 'createEmployee'])->name('create-employee');
+        Route::post('/create-role', [RoleController::class, 'store'])->name('create-role');
+        Route::get('/roles', [RoleController::class, 'index'])->name('roles');
+    });
 
 Route::group([ 'middleware' => ['auth','nocache']], function () {
 Route::get('/manage-users', [UserController::class, 'index'])->name('manage-users');
-Route::post('/create-employee', [UserController::class, 'createEmployee'])->name('create-employee');
+
 Route::get('/manage-events', [EventsController::class, 'index'])->name('manage-events');
 });

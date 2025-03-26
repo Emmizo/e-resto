@@ -99,18 +99,11 @@ class AuthController extends Controller
         $password = Str::random(8);
         // Handle profile picture upload
         $encryptpassword = Hash::make($password);
-        if($request->profile_picture) {
-            $directory = public_path().'/users_pic';
-            if (!is_dir($directory)) {
-                mkdir($directory);
-                chmod($directory, 0777);
-            }
-            $imageName = strtotime(date('Y-m-d H:i:s')) . '-' . str_replace(' ', '-', $request->file('profile_picture')->getClientOriginalName());
-            $request->file('profile_picture')->move($directory, $imageName);
-            $profilePicturePath  = 'users_pic/'.$imageName;
-        }
+        $profilePicturePath = $this->handleProfilePicture($request);
+        $restaurantImagePath = $this->handleRestaurantImage($request);
+        // Create the user
         // Handle restaurant image upload
-
+        /* $restaurantImagePath  = null;
         if($request->restaurant_image) {
             $directory = public_path().'/restaurant_pic';
             if (!is_dir($directory)) {
@@ -120,7 +113,7 @@ class AuthController extends Controller
             $imageName = strtotime(date('Y-m-d H:i:s')) . '-' . str_replace(' ', '-', $request->file('restaurant_image')->getClientOriginalName());
             $request->file('restaurant_image')->move($directory, $imageName);
             $restaurantImagePath  = 'restaurant_pic/'.$imageName;
-        }
+        } */
         // Create the user
         $user = User::create([
             'first_name' => $request->first_name,
@@ -158,7 +151,38 @@ class AuthController extends Controller
         return response()->json(["msg" =>'success','status'=>201],201);
 
     }
-
+/**
+     * Handle profile picture upload
+     */
+    private function handleProfilePicture($request)
+    {
+        if ($request->profile_picture) {
+            $directory = public_path() . '/users_pic';
+            if (!is_dir($directory)) {
+                mkdir($directory, 0777, true);
+            }
+            $imageName = strtotime(date('Y-m-d H:i:s')) . '-' . str_replace(' ', '-', $request->file('profile_picture')->getClientOriginalName());
+            $request->file('profile_picture')->move($directory, $imageName);
+            return 'users_pic/' . $imageName;
+        }
+        return null;
+    }
+    /**
+     * Handle restaurant image upload
+     */
+    private function handleRestaurantImage($request)
+    {
+        if ($request->restaurant_image) {
+            $directory = public_path() . '/restaurant_pic';
+            if (!is_dir($directory)) {
+                mkdir($directory, 0777, true);
+            }
+            $imageName = strtotime(date('Y-m-d H:i:s')) . '-' . str_replace(' ', '-', $request->file('restaurant_image')->getClientOriginalName());
+            $request->file('restaurant_image')->move($directory, $imageName);
+            return 'restaurant_pic/' . $imageName;
+        }
+        return null;
+    }
     /**
      * Handle user login
      */

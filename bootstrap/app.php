@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth' => \App\Http\Middleware\Authenticate::class,
             'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
             'auth:api' => \App\Http\Middleware\EnsureTokenIsValid::class,
+            'restaurant.permission' => \App\Http\Middleware\RestaurantPermission::class,
              ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
