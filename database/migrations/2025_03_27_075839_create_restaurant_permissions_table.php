@@ -19,11 +19,11 @@ return new class extends Migration
             // Consider adding a status or granularity column
             $table->string('permission_name');
             $table->boolean('is_active')->default(true); // Optional: for more granular control
-
+            $table->string('level')->nullable();
             $table->timestamps();
 
             // Unique constraint remains the same
-            $table->unique(['user_id', 'restaurant_id', 'permission_name'], 'unq_rest_perm');
+            $table->unique(['user_id', 'restaurant_id', 'permission_name','level'], 'unq_rest_perm_with_level');
         });
     }
 

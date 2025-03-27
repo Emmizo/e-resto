@@ -178,9 +178,9 @@
                                 <td>
                                     <div class="toggle-switch d-flex align-items-center">
                                         <div class="toggle-button toggle-front d-flex align-items-center position-relative">
-                                            <label for="status1" class="form-check-label font-dmsans text-primary-v1 visually-hidden">Status</label>
+                                            <label for="status{{ $user->id }}" class="form-check-label font-dmsans text-primary-v1 visually-hidden">Status</label>
                                             <label class="switch">
-                                                <input type="checkbox" id="status1" checked>
+                                                <input type="checkbox" id="status{{ $user->id }}" class="status-toggle" data-id="{{ $user->id }}" {{ $user->status ==1 ? 'checked' : '' }}>
                                                 <span class="slider"></span>
                                                 <span class="active font-dmsans fw-medium">Active</span>
                                                 <span class="inactive font-dmsans fw-medium">Inactive</span>

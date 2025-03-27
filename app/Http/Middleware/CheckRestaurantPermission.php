@@ -20,9 +20,10 @@ class CheckRestaurantPermission
         $restaurantId = $request->route('restaurantId') ??
                        $request->input('restaurant_id') ??
                        session('userData')['users']->restaurant_id;
+                       $restaurantName =session('userData')['users']->restaurant_name;
 
         if (!$restaurantId) {
-            abort(403, 'Restaurant not specified');
+            abort(403, 'Restaurant not specified'.$restaurantId);
         }
 
         // Admin bypass (optional - you might want to keep this)
@@ -43,7 +44,9 @@ class CheckRestaurantPermission
 
         // Check specific permission
         if (!$user->hasRestaurantPermission($permission, $restaurantId)) {
-            abort(403, "Unauthorized - You don't have {$permission} permission for this restaurant");
+            return response()->view('errors.403', [
+                'exception' => new \Exception("Unauthorized - You don't have {$permission} permission for this restaurant {$restaurantName}")
+            ], 403);
         }
 
         return $next($request);

@@ -5,6 +5,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\EventsController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\MenuController;
+use App\Http\Controllers\DashboardController;
 
 /* Logout */
 Route::get('/logout', function () {
@@ -39,20 +41,22 @@ Route::group([
     'middleware' => ['auth', 'nocache', 'restaurant.permission:User_Management'],
 ], function () {
     // User Management Routes
-    Route::post('/create-employee', [UserController::class, 'createEmployee'])
-        ->name('create-employee');
+    Route::post('/create-employee', [UserController::class, 'createEmployee'])->name('create-employee');
 
-    Route::get('/manage-users', [UserController::class, 'index'])
-        ->name('manage-users');
+    Route::get('/manage-users', [UserController::class, 'index'])->name('manage-users');
 
 
 });
 
 Route::group([ 'middleware' => ['auth','nocache', 'restaurant.permission:Role_Management']], function () {
 // Role Management Routes
-Route::post('/create-role', [RoleController::class, 'store'])
-->name('create-role');
+Route::post('/create-role', [RoleController::class, 'store'])->name('create-role');
 
-Route::get('/roles', [RoleController::class, 'index'])
-->name('roles');
+Route::get('/roles', [RoleController::class, 'index'])->name('roles');
+});
+
+Route::group([ 'middleware' => ['auth','nocache', 'restaurant.permission:Menu_Management']], function () {
+Route::get('/menu', [MenuController::class, 'index'])->name('manage-menu');
+
+Route::post('/menu-store', [MenuController::class, 'store'])->name('menu-store');
 });
