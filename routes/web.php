@@ -59,4 +59,8 @@ Route::group([ 'middleware' => ['auth','nocache', 'restaurant.permission:Menu_Ma
 Route::get('/manage-menu', [MenuController::class, 'index'])->name('manage-menu');
 
 Route::post('/menu-store', [MenuController::class, 'store'])->name('menu-store');
+Route::get('/menus/{menu}/edit',[MenuController::class, 'edit']);
+    Route::put('/menus/{menu}', [MenuController::class,'update']);
+    Route::patch('/menus/{menu}/status', [MenuController::class,'updateStatus']);
+    Route::delete('/menus/{menu}',[MenuController::class,'destroy']);
 });

@@ -26,7 +26,7 @@ class Menu extends Model
      * @var array
      */
     protected $casts = [
-        'is_active' => 'boolean', // Cast boolean field
+        // 'is_active' => 'boolean',
     ];
 
     /**
