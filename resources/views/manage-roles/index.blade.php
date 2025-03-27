@@ -116,7 +116,7 @@
                 <div class="modal-form">
 
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <div class="form-group m-0 mb-3 pb-1">
                                     <label for="userName" class="form-label">Name <span class="asterik">*</span></label>
                                     <input type="text" class="form-control rounded-3" id="userName" placeholder="Enter name" name="name">

@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->enum('role', ['client', 'restaurant_owner', 'restaurant_employee', 'admin'])->default('client');
+            $table->enum('role', ['client', 'restaurant_owner', 'manager','chef','waiter','cashier','Other', 'admin'])->default('client');
             $table->string('phone_number')->nullable();
             $table->string('profile_picture')->nullable();
             $table->json('preferences')->nullable();

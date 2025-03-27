@@ -299,7 +299,7 @@
                             <div class="col-md-12">
                                 <div class="form-group m-0 mb-3 pb-1">
                                     <label for="userName" class="form-label">Permission <span class="asterik">*</span></label>
-                                    <select class="form-select" aria-label="User Role" name="permission[]"  multiple="multiple" id="Permissions">
+                                    <select class="form-select" aria-label="User Role" name="permissions[]"  multiple="multiple" id="Permissions">
 
                                         @foreach ($permissions as $key => $permission)
                                         <option value="{{ $permission->name }}">{{ $permission->name }}
@@ -766,7 +766,7 @@ $('#addUserForm').validate({
             extension: "jpeg,jpg,png",
             maxsize: 5242880,
         },
-       'permission[]': {
+       'permissions[]': {
             required: true,
         },
         is_active: {
@@ -797,7 +797,7 @@ $('#addUserForm').validate({
         position: {
             required: "Please select a role",
         },
-        "permission[]": {
+        "permissions[]": {
             required: "Please enter permission",
         },
 is_active   : {

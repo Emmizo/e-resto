@@ -14,6 +14,7 @@
         <div class="sidebar-menu-items custom-scroll-content h-100" id="sidebar-menu">
             <nav class="sidebar-nav-menu-items">
                 <ul class="nav">
+                    @hasrestaurantpermission('User_Management', $data['users']->restaurant_id)
                     <li class="nav-item">
                         <a class="nav-link font-dmsans fw-medium text-white" href="{{route('manage-users')}}" title="Manage Users">
                             <svg width="22" height="16" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -22,6 +23,8 @@
                             <span class="menu-title">Manage Users</span>
                         </a>
                     </li>
+                    @endhasrestaurantpermission
+                    @hasrestaurantpermission('Role_Management', $data['users']->restaurant_id)
                     <li class="nav-item">
                         <a class="nav-link font-dmsans fw-medium text-white" href="{{route('roles')}}" title="Manage Events">
                             <svg width="18" height="20" viewBox="0 0 18 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -30,7 +33,7 @@
                             <span class="menu-title">Manage Role</span>
                         </a>
                     </li>
-
+                    @endhasrestaurantpermission
                 </ul>
             </nav>
         </div>

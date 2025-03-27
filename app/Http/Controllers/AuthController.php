@@ -101,19 +101,7 @@ class AuthController extends Controller
         $encryptpassword = Hash::make($password);
         $profilePicturePath = $this->handleProfilePicture($request);
         $restaurantImagePath = $this->handleRestaurantImage($request);
-        // Create the user
-        // Handle restaurant image upload
-        /* $restaurantImagePath  = null;
-        if($request->restaurant_image) {
-            $directory = public_path().'/restaurant_pic';
-            if (!is_dir($directory)) {
-                mkdir($directory);
-                chmod($directory, 0777);
-            }
-            $imageName = strtotime(date('Y-m-d H:i:s')) . '-' . str_replace(' ', '-', $request->file('restaurant_image')->getClientOriginalName());
-            $request->file('restaurant_image')->move($directory, $imageName);
-            $restaurantImagePath  = 'restaurant_pic/'.$imageName;
-        } */
+
         // Create the user
         $user = User::create([
             'first_name' => $request->first_name,
@@ -144,6 +132,7 @@ class AuthController extends Controller
             'owner_id' => $user->id,
             'is_approved' => false, // Default to not approved
         ]);
+
         event(new NewUserCreatedEvent($user));
         // Auto-login the user
         auth()->login($user);

@@ -36,15 +36,23 @@ Route::group(['prefix' => '/users', 'middleware' => ['auth','nocache'],'namespac
 });
 // , 'restaurant.permission:mange-users'
 Route::group([
-    'middleware' => ['auth', 'nocache'],
+    'middleware' => ['auth', 'nocache', 'restaurant.permission:User_Management'],
 ], function () {
-        Route::post('/create-employee', [UserController::class, 'createEmployee'])->name('create-employee');
-        Route::post('/create-role', [RoleController::class, 'store'])->name('create-role');
-        Route::get('/roles', [RoleController::class, 'index'])->name('roles');
-    });
+    // User Management Routes
+    Route::post('/create-employee', [UserController::class, 'createEmployee'])
+        ->name('create-employee');
 
-Route::group([ 'middleware' => ['auth','nocache']], function () {
-Route::get('/manage-users', [UserController::class, 'index'])->name('manage-users');
+    Route::get('/manage-users', [UserController::class, 'index'])
+        ->name('manage-users');
 
-Route::get('/manage-events', [EventsController::class, 'index'])->name('manage-events');
+
+});
+
+Route::group([ 'middleware' => ['auth','nocache', 'restaurant.permission:Role_Management']], function () {
+// Role Management Routes
+Route::post('/create-role', [RoleController::class, 'store'])
+->name('create-role');
+
+Route::get('/roles', [RoleController::class, 'index'])
+->name('roles');
 });

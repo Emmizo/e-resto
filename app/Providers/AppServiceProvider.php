@@ -24,6 +24,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
 
+        \Blade::if('hasrestaurantpermission', function ($permission, $restaurantId = null) {
+            return auth()->check() &&
+                   auth()->user()->hasRestaurantPermission($permission, $restaurantId);
+        });
         // Passport::routes();
         view()->composer('*', function ($view) {
             if (!Auth::check()) {

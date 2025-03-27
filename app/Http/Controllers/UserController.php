@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Validator;
 use Str;
 use Hash;
 use App\Events\NewUserCreatedEvent;
+use App\Models\RestaurantPermission;
 
 class UserController extends Controller
 {
@@ -107,7 +108,7 @@ class UserController extends Controller
             'email' => $request->email,
             'password' => $encryptpassword,
             'plain_password' => $password,
-            'role' => "restaurant_employee",
+            'role' => $request->position,
             'phone_number' => $request->phone_number,
             'profile_picture' => $profilePicturePath,
             'preferences' => json_encode([]),
@@ -121,7 +122,17 @@ class UserController extends Controller
             'permissions' => json_encode($request->permissions ?? []),
             'is_active' => $request->is_active,
         ]);
-
+// Grant specific permissions
+if ($request->permissions) {
+    foreach ($request->permissions as $permission) {
+        RestaurantPermission::create([
+            'user_id' => $user->id,
+            'restaurant_id' => $restaurantId,
+            'permission_name' => $permission,
+            'granted' => true
+        ]);
+    }
+}
         event(new NewUserCreatedEvent($user));
 
         return response()->json([
