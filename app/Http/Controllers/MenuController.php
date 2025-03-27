@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Menu;
 use App\Models\Restaurant;
+use Illuminate\Support\Facades\Validator;
 
 class MenuController extends Controller
 {
@@ -37,7 +38,36 @@ class MenuController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'description' => 'required|string|max:255',
+
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 422,
+                'errors' => $validator->errors(),
+                'message' => 'Validation failed. Please check your input.',
+            ], 422);
+        }
+        $menu= Menu::create([
+            'name' => $request->name,
+            'description' => $request->description,
+            'is_active' => 1,
+            'restaurant_id' => session('userData')['users']->restaurant_id,
+        ]);
+        if ($menu) {
+            return response()->json([
+                'status' => 200,
+                'message' => 'Menu created successfully.',
+            ]);
+        } else {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Failed to create menu.',
+            ], 500);
+        }
     }
 
     /**

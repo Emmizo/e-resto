@@ -57,21 +57,21 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($menus as $user)
+                            @foreach ($menus as $menu)
 
                             <tr>
                                 <td>
-                                    <span>{{$user->menu_name}}</span>
+                                    <span>{{$menu->menu_name}}</span>
                                 </td>
                                 <td>
-                                    <span>{{ $user->menu_description }}</span>
+                                    <span>{{ $menu->menu_description }}</span>
                                 </td>
                                 <td>
                                     <div class="toggle-switch d-flex align-items-center">
                                         <div class="toggle-button toggle-front d-flex align-items-center position-relative">
                                             <label for="status{{ $menu->id }}" class="form-check-label font-dmsans text-primary-v1 visually-hidden">Status</label>
                                             <label class="switch">
-                                                <input type="checkbox" id="status{{ $menu->id }}" class="status-toggle" data-id="{{ $menu->id }}" {{ $menu->is_active ? 'checked' : '' }}>
+                                                <input type="checkbox" id="status{{ $menu->id }}" class="status-toggle" data-id="{{ $menu->id }}" {{ $menu->is_active == 1 ? 'checked' : '' }}>
                                                 <span class="slider"></span>
                                                 <span class="active font-dmsans fw-medium">Active</span>
                                                 <span class="inactive font-dmsans fw-medium">Inactive</span>
@@ -115,7 +115,7 @@
     </div>
 </div>
 
-<!-- Add role Modal -->
+<!-- Add menu Modal -->
 <div class="modal fade" id="addUser" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="addUserLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -124,7 +124,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div id="message-container-login"></div>
-            <form action="" method="POST" id="addRoleForm">
+            <form action="" method="POST" id="addMenuForm">
             <div class="modal-body">
 
                 <div class="modal-form">
@@ -138,20 +138,18 @@
                             </div>
 
                             <div class="col-md-12">
-                                <div class="form-group m-0 mb-3 pb-1">
-                                    <label for="userName" class="form-label">Permission <span class="asterik">*</span></label>
-
-                                    </select>
+                                <div class="form-group m-0 mb-3">
+                                    <label for="restaurantDescription" class="form-label">Description<span class="asterik">*</span></label>
+                                    <textarea class="form-control rounded-3" id="restaurantDescription" name="description" rows="3" placeholder="Enter Restaurant Description" required></textarea>
                                 </div>
                             </div>
-
 
                         </div>
 
                 </div>
             </div>
             <div class="modal-footer border-0 justify-content-start">
-                <button type="submit" class="btn btn-primary btn-small fw-semibold text-uppercase rounded-3">Submit</button>
+                <button type="submit" class="btn btn-primary btn-small fw-semibold text-uppercase rounded-3" id="send_btn2">Submit</button>
                 <button type="button" class="btn btn-outline btn-small fw-semibold text-uppercase rounded-3 border border-grey-v1" data-bs-dismiss="modal">Cancel</button>
             </div>
         </form>
@@ -342,13 +340,13 @@ var nonSelectedList = $('[id="bootstrap-duallistbox-nonselected-list_Permissions
 var selectedList = $('[id="bootstrap-duallistbox-selected-list_Permissions[]"]');
 
 
-$('#addRoleForm').validate({
+$('#addMenuForm').validate({
     rules: {
        name: {
             required: true,
         },
 
-       'Permissions[]': {
+       'description': {
             required: true,
         },
 
@@ -359,7 +357,7 @@ $('#addRoleForm').validate({
             required: "Please enter your first name",
         },
 
-        "Permissions[]": {
+        "description": {
             required: "Please enter permission",
         }
     },
@@ -381,28 +379,17 @@ $('#addRoleForm').validate({
         var form_data = new FormData();
 
 
-                $('#addRoleForm input').each(function(i, e) {
+                $('#addMenuForm input').each(function(i, e) {
+                var getID = $(this).attr('id');
+                var name = $(this).attr('name');
+                form_data.append(name, $("#" + getID).val());
+                });
+                $('#addMenuForm textarea').each(function() {
                 var getID = $(this).attr('id');
                 var name = $(this).attr('name');
                 form_data.append(name, $("#" + getID).val());
                 });
 
-                $('#addRoleForm select').each(function() {
-                    var $select = $(this);
-                    var name = $select.attr('name');
-
-                    if ($select.attr('multiple')) {
-                        // For multiple select (like permissions)
-                        var values = $select.val() || []; // Get array of selected values
-
-                        values.forEach(function(value) {
-                        form_data.append(name, value); // Append each value separately
-                        });
-                    } else {
-                        // For single select
-                        form_data.append(name, $select.val());
-                    }
-                });
 
         // Set up CSRF token
         $.ajaxSetup({
@@ -413,7 +400,7 @@ $('#addRoleForm').validate({
 
         // Make AJAX request
         $.ajax({
-            url: "{{ route('create-role') }}", // Use form action or fallback
+            url: "{{ route('menu-store') }}", // Use form action or fallback
             type: "POST",
             dataType: "json",
             data: form_data,
@@ -436,7 +423,7 @@ $('#addRoleForm').validate({
 
                     // Redirect after a short delay
                     setTimeout(function() {
-                        window.location.href = result.redirect || '/roles';
+                        window.location.href = result.redirect || '/manage-menu';
                     }, 1500);
                 } else {
                     // Show error message

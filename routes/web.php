@@ -56,7 +56,7 @@ Route::get('/roles', [RoleController::class, 'index'])->name('roles');
 });
 
 Route::group([ 'middleware' => ['auth','nocache', 'restaurant.permission:Menu_Management']], function () {
-Route::get('/menu', [MenuController::class, 'index'])->name('manage-menu');
+Route::get('/manage-menu', [MenuController::class, 'index'])->name('manage-menu');
 
 Route::post('/menu-store', [MenuController::class, 'store'])->name('menu-store');
 });

@@ -194,12 +194,12 @@ class AuthController extends Controller
                     return response()->json(["msg" =>'success','status'=>201],201);
 
                 }else{
-                    return response()->json(["msg" =>'fail','status'=>401],401);
+                    return response()->json(["msg" =>'Your account disactivated','status'=>401],401);
                 }
 
         }
         else{
-            return response()->json(["msg" =>'Wrong credential','status'=>401],401);
+            return response()->json(["msg" =>'Worng credential','status'=>401],401);
             }
 
         }
