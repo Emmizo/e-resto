@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth:api' => \App\Http\Middleware\EnsureTokenIsValid::class,
             'restaurant.permission' => \App\Http\Middleware\CheckRestaurantPermission::class,
             'notFound' => \App\Http\Middleware\NotFoundMiddleware::class,
+            'ServerError' => \App\Http\Middleware\HandleServerError::class,
              ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
