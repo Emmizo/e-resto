@@ -17,7 +17,7 @@ class MenuController extends Controller
     {
         $menus = Menu::join('restaurants', 'menus.restaurant_id', '=', 'restaurants.id')
             ->select(
-                'menuses.id',
+                'menus.id',
                 'menus.name as menu_name',
                 'menus.description as menu_description',
                 'menus.is_active',
