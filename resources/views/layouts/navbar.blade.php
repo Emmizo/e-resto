@@ -24,7 +24,7 @@
                             </figure>
                         </div>
                         <div class="user-details ps-1">
-                            <p class="font-dmsans fw-medium xsmall user-name text-truncate text-primary-v1">Welcome <span class="fw-bold">{{ Auth::user()->first_name . ' ' . Auth::user()->last_name }}</span></p>
+                            <p class="font-dmsans fw-medium xsmall user-name text-truncate text-primary-v1">Welcome <span class="fw-bold">{{ Auth::user()->first_name??'' . ' ' . Auth::user()->last_name??' ' }}</span></p>
                             <p class="font-dmsans fw-normal xs-small user-role text-truncate text-dark-v1">
                                 {{ Str::title(str_replace('_', ' ', Auth::user()->role)) }}
                             </p>
