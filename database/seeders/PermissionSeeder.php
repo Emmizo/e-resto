@@ -23,6 +23,9 @@ class PermissionSeeder extends Seeder
             'Order_Management',
             'Financial_Reporting',
             'Role_Management',
+            'Edit_user_management',
+            'Edit_menu_management',
+            'Active_User_Management',
         ];
 
         foreach ($permissions as $permission) {
