@@ -1,9 +1,9 @@
 <?php
 namespace App\Http\Middleware;
 
-use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Closure;
 
 class CheckRestaurantPermission
 {
@@ -15,20 +15,18 @@ class CheckRestaurantPermission
     public function handle(Request $request, Closure $next, $permission)
     {
         $user = $request->user();
-
-        // Get restaurant ID from various possible sources
-        $restaurantId = $request->route('restaurantId') ??
-                       $request->input('restaurant_id') ??
-                       session('userData')['users']->restaurant_id;
-                       $restaurantName =session('userData')['users']->restaurant_name;
-
-        if (!$restaurantId) {
-            abort(403, 'Restaurant not specified'.$restaurantId);
-        }
-
         // Admin bypass (optional - you might want to keep this)
         if ($user->role === 'admin') {
             return $next($request);
+        }
+        // Get restaurant ID from various possible sources
+        $restaurantId = $request->route('restaurantId')
+            ?? $request->input('restaurant_id')
+            ?? session('userData')['users']->restaurant_id;
+        $restaurantName = session('userData')['users']->restaurant_name;
+
+        if (!$restaurantId) {
+            abort(403, 'Restaurant not specified' . $restaurantId);
         }
 
         // Restaurant owner check (if they own this restaurant)
