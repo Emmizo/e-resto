@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@section('content')
 <!-- Main Content -->
 <main class="content-wrapper">
     <div class="main-content manage-users">
@@ -564,3 +565,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
   </script>
+@endsection

@@ -1,5 +1,5 @@
 @extends('layouts.app')
-
+@section('content')
 <!-- Main Content -->
 <main class="content-wrapper">
     <div class="main-content manage-users">
@@ -941,3 +941,4 @@ function resetForm() {
         $('#userPhone').mask('(000) 000-0000');
 });
   </script>
+  @endsection

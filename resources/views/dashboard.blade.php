@@ -8,67 +8,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Restaurant Recommendation System - Admin Dashboard</title>
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    {{-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"> --}}
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Font Awesome -->
     {{-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"> --}}
     <style>
-        :root {
-            --primary-color: #4e73df;
-            --secondary-color: #1cc88a;
-            --danger-color: #e74a3b;
-            --warning-color: #f6c23e;
-            --dark-color: #5a5c69;
-        }
-   main{
-            margin-top: 50px;
-   }
 
-        .card {
-            border: none;
-            border-radius: 0.35rem;
-            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
-        }
-        .card-header {
-            background-color: #f8f9fc;
-            border-bottom: 1px solid #e3e6f0;
-            padding: 1rem 1.35rem;
-            font-weight: 600;
-        }
-        .bg-primary {
-            background-color: var(--primary-color) !important;
-        }
-        .bg-success {
-            background-color: var(--secondary-color) !important;
-        }
-        .bg-danger {
-            background-color: var(--danger-color) !important;
-        }
-        .bg-warning {
-            background-color: var(--warning-color) !important;
-        }
-        .stat-card {
-            border-left: 0.25rem solid;
-        }
-        .stat-card .text-xs {
-            font-size: 0.7rem;
-        }
-        .chart-area {
-            position: relative;
-            height: 10rem;
-            width: 100%;
-        }
-        .chart-bar {
-            position: relative;
-            height: 10rem;
-            width: 100%;
-        }
-        .chart-pie {
-            position: relative;
-            height: 15rem;
-            width: 100%;
-        }
     </style>
 </head>
 
