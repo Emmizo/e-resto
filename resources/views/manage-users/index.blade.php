@@ -8,10 +8,10 @@
         <div class="breadcrumb-section mb-2 mb-xl-4">
             <ul class="breadcrumb-lists d-flex align-items-center flex-wrap">
                 <li class="breadcrumb-item position-relative">
-                    <a href="javascript:;" class="breadcrumb-link font-dmsans fw-medium xsmall text-primary-v1" title="Home">Home</a>
+                    <a href="{{route('dashboard')}}" class="breadcrumb-link font-dmsans fw-medium xsmall text-primary-v1" title="Home">Home</a>
                 </li>
                 <li class="breadcrumb-item position-relative">
-                    <a href="javascript:;" class="breadcrumb-link font-dmsans fw-medium xsmall text-primary-v1" title="Manage Users">Manage Users</a>
+                    <a href="{{route('manage-users')}}" class="breadcrumb-link font-dmsans fw-medium xsmall text-primary-v1" title="Manage Users">Manage Users</a>
                 </li>
             </ul>
         </div>

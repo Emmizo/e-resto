@@ -12,7 +12,7 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {{-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"> --}}
     <style>
         :root {
             --primary-color: #4e73df;
@@ -98,7 +98,7 @@
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                             Total Restaurants</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800">1,248</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{$dashboardData['total_restaurants']}}</div>
                                     </div>
                                     <div class="col-auto">
                                         <i class="fas fa-utensils fa-2x text-gray-300"></i>
@@ -114,7 +114,7 @@
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                             Active Users</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800">24,593</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{$dashboardData['total_users']}}</div>
                                     </div>
                                     <div class="col-auto">
                                         <i class="fas fa-users fa-2x text-gray-300"></i>

@@ -763,6 +763,12 @@ $('#registerForm').validate({
                 $('#loader').show();
                 $('#send_btn2').prop('disabled', true);
                 $('.alert-dismissible').hide(); // Hide any previous alerts
+                // Re-enable the button after a specific delay (e.g., 5000ms = 5 seconds)
+    setTimeout(function() {
+        $('#send_btn2').html("Submit"); // Reset button text
+        $('#send_btn2').prop('disabled', false); // Re-enable the button
+        $('#loader').hide(); // Hide the loader
+    }, 5000);
             },
             success: function(result) {
                 console.log(result.status);
@@ -911,6 +917,11 @@ $('#loginForm').validate({
                 $('#loader').show();
                 $('#send_btn').prop('disabled', true);
                 $('.alert-dismissible').hide(); // Hide any previous alerts
+                setTimeout(function() {
+        $('#send_btn').html("Submit"); // Reset button text
+        $('#send_btn').prop('disabled', false); // Re-enable the button
+        $('#loader').hide(); // Hide the loader
+    }, 5000);
             },
             success: function(result) {
                 console.log(result.status);
@@ -918,8 +929,6 @@ $('#loginForm').validate({
                 if (result.status == '201') {
                     // Show success message before redirect
                     $('#message-container-login').html('<div class="alert alert-success alert-dismissible">Logged In! <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>');
-
-
                     // Redirect after a short delay
                     setTimeout(function() {
                         window.location.href = result.redirect || '/dashboard';
