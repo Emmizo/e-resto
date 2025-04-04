@@ -43,7 +43,7 @@ class UserController extends Controller
                 \DB::raw('CASE WHEN users.id = restaurants.owner_id THEN "Owner" ELSE "Employee" END as is_owner')
             )
             ->where(function ($query) {
-                // Always include the current user
+                
                 $query
                     ->where('users.id', auth()->user()->id)
                     ->orWhere(function ($q) {
