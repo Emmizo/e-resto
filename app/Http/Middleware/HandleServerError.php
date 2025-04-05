@@ -2,11 +2,11 @@
 
 namespace App\Http\Middleware;
 
-use Closure;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Throwable;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\Response;
+use Closure;
+use Throwable;
 
 class HandleServerError
 {
@@ -23,7 +23,6 @@ class HandleServerError
             // Log the error for debugging
             Log::error($e);
 
-            // Return the custom 500 error page
             return response()->view('errors.500', [], 500);
         }
 
