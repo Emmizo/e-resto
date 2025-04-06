@@ -366,7 +366,7 @@ $('#addRoleForm').validate({
     unhighlight: function(element) {
         $(element).removeClass('is-invalid');
     },
-        // Add submit handler to prevent default form submission and handle via AJAX
+
         submitHandler: function(form, e) {
         e.preventDefault();
 
