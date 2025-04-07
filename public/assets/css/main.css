@@ -84,12 +84,15 @@ h1, h2, h3, h4 {
 }
 .text-ellipsis-2 {
     -webkit-line-clamp: 2;
+    line-clamp: 2;
 }
 .text-ellipsis-3 {
     -webkit-line-clamp: 3;
+    line-clamp: 3;
 }
 .text-ellipsis-4 {
     -webkit-line-clamp: 4;
+    line-clamp: 4;
 }
 h1 {
     font-size: 40px;
