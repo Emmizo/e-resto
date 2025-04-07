@@ -43,7 +43,6 @@ class UserController extends Controller
                 \DB::raw('CASE WHEN users.id = restaurants.owner_id THEN "Owner" ELSE "Employee" END as is_owner')
             )
             ->where(function ($query) {
-                
                 $query
                     ->where('users.id', auth()->user()->id)
                     ->orWhere(function ($q) {
@@ -167,15 +166,8 @@ class UserController extends Controller
         // Find the user
         $user = User::findOrFail($id);
 
-        // Profile picture handling
-        $profilePicturePath = $user->profile_picture;
-        if ($request->hasFile('profile_picture')) {
-            // Delete old profile picture if exists
-            if ($profilePicturePath && Storage::exists('public/' . $profilePicturePath)) {
-                Storage::delete('public/' . $profilePicturePath);
-            }
-            $profilePicturePath = $this->handleProfilePicture($request);
-        }
+        // Profile picture handling (keep your existing logic)
+        $profilePicturePath = $this->handleProfilePicture($request);
 
         // Update user details
         $user->update([
@@ -285,5 +277,35 @@ class UserController extends Controller
         $id = $user->id;
         $info = User::find($id);
         return view('manage-users.updateProfile', compact('info'));
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $request->id,
+            'phone_number' => 'required|string|max:20',
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 422,
+                'errors' => $validator->errors(),
+                'message' => 'Validation failed. Please check your input.',
+            ], 422);
+        }
+        $profilePicturePath = $this->handleProfilePicture($request);
+        $user = User::find($request->id);
+        $user->update([
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'email' => $request->email,
+            'phone_number' => $request->phone_number,
+            'profile_picture' => $profilePicturePath,
+        ]);
+        return redirect()->route('manage-users');
+        // Profile picture handling
     }
 }

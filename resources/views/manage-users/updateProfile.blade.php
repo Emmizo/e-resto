@@ -21,7 +21,9 @@
                 <h1 class="fs-5 font-dmsans fw-bold text-primary-v1">Add User</h1>
             </div>
             <div id="message-container-login"></div>
-            <form action="" method="POST" id="addUserForm">
+            <form action="{{route('manage-update-profile')}}" method="POST" id="addUserForm" enctype="multipart/form-data">
+                @csrf
+                <input type="hidden" name="id" value="{{$info->id}}">
                 <div class="card-body">
                     <div class="user-profile-add pb-3 mb-4">
                         <div class="user-profile-icon d-flex align-items-center justify-content-center mx-auto border border-grey-v1 position-relative rounded-circle">
