@@ -5,7 +5,7 @@
 
             <a href="{{ route('dashboard') }}" class="sidebar-header-logo" title="District 10">
                 @if(auth()->user()->role=="admin")
-                <img src="assets/images/logo.png " alt="District 10" width="61" height="86" class="sidebar-header-logo-img">
+                <img src="{{asset('assets/images/logo.png')}}" alt="District 10" width="61" height="86" class="sidebar-header-logo-img">
                 @else
                 <img src="{{$data['users']->restaurant_logo??''}}" alt="District 10" width="61" height="86" class="sidebar-header-logo-img">
                 @endif

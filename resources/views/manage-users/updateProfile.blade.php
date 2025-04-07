@@ -26,7 +26,7 @@
                     <div class="user-profile-add pb-3 mb-4">
                         <div class="user-profile-icon d-flex align-items-center justify-content-center mx-auto border border-grey-v1 position-relative rounded-circle">
                             <div class="user-profile-circle w-100 h-100 position-absolute start-0 top-0 overflow-hidden rounded-circle">
-                                <img class="user-profile-pic w-100 h-100 object-fit-cover rounded-circle d-none" src="assets/images/user.png" alt="Profile Image">
+                                <img class="user-profile-pic w-100 h-100 object-fit-cover rounded-circle d-none" src="{{asset('assets/images/user.png')}}" alt="Profile Image">
                             </div>
                             <div class="user-profile-add">
                                 <svg class="upload-button position-relative cursor-pointer" width="32" height="29" viewBox="0 0 32 29" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -69,15 +69,8 @@
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group m-0 mb-3 pb-1">
-                                    <label for="userName" class="form-label">User Role <span class="asterik">*</span></label>
-                                    <select class="form-select" aria-label="User Role" name="position">
-                                        <option selected disabled>Select user role</option>
-                                        <option value="Manager" >Manager</option>
-                                        <option value="Chef">Chef</option>
-                                        <option value="Waiter">Waiter</option>
-                                        <option value="Cashier">Cashier</option>
-                                        <option value="Other">Other</option>
-                                    </select>
+                                    <label for="userPhone" class="form-label">Role</label>
+                                    <input type="text" class="form-control rounded-3" id="userPhone" placeholder="Enter role" name="role" value="{{$info->role}}" readonly>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -119,4 +112,11 @@
         </div>
     </div>
 </main>
-@endsection
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+   $(document).ready(function() {
+    $('#userPhone').mask('(000) 000-0000');
+   });
+   </script>
+   @endsection
