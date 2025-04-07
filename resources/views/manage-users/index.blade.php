@@ -176,17 +176,42 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <div class="toggle-switch d-flex align-items-center">
-                                        <div class="toggle-button toggle-front d-flex align-items-center position-relative">
-                                            <label for="status{{ $user->id }}" class="form-check-label font-dmsans text-primary-v1 visually-hidden">Status</label>
-                                            <label class="switch">
-                                                <input type="checkbox" id="status{{ $user->id }}" class="status-toggle" data-id="{{ $user->id }}" {{ $user->status ==1 ? 'checked' : '' }}>
-                                                <span class="slider"></span>
-                                                <span class="active font-dmsans fw-medium">Active</span>
-                                                <span class="inactive font-dmsans fw-medium">Inactive</span>
-                                            </label>
-                                        </div>
+                                    @php
+                                    $currentUser = auth()->user();
+                                    $currentUserRole = $currentUser->role;
+                                    $targetUserRole = $user->role;
+
+                                    $canToggle = false;
+
+                                    // Prevent self-disable
+                                    if ($currentUser->id !== $user->id) {
+                                        if ($currentUserRole === 'admin' && $targetUserRole === 'restaurant_owner') {
+                                            $canToggle = true;
+                                        } elseif ($currentUserRole === 'restaurant_owner' && $user->id !== $currentUser->id) {
+                                            $canToggle = true;
+                                        } elseif ($currentUserRole === 'manager' && $targetUserRole !== 'restaurant_owner') {
+                                            $canToggle = true;
+                                        }
+                                    }
+                                @endphp
+
+                                <div class="toggle-switch d-flex align-items-center">
+                                    <div class="toggle-button toggle-front d-flex align-items-center position-relative">
+                                        <label for="status{{ $user->id }}" class="form-check-label font-dmsans text-primary-v1 visually-hidden">Status</label>
+
+                                        <label class="switch {{ $canToggle ? '' : 'switch-disabled' }}">
+                                            <input type="checkbox"
+                                                   id="status{{ $user->id }}"
+                                                   class="status-toggle"
+                                                   data-id="{{ $user->id }}"
+                                                   {{ $user->status == 1 ? 'checked' : '' }}
+                                                   {{ $canToggle ? '' : 'disabled' }}>
+                                            <span class="slider"></span>
+                                            <span class="active font-dmsans fw-medium">Active</span>
+                                            <span class="inactive font-dmsans fw-medium">Inactive</span>
+                                        </label>
                                     </div>
+                                </div>
                                 </td>
                                 <td class="action-cell text-center">
                                     <div class="action-col position-relative d-inline-block">

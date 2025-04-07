@@ -17,7 +17,13 @@
     --transparent: transparent;
     --primary-transition: all 0.3s ease-in-out;
 }
-
+.switch-disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+.switch-disabled .slider {
+    background-color: #ccc;
+}
 /* Basic CSS */
 * {
     box-sizing: border-box;

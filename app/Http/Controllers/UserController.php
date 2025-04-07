@@ -49,7 +49,7 @@ class UserController extends Controller
                         if (auth()->user()->role === 'restaurant_owner') {
                             // Restaurant owners should see their employees
                             $q->where('restaurants.owner_id', auth()->user()->id);
-                        } elseif (auth()->user()->role === 'restaurant_employee') {
+                        } elseif (auth()->user()->role === 'manager') {
                             // Employees should see their workmates in the same restaurant
                             $q
                                 ->whereIn('restaurant_employees.restaurant_id', function ($subquery) {
