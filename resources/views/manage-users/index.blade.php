@@ -966,5 +966,22 @@ function resetForm() {
         }
         $('#userPhone').mask('(000) 000-0000');
 });
+
+// Toggle Status
+$('.status-toggle').change(function() {
+        const userId = $(this).data('id');
+        const isActive = $(this).is(':checked') ? 1 : 0;
+// console.log(userId);
+        console.log(isActive);
+        $.ajax({
+            url: `user/${userId}/status`,
+            method: 'PATCH',
+            data: {
+                id: userId,
+                status: isActive,
+                _token: '{{ csrf_token() }}'
+            }
+        });
+    });
   </script>
   @endsection

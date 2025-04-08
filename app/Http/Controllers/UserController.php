@@ -61,7 +61,7 @@ class UserController extends Controller
                                 ->where('users.id', '!=', auth()->user()->id);
                         } elseif (auth()->user()->role === 'admin') {
                             // Admins should see all users associated with restaurants
-                            $q->whereNotNull('restaurants.owner_id');
+                            $q->where('users.role', 'restaurant_owner');
                         }
                     });
             })
@@ -307,5 +307,18 @@ class UserController extends Controller
         ]);
         return redirect()->route('manage-users');
         // Profile picture handling
+    }
+
+    public function activateAccount(Request $request)
+    {
+        $user = User::find($request->id);
+        if ($user) {
+            $user->status = $request->status;
+
+            $user->save();
+            return response()->json(['success' => true]);
+        } else {
+            return response()->json(['success' => false]);
+        }
     }
 }
