@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Passport\Passport;
 
+
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -23,9 +24,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $this->registerPolicies();
+       // $this->registerPolicies();
 
-        Passport::routes();
+       /// Passport::routes();
         Passport::hashClientSecrets();
         Passport::tokensExpireIn(now()->addDays(15));
         Passport::refreshTokensExpireIn(now()->addDays(30));
