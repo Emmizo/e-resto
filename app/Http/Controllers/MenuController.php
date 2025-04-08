@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Menu;
+use App\Models\MenuItem;
 use App\Models\Restaurant;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Str;
-use App\Models\MenuItem;
+
 class MenuController extends Controller
 {
     /**
@@ -21,11 +22,11 @@ class MenuController extends Controller
                 'menus.name as menu_name',
                 'menus.description as menu_description',
                 'menus.is_active',
-            )->where('menus.restaurant_id', session('userData')['users']->restaurant_id)
+            )
+            ->where('menus.restaurant_id', session('userData')['users']->restaurant_id)
             ->get();
-        return view('manage-menu.index',compact('menus'));
+        return view('manage-menu.index', compact('menus'));
     }
-
 
     /**
      * Show the form for creating a new resource.
@@ -49,7 +50,7 @@ class MenuController extends Controller
             'menu_items.*.price' => 'required|numeric|min:0',
             'menu_items.*.category' => 'required|string|max:255',
             'menu_items.*.dietary_info' => 'nullable|string|max:255',
-            'menu_items.*.image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // Each item MUST have an image
+            'menu_items.*.image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',  // Each item MUST have an image
         ]);
 
         if ($validator->fails()) {
@@ -70,16 +71,16 @@ class MenuController extends Controller
 
         // Save each menu item with its own image
         foreach ($request->menu_items as $item) {
-            $imagePath = $this->handleMenuItemImage($item['image']); // Process image
+            $imagePath = $this->handleMenuItemImage($item['image']);  // Process image
 
             MenuItem::create([
                 'menu_id' => $menu->id,
-                'name' => $item['name']??'',
-                'description' => $item['description']??'',
+                'name' => $item['name'] ?? '',
+                'description' => $item['description'] ?? '',
                 'price' => $item['price'],
-                'image' => $imagePath??'', // Store the image path
-                'category' => $item['category']??'',
-                'dietary_info' => $item['dietary_info']??'',
+                'image' => $imagePath ?? '',  // Store the image path
+                'category' => $item['category'] ?? '',
+                'dietary_info' => $item['dietary_info'] ?? '',
                 'is_available' => 1,
             ]);
         }
@@ -88,31 +89,31 @@ class MenuController extends Controller
             'status' => 200,
             'message' => 'Menu and items created successfully.',
         ]);
-
     }
 
-   /**
- * Handles uploading an image for a menu item.
- * @param \Illuminate\Http\UploadedFile $imageFile
- * @return string|null Path to the stored image or null if upload fails
- */
-private function handleMenuItemImage($imageFile)
-{
-    $directory = public_path('menu_item_images');
+    /**
+     * Handles uploading an image for a menu item.
+     * @param \Illuminate\Http\UploadedFile $imageFile
+     * @return string|null Path to the stored image or null if upload fails
+     */
+    private function handleMenuItemImage($imageFile)
+    {
+        $directory = public_path('menu_item_images');
 
-    // Create directory if it doesn't exist
-    if (!file_exists($directory)) {
-        mkdir($directory, 0755, true);
+        // Create directory if it doesn't exist
+        if (!file_exists($directory)) {
+            mkdir($directory, 0755, true);
+        }
+
+        // Generate a unique filename
+        $imageName = time() . '-' . Str::random(10) . '.' . $imageFile->getClientOriginalExtension();
+
+        // Move the uploaded file
+        $imageFile->move($directory, $imageName);
+
+        return 'menu_item_images/' . $imageName;  // Relative path for DB storage
     }
 
-    // Generate a unique filename
-    $imageName = time() . '-' . Str::random(10) . '.' . $imageFile->getClientOriginalExtension();
-
-    // Move the uploaded file
-    $imageFile->move($directory, $imageName);
-
-    return 'menu_item_images/' . $imageName; // Relative path for DB storage
-}
     /**
      * Display the specified resource.
      */
@@ -124,15 +125,20 @@ private function handleMenuItemImage($imageFile)
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Request $request)
     {
+        $menu = Menu::find($request->id);
+        return response()->json([
+            'status' => 200,
+            'menu' => $menu,
+        ]);
         //
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request,  Menu $menu)
+    public function update(Request $request, Menu $menu)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -145,7 +151,7 @@ private function handleMenuItemImage($imageFile)
         return response()->json(['success' => true]);
     }
 
-     /**
+    /**
      * Update menu status.
      */
     public function updateStatus(Request $request, Menu $menu)

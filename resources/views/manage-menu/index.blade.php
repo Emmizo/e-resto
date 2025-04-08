@@ -84,7 +84,7 @@
                                 <td class="action-cell text-center">
                                     <div class="action-col position-relative d-inline-block">
                                         <a href="javascript:;" class="p-1 action-btn" data-bs-toggle="popover" data-bs-placement="top" data-id="{{ $menu->id }}">
-                                            <svg class="action-icon cursor-pointer" width="20" height="4" viewBox="0 0 20 4" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                           <svg class="action-icon cursor-pointer" width="20" height="4" viewBox="0 0 20 4" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                 <path d="M10 0C11.1046 0 12 0.89543 12 2C12 3.10457 11.1046 4 10 4C8.89543 4 8 3.10457 8 2C8 0.89543 8.89543 0 10 0Z" fill="#2D264B"/>
                                                 <path d="M2 -4.76837e-07C3.10457 -4.76837e-07 4 0.89543 4 2C4 3.10457 3.10457 4 2 4C0.89543 4 0 3.10457 0 2C0 0.89543 0.89543 -4.76837e-07 2 -4.76837e-07Z" fill="#2D264B"/>
                                                 <path d="M18 2.38419e-07C19.1046 2.38419e-07 20 0.895431 20 2C20 3.10457 19.1046 4 18 4C16.8954 4 16 3.10457 16 2C16 0.895431 16.8954 2.38419e-07 18 2.38419e-07Z" fill="#2D264B"/>
@@ -197,65 +197,79 @@
 
 
 
+
 <!-- Edit Menu Modal -->
-<div class="modal fade" id="editMenuModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+<div class="modal fade" id="editMenuModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editMenuModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Edit Menu</h5>
+            <div class="modal-header border-0">
+                <h1 class="modal-title fs-5 font-dmsans fw-bold text-primary-v1" id="editMenuModalLabel">Edit Menu Type</h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <form id="editMenuForm">
-                    @csrf
-                    <input type="hidden" id="edit_menu_id" name="id">
-                    <div class="mb-3">
-                        <label for="edit_menu_name" class="form-label">Name</label>
-                        <input type="text" class="form-control" id="edit_menu_name" name="name">
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit_menu_description" class="form-label">Description</label>
-                        <textarea class="form-control" id="edit_menu_description" name="description"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-check-label">Status</label>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="edit_menu_status" name="is_active">
-                            <label class="form-check-label" for="edit_menu_status">Active</label>
+            <div id="edit-message-container"></div>
+            <form action="" method="POST" id="editMenuForm">
+                @csrf
+                <input type="hidden" id="edit_menu_id" name="id">
+                <div class="modal-body">
+                    <div class="modal-form">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group m-0 mb-3 pb-1">
+                                    <label for="edit_menu_name" class="form-label">Name <span class="asterik">*</span></label>
+                                    <input type="text" class="form-control rounded-3" id="edit_menu_name" placeholder="Enter name" name="name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group m-0 mb-3">
+                                    <label for="edit_menu_description" class="form-label">Description<span class="asterik">*</span></label>
+                                    <textarea class="form-control rounded-3" id="edit_menu_description" name="description" rows="3" placeholder="Enter Menu Description" required></textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group m-0 mb-3">
+                                    <label class="form-check-label">Status</label>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="edit_menu_status" name="is_active">
+                                        <label class="form-check-label" for="edit_menu_status">Active</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="m-0">Menu Items</h4>
+                            <button type="button" class="btn btn-success btn-sm" id="editAddMenuItem">
+                                <i class="bi bi-plus-circle me-1"></i>Add Menu Item
+                            </button>
+                        </div>
+                        <div id="editMenuItemsContainer">
+                            <!-- Menu items will be loaded here dynamically -->
                         </div>
                     </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="updateMenuBtn">Save Changes</button>
-            </div>
+                </div>
+                <div class="modal-footer border-0 justify-content-start">
+                    <button type="button" class="btn btn-primary btn-small fw-semibold text-uppercase rounded-3" id="updateMenuBtn">Update</button>
+                    <button type="button" class="btn btn-outline btn-small fw-semibold text-uppercase rounded-3 border border-grey-v1" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
-<!-- Delete User Modal -->
-<div class="modal fade" id="deleteUser" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="deleteUserLabel" aria-hidden="true">
+<!-- Delete Menu Modal -->
+<div class="modal fade" id="deleteMenuModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header border-0">
-                <h1 class="modal-title fs-5 font-dmsans fw-bold text-primary-v1" id="deleteUserLabel">Delete User</h1>
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Menu</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="modal-form">
-                    <div class="row">
-                        <div class="col-md-12 text-center">
-                            <p class="font-dmsans text-primary-v1 medium mb-4">Are you sure you want to delete this User?</p>
-                            <div class="footer-btns">
-                                <button type="submit" class="btn btn-primary btn-small fw-semibold text-uppercase rounded-3">Yes</button>
-                                <button type="button" class="btn btn-outline btn-small fw-semibold text-uppercase rounded-3 border border-grey-v1" data-bs-dismiss="modal">No</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <p class="font-dmsans text-primary-v1 medium mb-4">Are you sure you want to delete this menu?</p>
             </div>
-            <div class="modal-footer border-0 justify-content-start pt-0">
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteMenu">Delete</button>
             </div>
         </div>
     </div>
@@ -496,54 +510,235 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         $(document).ready(function() {
-    // Initialize popover
+    // Initialize popover with template
+    let currentMenuId = null;
+
+    // Initialize popovers
     $('[data-bs-toggle="popover"]').popover({
         html: true,
         content: function() {
             return $('#table-action-popover').html();
-        }
+        },
+        sanitize: false
     });
 
     // Store menu ID when action button is clicked
-    let currentMenuId;
     $(document).on('click', '.action-btn', function() {
         currentMenuId = $(this).data('id');
+        console.log('Action button clicked, ID:', currentMenuId);
     });
 
-    // Edit Menu - Fetch data and open modal
+    // Use event delegation for edit and delete buttons in popovers
     $(document).on('click', '.edit-menu', function() {
+        console.log('Edit menu clicked, using ID:', currentMenuId);
+        if (!currentMenuId) {
+            console.error('No menu ID available');
+            return;
+        }
+
+        // Clear previous menu items
+        $('#editMenuItemsContainer').empty();
+
         $.ajax({
-            url: `/menus/${currentMenuId}/edit`,
+            url: `/menus/${menuId}/edit`,
             method: 'GET',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
             success: function(response) {
+                console.log('Menu data:', response);
+
+                // Set main menu details
                 $('#edit_menu_id').val(response.id);
-                $('#edit_menu_name').val(response.name);
-                $('#edit_menu_description').val(response.description);
+                $('#edit_menu_name').val(response.menu_name);
+                $('#edit_menu_description').val(response.menu_description);
                 $('#edit_menu_status').prop('checked', response.is_active == 1);
+
+                // Load menu items if they exist
+                if (response.menu_items && response.menu_items.length > 0) {
+                    response.menu_items.forEach((item, index) => {
+                        addEditMenuItem(item, index);
+                    });
+                } else {
+                    // Add an empty menu item if none exist
+                    addEditMenuItem(null, 0);
+                }
+
+                $('#editMenuModal').modal('show');
+            },
+            error: function(xhr) {
+                console.error('Error fetching menu data:', xhr.responseText);
+                alert('Failed to load menu data. Please try again.');
             }
         });
     });
+
+    // Function to add menu item in edit form
+    function addEditMenuItem(item, index) {
+        const menuItem = `
+            <div class="menu-item row mb-3">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" name="edit_menu_items[${index}][name]"
+                           placeholder="Item Name" value="${item ? item.name : ''}" required>
+                </div>
+                <div class="col-md-3">
+                    <input type="number" class="form-control" name="edit_menu_items[${index}][price]"
+                           placeholder="Price" value="${item ? item.price : ''}" required>
+                </div>
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <input type="file" class="form-control" name="edit_menu_items[${index}][image]" accept="image/*">
+                        ${item && item.image ? `<div class="mt-1">Current: ${item.image}</div>` : ''}
+                    </div>
+                </div>
+                <div class="col-md-4 mt-2">
+                    <input type="text" class="form-control" name="edit_menu_items[${index}][category]"
+                           placeholder="Category" value="${item ? item.category || '' : ''}">
+                </div>
+                <div class="col-md-3 mt-2">
+                    <input type="text" class="form-control" name="edit_menu_items[${index}][dietary_info]"
+                           placeholder="Dietary Info" value="${item ? item.dietary_info || '' : ''}">
+                </div>
+                <div class="col-md-3 mt-2">
+                    <select class="form-control" name="edit_menu_items[${index}][is_available]">
+                        <option value="1" ${item && item.is_available == 1 ? 'selected' : ''}>Available</option>
+                        <option value="0" ${item && item.is_available == 0 ? 'selected' : ''}>Not Available</option>
+                    </select>
+                </div>
+                <div class="col-md-2 mt-2">
+                    <button type="button" class="btn btn-danger remove-edit-item-btn" onclick="removeEditItem(this)">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <hr>
+        `;
+
+        $('#editMenuItemsContainer').append(menuItem);
+    }
+
+    // Add menu item button for edit form
+    $('#editAddMenuItem').click(function() {
+        const index = $('#editMenuItemsContainer .menu-item').length;
+        addEditMenuItem(null, index);
+    });
+
+    // Remove menu item in edit form
+    window.removeEditItem = function(btn) {
+        // Prevent removing the last menu item
+        if ($('#editMenuItemsContainer .menu-item').length > 1) {
+            $(btn).closest('.menu-item').next('hr').remove();
+            $(btn).closest('.menu-item').remove();
+        } else {
+            alert('At least one menu item is required.');
+        }
+    };
 
     // Update Menu
     $('#updateMenuBtn').click(function() {
+        const menuId = $('#edit_menu_id').val();
+
+        // Create a FormData object to handle file uploads
+        const formData = new FormData();
+        formData.append('_method', 'PUT');
+        formData.append('menu_name', $('#edit_menu_name').val());
+        formData.append('menu_description', $('#edit_menu_description').val());
+        formData.append('is_active', $('#edit_menu_status').is(':checked') ? 1 : 0);
+
+        // Add CSRF token
+        formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
+
+        // Add menu items
+        $('#editMenuItemsContainer .menu-item').each(function(index) {
+            const $item = $(this);
+
+            // Get all inputs from this menu item
+            $item.find('input, select').each(function() {
+                const name = $(this).attr('name');
+
+                // For file inputs, check if a file is selected
+                if ($(this).attr('type') === 'file') {
+                    if ($(this)[0].files.length > 0) {
+                        formData.append(name, $(this)[0].files[0]);
+                    }
+                } else {
+                    formData.append(name, $(this).val());
+                }
+            });
+        });
+
         $.ajax({
-            url: `/menus/${currentMenuId}`,
-            method: 'PUT',
-            data: $('#editMenuForm').serialize(),
-            success: function() {
+            url: `/menus/${menuId}`,
+            method: 'POST', // Using POST with _method: PUT for FormData
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            data: formData,
+            processData: false,
+            contentType: false,
+            beforeSend: function() {
+                $('#updateMenuBtn')
+                    .html("<i class='fa fa-spin fa-spinner'></i> Updating...")
+                    .prop('disabled', true);
+            },
+            success: function(response) {
+                $('#editMenuModal').modal('hide');
+                alert('Menu updated successfully!');
                 location.reload();
+            },
+            error: function(xhr) {
+                console.error('Error updating menu:', xhr.responseText);
+                let errorMessage = 'Failed to update menu. Please try again.';
+
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    errorMessage = Object.values(xhr.responseJSON.errors).flat().join('<br>');
+                }
+
+                $('#edit-message-container').html(
+                    `<div class="alert alert-danger alert-dismissible">${errorMessage}
+                     <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>`
+                );
+
+                $('#updateMenuBtn')
+                    .html("Update")
+                    .prop('disabled', false);
             }
         });
     });
 
-    // Delete Menu
-    $('#confirmDeleteBtn').click(function() {
+    // Delete Menu functionality
+    $(document).on('click', '.delete-menu', function() {
+        const menuId = $(this).data('menu-id');
+        console.log('Delete Menu ID:', menuId);
+
+        if (!menuId) {
+            console.error('No menu ID found');
+            return;
+        }
+
+        // Set the current menu ID in the delete modal
+        $('#deleteMenuModal').data('menu-id', menuId);
+        $('#deleteMenuModal').modal('show');
+    });
+
+    // Confirm delete action
+    $('#confirmDeleteMenu').click(function() {
+        const menuId = $('#deleteMenuModal').data('menu-id');
+
         $.ajax({
-            url: `/menus/${currentMenuId}`,
+            url: `/menus/${menuId}`,
             method: 'DELETE',
-            data: { _token: '{{ csrf_token() }}' },
-            success: function() {
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                $('#deleteMenuModal').modal('hide');
+                alert('Menu deleted successfully!');
                 location.reload();
+            },
+            error: function(xhr) {
+                console.error('Error deleting menu:', xhr.responseText);
+                alert('Failed to delete menu. Please try again.');
             }
         });
     });
@@ -556,9 +751,19 @@ document.addEventListener('DOMContentLoaded', function() {
         $.ajax({
             url: `/menus/${menuId}/status`,
             method: 'PATCH',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
             data: {
-                is_active: isActive,
-                _token: '{{ csrf_token() }}'
+                is_active: isActive
+            },
+            success: function(response) {
+                console.log('Status updated successfully');
+            },
+            error: function(xhr) {
+                console.error('Error updating status:', xhr.responseText);
+                // Revert toggle if there was an error
+                $(this).prop('checked', !isActive);
             }
         });
     });
