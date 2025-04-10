@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Passport\Passport;
 
-
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -24,20 +23,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-       // $this->registerPolicies();
+        // $this->registerPolicies();
 
-       /// Passport::routes();
-        Passport::hashClientSecrets();
-        Passport::tokensExpireIn(now()->addDays(15));
-        Passport::refreshTokensExpireIn(now()->addDays(30));
-        Passport::personalAccessTokensExpireIn(now()->addMonths(6));
-        /*      Passport::tokensCan([
-                 'restaurant' => 'Restaurant',
-                 'admin' => 'Admin',
-                 'employee' => 'Employee',
-                 'owner' => 'Owner',
-                 'manager' => 'Manager',
-             ]); */
+        // / Passport::routes();
+        /*   Passport::hashClientSecrets();
+          Passport::tokensExpireIn(now()->addDays(15));
+          Passport::refreshTokensExpireIn(now()->addDays(30));
+          Passport::personalAccessTokensExpireIn(now()->addMonths(6)); */
+
         \Blade::if('hasrestaurantpermission', function ($permission, $restaurantId = null) {
             return auth()->check() &&
                 auth()->user()->hasRestaurantPermission($permission, $restaurantId);

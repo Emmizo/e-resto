@@ -37,25 +37,37 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 400);
+            return response()->json(['errors' => $validator->errors()], 400);
         }
 
-        $user = new User();
-        $user->first_name = $request->first_name;
-        $user->last_name = $request->last_name;
-        $user->email = $request->email;
-        $user->password = Hash::make($request->password);
+        try {
+            $user = new User();
+            $user->first_name = $request->first_name;
+            $user->last_name = $request->last_name;
+            $user->email = $request->email;
+            $user->password = Hash::make($request->password);
+            $user->save();
 
-        $user->save();
-        // Generate Passport token
-        $token = $user->createToken('AuthToken')->accessToken;
-        event(new NewUserCreatedEvent($user));
-        // Auto-login the user
-        auth()->login($user);
-        return response()->json([
-            'user' => $user,
-            'token' => $token
-        ], 201);
+            // Use consistent token name
+            $token = $user->createToken('RestoFinder Personal Access Client')->accessToken;
+
+            event(new NewUserCreatedEvent($user));
+
+            // Auto-login the user
+            auth()->login($user);
+
+            return response()->json([
+                'user' => $user,
+                'token' => $token,
+                'success' => true
+            ], 201);
+        } catch (\Exception $e) {
+            \Log::error('User registration failed: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Registration failed',
+                'success' => false
+            ], 500);
+        }
     }
 
     /**
@@ -67,73 +79,79 @@ class AuthController extends Controller
             'email' => 'required|string|email|max:255',
             'password' => 'required|string|min:6',
         ]);
+
         if ($validator->fails()) {
-            return response(['errors' => $validator->errors()->all()], 422);
+            return response()->json(['errors' => $validator->errors()->all()], 422);
         }
 
-        $Authorized = User::where('email', $request->email)->where('status', 1)->first();
-        $user = User::where('email', $request->email)->first();
-        if (!$user) {
-            $response = ['message' => 'User does not exist', 'status' => 404, 'success' => false];
-            return response([$response, 404]);
-        } else {
-            if ($Authorized) {
-                if (Hash::check($request->password, $user->password)) {
-                    $token = $user->createToken('Laravel Password Grant Client')->accessToken;
-                    if ($user->has_2fa_enabled != 1) {
-                        // Check if 2FA is enabled
-                        $google2fa = new Google2FA();
-                        $secretKey = $google2fa->generateSecretKey();
+        try {
+            $user = User::where('email', $request->email)->first();
 
-                        // Save the secret to the user
-                        $user->google2fa_secret = $secretKey;
-                        // $user->has_2fa_enabled = true;
-                        // DEBUG: Get the current valid OTP (remove in production!)
-                        $currentOtp = $google2fa->getCurrentOtp($secretKey);
-                        Mail::to($user->email)->send(new TwoFASetupMail($currentOtp));
-
-                        $user->save();
-                        $response = [
-                            'user' => [
-                                'id' => $user->id,
-                                'first_name' => $user->first_name,
-                                'last_name' => $user->last_name,
-                                'email' => $user->email,
-                                'google2fa_secret' => $currentOtp,
-                                'has_2fa_enabled' => $user->has_2fa_enabled,
-                                'status' => $user->status,
-                            ],
-                            'token' => $token,
-                            'success' => true,
-                            'status' => 200,
-                        ];
-                    } else {
-                        $response = [
-                            'user' => [
-                                'id' => $user->id,
-                                'first_name' => $user->first_name,
-                                'last_name' => $user->last_name,
-                                'email' => $user->email,
-                                'google2fa_secret' => $user->google2fa_secret,
-                                'has_2fa_enabled' => $user->has_2fa_enabled,
-                                'status' => $user->status,
-                            ],
-                            'token' => $token,
-                            'success' => true,
-                            'status' => 200,
-                        ];
-                    }
-                    return response()->json([$response]);
-                } else {
-                    $response = ['message' => 'Password mismatch', 'success' => false, 'status' => 401];
-                    return response([$response]);
-                }
-            } else {
-                $response = ['message' => 'Your not allowed to access', 'success' => false, 'status' => 401];
-                return response([$response, 401]);
+            if (!$user) {
+                return response()->json([
+                    'message' => 'User does not exist',
+                    'success' => false
+                ], 404);
             }
+
+            if ($user->status != 1) {
+                return response()->json([
+                    'message' => 'You are not allowed to access',
+                    'success' => false
+                ], 401);
+            }
+
+            if (!Hash::check($request->password, $user->password)) {
+                return response()->json([
+                    'message' => 'Password mismatch',
+                    'success' => false
+                ], 401);
+            }
+
+            // Use consistent token name
+            $token = $user->createToken('RestoFinder Personal Access Client')->accessToken;
+
+            if ($user->has_2fa_enabled != 1) {
+                // Check if 2FA is enabled
+                $google2fa = new Google2FA();
+                $secretKey = $google2fa->generateSecretKey();
+
+                // Save the secret to the user
+                $user->google2fa_secret = $secretKey;
+
+                // Get the current valid OTP
+                $currentOtp = $google2fa->getCurrentOtp($secretKey);
+                Mail::to($user->email)->send(new TwoFASetupMail($currentOtp));
+
+                $user->save();
+            }
+
+            $userData = [
+                'id' => $user->id,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'email' => $user->email,
+                'has_2fa_enabled' => $user->has_2fa_enabled,
+                'status' => $user->status,
+            ];
+
+            // Only include 2FA details if needed
+            if ($user->has_2fa_enabled != 1) {
+                $userData['google2fa_secret'] = $currentOtp;
+            }
+
+            return response()->json([
+                'user' => $userData,
+                'token' => $token,
+                'success' => true
+            ], 200);
+        } catch (\Exception $e) {
+            \Log::error('Login failed: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Login failed',
+                'success' => false
+            ], 500);
         }
-        //
     }
 
     /**
