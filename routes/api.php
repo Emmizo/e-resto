@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Route;
 Route::group(['namespace' => 'Api', 'prefix' => 'v1'], function () {
     Route::post('signup', [AuthController::class, 'signUp']);
     Route::post('login', [AuthController::class, 'login']);
-    Route::get('getUserInfo', [AuthController::class, 'getAllUsers']);
+    Route::get('getUserInfo', [AuthController::class, 'getUsers']);
 
     Route::post('auth/{google}/callback', [AuthController::class, 'handleGoogleCallback']);
     Route::post('deleteTask', [TaskController::class, 'deleteTask']);
@@ -17,4 +17,5 @@ Route::group(['namespace' => 'Api', 'prefix' => 'v1', 'middleware' => 'auth:api'
     Route::post('2fa/generate', [AuthController::class, 'generate2FASecret']);
     Route::post('2fa/verify', [AuthController::class, 'verify2FA']);
     Route::post('/disable-2fa', [AuthController::class, 'disable2FA']);
+    Route::post('logout', [AuthController::class, 'logout']);
 });

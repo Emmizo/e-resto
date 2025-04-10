@@ -41,7 +41,7 @@ Route::group([
 ], function () {
     // User Management Routes
     Route::post('/create-employee', [UserController::class, 'createEmployee'])->name('create-employee');
-
+    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
     Route::get('/manage-users', [UserController::class, 'index'])->name('manage-users');
 });
 
@@ -56,10 +56,10 @@ Route::group(['middleware' => ['auth', 'nocache', 'restaurant.permission:Menu_Ma
     Route::get('/manage-menu', [MenuController::class, 'index'])->name('manage-menu');
 
     Route::post('/menu-store', [MenuController::class, 'store'])->name('menu-store');
-    Route::get('/menus/{menu}/edit', [MenuController::class, 'edit']);
-    Route::put('/menus/{menu}', [MenuController::class, 'update']);
-    Route::patch('/menus/{menu}/status', [MenuController::class, 'updateStatus']);
-    Route::delete('/menus/{menu}', [MenuController::class, 'destroy']);
+    Route::get('/menu/{id}/edit', [MenuController::class, 'edit'])->name('menu.edit');
+    Route::put('/menu/{id}', [MenuController::class, 'update'])->name('menu.update');
+    Route::patch('/menu/{id}/status', [MenuController::class, 'updateStatus'])->name('menu.status');
+    Route::delete('/menu/{id}', [MenuController::class, 'destroy'])->name('menu.destroy');
     Route::get('menu/{menuId}/edit', [MenuController::class, 'getMenuItems']);
     Route::patch('user/{userId}/status', [UserController::class, 'activateAccount']);
 });

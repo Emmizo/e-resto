@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
 class Menu extends Model
 {
     use HasFactory;
@@ -37,5 +38,15 @@ class Menu extends Model
     public function restaurant()
     {
         return $this->belongsTo(Restaurant::class, 'restaurant_id');
+    }
+
+    /**
+     * Get the menu items associated with this menu.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function menuItems()
+    {
+        return $this->hasMany(MenuItem::class, 'menu_id');
     }
 }

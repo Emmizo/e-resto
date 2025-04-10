@@ -125,14 +125,37 @@ class MenuController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Request $request)
+    public function edit(Request $request, $id)
     {
-        $menu = Menu::find($request->id);
+        $menu = Menu::with('menuItems')->find($id);
+        if (!$menu) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Menu not found'
+            ], 404);
+        }
+
         return response()->json([
             'status' => 200,
-            'menu' => $menu,
+            'menu' => [
+                'id' => $menu->id,
+                'name' => $menu->name,
+                'description' => $menu->description,
+                'is_active' => $menu->is_active,
+                'menu_items' => $menu->menuItems->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'name' => $item->name,
+                        'description' => $item->description,
+                        'price' => $item->price,
+                        'category' => $item->category,
+                        'dietary_info' => $item->dietary_info,
+                        'is_available' => $item->is_available,
+                        'image' => $item->image
+                    ];
+                })
+            ]
         ]);
-        //
     }
 
     /**
@@ -140,15 +163,81 @@ class MenuController extends Controller
      */
     public function update(Request $request, Menu $menu)
     {
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'description' => 'required|string',
-            'is_active' => 'boolean'
+            'description' => 'required|string|max:255',
+            // 'is_active' => 'boolean',
+            'menu_items' => 'array',
+            'menu_items.*.name' => 'required|string|max:255',
+            'menu_items.*.price' => 'required|numeric|min:0',
+            'menu_items.*.category' => 'required|string|max:255',
+            'menu_items.*.dietary_info' => 'nullable|string|max:255',
+            'menu_items.*.image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $menu->update($validated);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 422,
+                'errors' => $validator->errors(),
+                'message' => 'Validation failed. Please check your input.',
+            ], 422);
+        }
 
-        return response()->json(['success' => true]);
+        // Update the menu
+        $menu->update([
+            'name' => $request->name,
+            'description' => $request->description,
+            'is_active' => $request->is_active ?? $menu->is_active,
+        ]);
+
+        // Handle menu items
+        if ($request->has('menu_items')) {
+            // Delete existing menu items that are not in the update
+            $existingItemIds = collect($request->menu_items)->pluck('id')->filter();
+            $menu->menuItems()->whereNotIn('id', $existingItemIds)->delete();
+
+            // Update or create menu items
+            foreach ($request->menu_items as $index => $itemData) {
+                $item = null;
+
+                // If item has an ID, find it
+                if (!empty($itemData['id'])) {
+                    $item = MenuItem::find($itemData['id']);
+                }
+
+                // Prepare item data
+                $itemAttributes = [
+                    'name' => $itemData['name'],
+                    'description' => $itemData['description'] ?? '',
+                    'price' => $itemData['price'],
+                    'category' => $itemData['category'] ?? '',
+                    'dietary_info' => $itemData['dietary_info'] ?? '',
+                    'is_available' => $itemData['is_available'] ?? 1,
+                ];
+
+                // Handle image upload
+                if (isset($itemData['image']) && $itemData['image'] instanceof \Illuminate\Http\UploadedFile) {
+                    $imagePath = $this->handleMenuItemImage($itemData['image']);
+                    $itemAttributes['image'] = $imagePath;
+                } elseif (isset($itemData['existing_image'])) {
+                    $itemAttributes['image'] = $itemData['existing_image'];
+                }
+
+                if ($item) {
+                    // Update existing item
+                    $item->update($itemAttributes);
+                } else {
+                    // Create new item
+                    $itemAttributes['menu_id'] = $menu->id;
+                    MenuItem::create($itemAttributes);
+                }
+            }
+        }
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Menu updated successfully'
+        ]);
     }
 
     /**

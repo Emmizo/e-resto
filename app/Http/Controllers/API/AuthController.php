@@ -159,24 +159,40 @@ class AuthController extends Controller
      */
     public function getUsers()
     {
-        $domain = config('app.url');
-        $user = User::where('id', auth()->user()->id)->first();
-        $response = [
-            'user' => [
-                'id' => $user->id,
-                'first_name' => $user->first_name . ' ' . $user->last_name,
-                'fovorite_name' => $user->last_name,
-                'email' => $user->email,
-                'google2fa_secret' => $user->google2fa_secret,
-                'has_2fa_enabled' => $user->has_2fa_enabled,
-                'profile_picture' => $user->profile_picture == null ? '' : $domain . '/' . $user->profile_picture,
-                'status' => $user->status,
-            ],
-            'base_url' => $domain,
-            'success' => true,
-            'status' => 200,
-        ];
-        return response()->json([$response]);
+        try {
+            $user = auth()->user();
+
+            if (!$user) {
+                return response()->json([
+                    'message' => 'User not authenticated',
+                    'success' => false
+                ], 401);
+            }
+
+            $domain = config('app.url');
+            $response = [
+                'user' => [
+                    'id' => $user->id,
+                    'first_name' => $user->first_name . ' ' . $user->last_name,
+                    'favorite_name' => $user->last_name,
+                    'email' => $user->email,
+                    'google2fa_secret' => $user->google2fa_secret,
+                    'has_2fa_enabled' => $user->has_2fa_enabled,
+                    'profile_picture' => $user->profile_picture ? $domain . '/' . $user->profile_picture : null,
+                    'status' => $user->status,
+                ],
+                'base_url' => $domain,
+                'success' => true,
+                'status' => 200,
+            ];
+            return response()->json($response);
+        } catch (\Exception $e) {
+            \Log::error('Get user info failed: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to get user information',
+                'success' => false
+            ], 500);
+        }
     }
 
     /**
@@ -347,5 +363,25 @@ class AuthController extends Controller
             'success' => true,
             'message' => '2FA has been disabled successfully'
         ]);
+    }
+
+    /**
+     * Logout the user and revoke their token.
+     */
+    public function logout(Request $request)
+    {
+        try {
+            $request->user()->token()->revoke();
+            return response()->json([
+                'message' => 'Successfully logged out',
+                'success' => true
+            ], 200);
+        } catch (\Exception $e) {
+            \Log::error('Logout failed: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Logout failed',
+                'success' => false
+            ], 500);
+        }
     }
 }

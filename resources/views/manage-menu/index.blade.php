@@ -108,10 +108,10 @@
     <div class="action-menu">
         <ul class="action-menu-list position-relative bg-white rounded-1 p-2">
             <li class="action-menu-item text-start">
-                <a href="javascript:;" class="action-menu-link font-dmsans fw-normal text-primary-v1 xsmall d-block p-1 edit-menu" data-bs-toggle="modal" data-bs-target="#editMenuModal">Edit</a>
+                <a href="javascript:;" class="action-menu-link font-dmsans fw-normal text-primary-v1 xsmall d-block p-1 edit-menu" data-bs-toggle="modal" data-bs-target="#editMenuModal" data-menu-id="">Edit</a>
             </li>
             <li class="action-menu-item text-start">
-                <a href="javascript:;" class="action-menu-link font-dmsans fw-normal text-primary-v1 xsmall d-block p-1 delete-menu" data-bs-toggle="modal" data-bs-target="#deleteMenuModal">Delete</a>
+                <a href="javascript:;" class="action-menu-link font-dmsans fw-normal text-primary-v1 xsmall d-block p-1 delete-menu" data-bs-toggle="modal" data-bs-target="#deleteMenuModal" data-menu-id="">Delete</a>
             </li>
         </ul>
     </div>
@@ -209,6 +209,7 @@
             <div id="edit-message-container"></div>
             <form action="" method="POST" id="editMenuForm">
                 @csrf
+                @method('PUT')
                 <input type="hidden" id="edit_menu_id" name="id">
                 <div class="modal-body">
                     <div class="modal-form">
@@ -248,7 +249,7 @@
                     </div>
                 </div>
                 <div class="modal-footer border-0 justify-content-start">
-                    <button type="button" class="btn btn-primary btn-small fw-semibold text-uppercase rounded-3" id="updateMenuBtn">Update</button>
+                    <button type="submit" class="btn btn-primary btn-small fw-semibold text-uppercase rounded-3" id="updateMenuBtn">Update</button>
                     <button type="button" class="btn btn-outline btn-small fw-semibold text-uppercase rounded-3 border border-grey-v1" data-bs-dismiss="modal">Cancel</button>
                 </div>
             </form>
@@ -510,61 +511,77 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         $(document).ready(function() {
-    // Initialize popover with template
-    let currentMenuId = null;
+    let menuItemCounter = 0;
 
-    // Initialize popovers
+    // Initialize popovers with click trigger
     $('[data-bs-toggle="popover"]').popover({
         html: true,
+        trigger: 'click',
         content: function() {
-            return $('#table-action-popover').html();
+            const menuId = $(this).data('id');
+            const popoverContent = $('#table-action-popover').html();
+            return popoverContent.replace(/data-menu-id=""/g, `data-menu-id="${menuId}"`);
         },
         sanitize: false
+    }).on('shown.bs.popover', function () {
+        // Store the current menu ID in a data attribute on the document
+        $(document).data('currentMenuId', $(this).data('id'));
     });
 
-    // Store menu ID when action button is clicked
-    $(document).on('click', '.action-btn', function() {
-        currentMenuId = $(this).data('id');
-        console.log('Action button clicked, ID:', currentMenuId);
+    // Close popover when clicking outside
+    $(document).on('click', function (e) {
+        if ($(e.target).closest('[data-bs-toggle="popover"]').length === 0 &&
+            $(e.target).closest('.popover').length === 0) {
+            $('[data-bs-toggle="popover"]').popover('hide');
+        }
     });
 
-    // Use event delegation for edit and delete buttons in popovers
-    $(document).on('click', '.edit-menu', function() {
-        console.log('Edit menu clicked, using ID:', currentMenuId);
-        if (!currentMenuId) {
+    // Handle edit button click
+    $(document).on('click', '.edit-menu', function(e) {
+        e.preventDefault();
+        const menuId = $(document).data('currentMenuId');
+
+        if (!menuId) {
             console.error('No menu ID available');
             return;
         }
+
+        // Hide the popover
+        $('[data-bs-toggle="popover"]').popover('hide');
 
         // Clear previous menu items
         $('#editMenuItemsContainer').empty();
 
         $.ajax({
-            url: `/menus/${menuId}/edit`,
+            url: `/menu/${menuId}/edit`,
             method: 'GET',
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
             success: function(response) {
-                console.log('Menu data:', response);
+                if (response.status === 200) {
+                    const menu = response.menu;
 
-                // Set main menu details
-                $('#edit_menu_id').val(response.id);
-                $('#edit_menu_name').val(response.menu_name);
-                $('#edit_menu_description').val(response.menu_description);
-                $('#edit_menu_status').prop('checked', response.is_active == 1);
+                    // Set main menu details
+                    $('#edit_menu_id').val(menu.id);
+                    $('#edit_menu_name').val(menu.name);
+                    $('#edit_menu_description').val(menu.description);
+                    $('#edit_menu_status').prop('checked', menu.is_active == 1);
 
-                // Load menu items if they exist
-                if (response.menu_items && response.menu_items.length > 0) {
-                    response.menu_items.forEach((item, index) => {
-                        addEditMenuItem(item, index);
-                    });
+                    // Load menu items
+                    if (menu.menu_items && menu.menu_items.length > 0) {
+                        menu.menu_items.forEach((item, index) => {
+                            addEditMenuItem(item, index);
+                        });
+                    } else {
+                        // Add an empty menu item if none exist
+                        addEditMenuItem(null, 0);
+                    }
+
+                    $('#editMenuModal').modal('show');
                 } else {
-                    // Add an empty menu item if none exist
-                    addEditMenuItem(null, 0);
+                    alert('Failed to load menu data. Please try again.');
                 }
-
-                $('#editMenuModal').modal('show');
             },
             error: function(xhr) {
                 console.error('Error fetching menu data:', xhr.responseText);
@@ -576,31 +593,37 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to add menu item in edit form
     function addEditMenuItem(item, index) {
         const menuItem = `
-            <div class="menu-item row mb-3">
+            <div class="menu-item row mb-3" data-index="${index}">
+                <input type="hidden" name="menu_items[${index}][id]" value="${item ? item.id : ''}">
                 <div class="col-md-4">
-                    <input type="text" class="form-control" name="edit_menu_items[${index}][name]"
+                    <input type="text" class="form-control" name="menu_items[${index}][name]"
                            placeholder="Item Name" value="${item ? item.name : ''}" required>
                 </div>
                 <div class="col-md-3">
-                    <input type="number" class="form-control" name="edit_menu_items[${index}][price]"
+                    <input type="number" class="form-control" name="menu_items[${index}][price]"
                            placeholder="Price" value="${item ? item.price : ''}" required>
                 </div>
                 <div class="col-md-5">
                     <div class="input-group">
-                        <input type="file" class="form-control" name="edit_menu_items[${index}][image]" accept="image/*">
-                        ${item && item.image ? `<div class="mt-1">Current: ${item.image}</div>` : ''}
+                        <input type="file" class="form-control" name="menu_items[${index}][image]" accept="image/*">
+                        ${item && item.image ? `
+                            <div class="mt-2 w-100">
+                                <img src="/${item.image}" alt="${item.name}" class="img-thumbnail" style="max-height: 100px;">
+                                <input type="hidden" name="menu_items[${index}][existing_image]" value="${item.image}">
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
                 <div class="col-md-4 mt-2">
-                    <input type="text" class="form-control" name="edit_menu_items[${index}][category]"
+                    <input type="text" class="form-control" name="menu_items[${index}][category]"
                            placeholder="Category" value="${item ? item.category || '' : ''}">
                 </div>
                 <div class="col-md-3 mt-2">
-                    <input type="text" class="form-control" name="edit_menu_items[${index}][dietary_info]"
+                    <input type="text" class="form-control" name="menu_items[${index}][dietary_info]"
                            placeholder="Dietary Info" value="${item ? item.dietary_info || '' : ''}">
                 </div>
                 <div class="col-md-3 mt-2">
-                    <select class="form-control" name="edit_menu_items[${index}][is_available]">
+                    <select class="form-control" name="menu_items[${index}][is_available]">
                         <option value="1" ${item && item.is_available == 1 ? 'selected' : ''}>Available</option>
                         <option value="0" ${item && item.is_available == 0 ? 'selected' : ''}>Not Available</option>
                     </select>
@@ -635,56 +658,34 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Update Menu
-    $('#updateMenuBtn').click(function() {
+    $('#editMenuForm').submit(function(e) {
+        e.preventDefault();
         const menuId = $('#edit_menu_id').val();
 
         // Create a FormData object to handle file uploads
-        const formData = new FormData();
+        const formData = new FormData(this);
         formData.append('_method', 'PUT');
-        formData.append('menu_name', $('#edit_menu_name').val());
-        formData.append('menu_description', $('#edit_menu_description').val());
-        formData.append('is_active', $('#edit_menu_status').is(':checked') ? 1 : 0);
-
-        // Add CSRF token
-        formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
-
-        // Add menu items
-        $('#editMenuItemsContainer .menu-item').each(function(index) {
-            const $item = $(this);
-
-            // Get all inputs from this menu item
-            $item.find('input, select').each(function() {
-                const name = $(this).attr('name');
-
-                // For file inputs, check if a file is selected
-                if ($(this).attr('type') === 'file') {
-                    if ($(this)[0].files.length > 0) {
-                        formData.append(name, $(this)[0].files[0]);
-                    }
-                } else {
-                    formData.append(name, $(this).val());
-                }
-            });
-        });
 
         $.ajax({
-            url: `/menus/${menuId}`,
-            method: 'POST', // Using POST with _method: PUT for FormData
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            },
+            url: `/menu/${menuId}`,
+            method: 'POST',
             data: formData,
             processData: false,
             contentType: false,
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
             beforeSend: function() {
                 $('#updateMenuBtn')
                     .html("<i class='fa fa-spin fa-spinner'></i> Updating...")
                     .prop('disabled', true);
             },
             success: function(response) {
-                $('#editMenuModal').modal('hide');
-                alert('Menu updated successfully!');
-                location.reload();
+                if (response.status === 200) {
+                    $('#editMenuModal').modal('hide');
+                    alert('Menu updated successfully!');
+                    location.reload();
+                }
             },
             error: function(xhr) {
                 console.error('Error updating menu:', xhr.responseText);

@@ -321,4 +321,60 @@ class UserController extends Controller
             return response()->json(['success' => false]);
         }
     }
+
+    /**
+     * Update the specified user in storage.
+     */
+    public function update(Request $request, User $user)
+    {
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'phone_number' => 'required|string|max:20',
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'position' => 'required|string',
+            'permissions' => 'nullable|array',
+            'is_active' => 'required|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 422,
+                'errors' => $validator->errors(),
+                'message' => 'Validation failed. Please check your input.',
+            ], 422);
+        }
+
+        // Handle profile picture
+        $profilePicturePath = $this->handleProfilePicture($request);
+        if ($profilePicturePath) {
+            $user->profile_picture = $profilePicturePath;
+        }
+
+        // Update user details
+        $user->update([
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'email' => $request->email,
+            'phone_number' => $request->phone_number,
+            'role' => $request->position,
+        ]);
+
+        // Update restaurant employee details if exists
+        $restaurantEmployee = RestaurantEmployee::where('user_id', $user->id)->first();
+        if ($restaurantEmployee) {
+            $restaurantEmployee->update([
+                'position' => $request->position,
+                'permissions' => json_encode($request->permissions ?? []),
+                'is_active' => $request->is_active,
+            ]);
+        }
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'User updated successfully',
+            'redirect' => route('manage-users')
+        ]);
+    }
 }
