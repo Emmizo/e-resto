@@ -377,4 +377,64 @@ class UserController extends Controller
             'redirect' => route('manage-users')
         ]);
     }
+
+    public function search(Request $request)
+    {
+        $query = User::query();
+
+        // Apply role filter
+        if ($request->has('role') && !empty($request->role)) {
+            $query->where('role', $request->role);
+        }
+
+        // Apply status filter
+        if ($request->has('status') && $request->status !== '') {
+            $query->where('status', $request->status);
+        }
+
+        // Apply restaurant filter (admin only)
+        if (auth()->user()->role === 'admin' && $request->has('restaurant') && !empty($request->restaurant)) {
+            $query->whereHas('restaurant', function ($q) use ($request) {
+                $q->where('id', $request->restaurant);
+            });
+        }
+
+        // Apply search term
+        if ($request->has('search') && !empty($request->search)) {
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q
+                    ->where('name', 'like', "%{$searchTerm}%")
+                    ->orWhere('email', 'like', "%{$searchTerm}%")
+                    ->orWhere('phone_number', 'like', "%{$searchTerm}%")
+                    ->orWhere('address', 'like', "%{$searchTerm}%")
+                    ->orWhere('role', 'like', "%{$searchTerm}%");
+            });
+        }
+
+        // Get paginated results
+        $users = $query
+            ->with('restaurant')
+            ->select(['id', 'name', 'email', 'phone_number', 'role', 'status', 'created_at'])
+            ->paginate($request->length);
+
+        // Format the response
+        $data = $users->items()->map(function ($user) {
+            return [
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone_number' => $user->phone_number,
+                'restaurant_name' => $user->restaurant ? $user->restaurant->name : '-',
+                'created_at' => $user->created_at->format('M d, Y H:i'),
+                'action' => view('manage-users.partials.action-buttons', ['user' => $user])->render()
+            ];
+        });
+
+        return response()->json([
+            'draw' => $request->draw,
+            'recordsTotal' => $users->total(),
+            'recordsFiltered' => $users->total(),
+            'data' => $data
+        ]);
+    }
 }

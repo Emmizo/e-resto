@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Reservation;
+use App\Models\Restaurant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class ReservationController extends Controller
 {
@@ -11,7 +14,12 @@ class ReservationController extends Controller
      */
     public function index()
     {
-        //
+        $reservations = Reservation::with(['user', 'restaurant'])
+            ->where('restaurant_id', session('userData')['users']->restaurant_id)
+            ->orderBy('reservation_time', 'desc')
+            ->get();
+
+        return view('manage-reservations.index', compact('reservations'));
     }
 
     /**
@@ -51,7 +59,25 @@ class ReservationController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $validator = Validator::make($request->all(), [
+            'status' => 'required|in:pending,confirmed,cancelled'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 422,
+                'errors' => $validator->errors(),
+                'message' => 'Validation failed. Please check your input.'
+            ], 422);
+        }
+
+        $reservation = Reservation::findOrFail($id);
+        $reservation->update(['status' => $request->status]);
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Reservation status updated successfully'
+        ]);
     }
 
     /**
@@ -59,6 +85,12 @@ class ReservationController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $reservation = Reservation::findOrFail($id);
+        $reservation->delete();
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Reservation deleted successfully'
+        ]);
     }
 }

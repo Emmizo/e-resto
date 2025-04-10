@@ -4,6 +4,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventsController;
 use App\Http\Controllers\MenuController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -43,6 +45,11 @@ Route::group([
     Route::post('/create-employee', [UserController::class, 'createEmployee'])->name('create-employee');
     Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
     Route::get('/manage-users', [UserController::class, 'index'])->name('manage-users');
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::post('/users/search', [UserController::class, 'search'])->name('users.search');
+    Route::post('/users', [UserController::class, 'store'])->name('users.store');
+    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 });
 
 Route::group(['middleware' => ['auth', 'nocache', 'restaurant.permission:Role_Management']], function () {
@@ -62,4 +69,20 @@ Route::group(['middleware' => ['auth', 'nocache', 'restaurant.permission:Menu_Ma
     Route::delete('/menu/{id}', [MenuController::class, 'destroy'])->name('menu.destroy');
     Route::get('menu/{menuId}/edit', [MenuController::class, 'getMenuItems']);
     Route::patch('user/{userId}/status', [UserController::class, 'activateAccount']);
+});
+
+// Add Order Management Routes
+Route::group(['middleware' => ['auth', 'nocache', 'restaurant.permission:Order_Management']], function () {
+    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+    Route::put('/orders/{order}', [OrderController::class, 'update'])->name('orders.update');
+    Route::delete('/orders/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');
+});
+
+// Reservation Management Routes
+Route::middleware(['auth', 'nocache', 'restaurant.permission:Reservation_Management'])->group(function () {
+    Route::get('/reservations', [ReservationController::class, 'index'])->name('reservations.index');
+    Route::get('/reservations/{reservation}', [ReservationController::class, 'show'])->name('reservations.show');
+    Route::put('/reservations/{reservation}', [ReservationController::class, 'update'])->name('reservations.update');
+    Route::delete('/reservations/{reservation}', [ReservationController::class, 'destroy'])->name('reservations.destroy');
 });

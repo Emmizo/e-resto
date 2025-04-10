@@ -25,9 +25,10 @@
                 <div class="filter-header-options d-flex align-items-center justify-content-between flex-wrap">
                     <div class="search-option">
                         <div class="search-container position-relative">
-                            <input type="search" class="custom-search" placeholder="Search Article" aria-controls="manageUsersTable">
+                            <input type="search" class="custom-search" placeholder="Search Users" aria-controls="manageUsersTable">
                         </div>
                     </div>
+
                     <div class="btn-options mt-3 mt-xl-0">
                         <a href="javascript:;" class="btn btn-white btn-xsmall font-dmsans fw-medium position-relative rounded-3 border border-grey-v1 filter-btn" title="Filter">Filter</a>
                         <a href="javascript:;" class="btn btn-primary btn-xsmall font-dmsans fw-medium position-relative rounded-3" data-bs-toggle="modal" data-bs-target="#addUser" title="Add User">Add User</a>
@@ -42,8 +43,8 @@
                                     <div class="form-group m-0 mb-3 mb-xl-0 normal-select">
                                         <label for="documentType" class="form-label visually-hidden">Document Type</label>
                                         <select class="form-select" id="documentType">
-                                            <option selected disabled>Select Document Type</option>
-                                            <option value="Document 1">Document 1</option>
+                                            <option selected disabled>Select Roles</option>
+                                            <option value="Document 1">Restaurant</option>
                                             <option value="Document 2">Document 2</option>
                                             <option value="Document 3">Document 3</option>
                                         </select>
@@ -53,7 +54,7 @@
                                     <div class="form-group m-0 mb-3 mb-xl-0 normal-select">
                                         <label for="chapter" class="form-label visually-hidden">Chapter</label>
                                         <select class="form-select" id="chapter">
-                                            <option selected disabled>Select Chapter</option>
+                                            <option selected disabled>Restaurant</option>
                                             <option value="Chapter 1">Chapter 1</option>
                                             <option value="Chapter 2">Chapter 2</option>
                                             <option value="Chapter 3">Chapter 3</option>
@@ -64,7 +65,7 @@
                                     <div class="form-group m-0 mb-3 mb-xl-0 normal-select">
                                         <label for="state" class="form-label visually-hidden">State</label>
                                         <select class="form-select" id="state">
-                                            <option selected disabled>Select State</option>
+                                            <option selected disabled>Address</option>
                                             <option value="State 1">State 1</option>
                                             <option value="State 2">State 2</option>
                                             <option value="State 3">State 3</option>
@@ -75,7 +76,7 @@
                                     <div class="form-group m-0 mb-3 mb-xl-0 normal-select">
                                         <label for="union" class="form-label visually-hidden">Union</label>
                                         <select class="form-select" id="union">
-                                            <option selected disabled>Select Union</option>
+                                            <option selected disabled>Select by Date</option>
                                             <option value="Union 1">Union 1</option>
                                             <option value="Union 2">Union 2</option>
                                             <option value="Union 3">Union 3</option>
@@ -989,5 +990,175 @@ $('.status-toggle').change(function() {
             }
         });
     });
-  </script>
+
+    // Initialize DataTable
+    var table = $('#manageUsersTable').DataTable({
+        responsive: true,
+        order: [[8, 'desc']], // Sort by created_at descending
+        language: {
+            emptyTable: "No users found"
+        },
+        dom: '<"top"f>rt<"bottom"lip><"clear">',
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: "{{ route('users.search') }}",
+            type: 'POST',
+            data: function(d) {
+                d.role = $('#roleFilter').val();
+                d.status = $('#statusFilter').val();
+                d.restaurant = $('#restaurantFilter').val();
+                d.search = $('.custom-search').val();
+            }
+        },
+        columns: [
+            { data: 'name', name: 'name' },
+            { data: 'email', name: 'email' },
+            { data: 'phone_number', name: 'phone_number' },
+            { data: 'restaurant_name', name: 'restaurant_name' },
+            { data: 'restaurant_phone', name: 'restaurant_phone' },
+            { data: 'restaurant_email', name: 'restaurant_email' },
+            { data: 'restaurant_address', name: 'restaurant_address' },
+            { data: 'role', name: 'role' },
+            { data: 'created_at', name: 'created_at' },
+            { data: 'website', name: 'website' },
+            { data: 'request', name: 'request', orderable: false, searchable: false },
+            { data: 'status', name: 'status', orderable: false, searchable: false },
+            { data: 'action', name: 'action', orderable: false, searchable: false }
+        ]
+    });
+
+    // Handle filter form submission
+    $('#filterForm').on('submit', function(e) {
+        e.preventDefault();
+        table.ajax.reload();
+        $('.dropdown-menu').removeClass('show');
+    });
+
+    // Handle reset filter
+    $('#resetFilter').click(function() {
+        $('#filterForm')[0].reset();
+        table.ajax.reload();
+        $('.dropdown-menu').removeClass('show');
+    });
+
+    // Handle custom search
+    $('.custom-search').on('keyup', function() {
+        table.ajax.reload();
+    });
+
+    // Handle role filter change
+    $('#roleFilter').on('change', function() {
+        table.ajax.reload();
+    });
+
+    // Handle status filter change
+    $('#statusFilter').on('change', function() {
+        table.ajax.reload();
+    });
+
+    // Handle restaurant filter change
+    $('#restaurantFilter').on('change', function() {
+        table.ajax.reload();
+    });
+
+    // Toggle Status
+    $(document).on('change', '.status-toggle', function() {
+        const userId = $(this).data('id');
+        const isActive = $(this).is(':checked') ? 1 : 0;
+
+        $.ajax({
+            url: `/users/${userId}/status`,
+            method: 'PATCH',
+            data: {
+                id: userId,
+                status: isActive,
+                _token: '{{ csrf_token() }}'
+            },
+            success: function(response) {
+                if (response.status === 200) {
+                    toastr.success('User status updated successfully');
+                    table.ajax.reload();
+                } else {
+                    toastr.error('Failed to update user status');
+                }
+            },
+            error: function() {
+                toastr.error('An error occurred while updating user status');
+            }
+        });
+    });
+
+    // Handle edit button click
+    $(document).on('click', '.edit-action', function() {
+        const userId = $(this).data('user-id');
+
+        $.ajax({
+            url: `/users/${userId}/edit`,
+            method: 'GET',
+            success: function(response) {
+                if (response.status === 200) {
+                    const user = response.user;
+                    $('#edit_user_id').val(user.id);
+                    $('#edit_first_name').val(user.first_name);
+                    $('#edit_last_name').val(user.last_name);
+                    $('#edit_email').val(user.email);
+                    $('#edit_phone_number').val(user.phone_number);
+                    $('#edit_position').val(user.role);
+                    $('#edit_is_active').prop('checked', user.status === 1);
+
+                    // Reset permissions checkboxes
+                    $('input[name="permissions[]"]').prop('checked', false);
+
+                    // Set permissions if they exist
+                    if (user.permissions) {
+                        const permissions = JSON.parse(user.permissions);
+                        permissions.forEach(permission => {
+                            $(`input[name="permissions[]"][value="${permission}"]`).prop('checked', true);
+                        });
+                    }
+
+                    $('#editUser').modal('show');
+                }
+            }
+        });
+    });
+
+    // Handle update button click
+    $('#updateUserBtn').click(function() {
+        const formData = new FormData($('#editUserForm')[0]);
+        const userId = $('#edit_user_id').val();
+
+        $.ajax({
+            url: `/users/${userId}`,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.status === 200) {
+                    $('#editUser').modal('hide');
+                    toastr.success('User updated successfully');
+                    table.ajax.reload();
+                }
+            },
+            error: function(xhr) {
+                if (xhr.status === 422) {
+                    const errors = xhr.responseJSON.errors;
+                    let errorMessage = '';
+                    for (let field in errors) {
+                        errorMessage += errors[field][0] + '\n';
+                    }
+                    toastr.error(errorMessage);
+                }
+            }
+        });
+    });
+});
+</script>
   @endsection
