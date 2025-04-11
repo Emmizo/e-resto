@@ -107,16 +107,7 @@ class OrderController extends Controller
         try {
             $user = auth()->user();
 
-            $orders = Order::join('users', 'orders.user_id', '=', 'users.id')->where('user_id', $user->id)->first();
-            // return response()->json($orders);
-            // Check if user has a restaurant ID
-            if (!$orders->id) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'No Order associated with your account.'
-                ], 403);
-            }
-
+            // Get all orders for the authenticated user
             $query = Order::with(['user', 'restaurant', 'orderItems.menuItem'])
                 ->where('user_id', $user->id);
 
@@ -139,6 +130,14 @@ class OrderController extends Controller
             }
 
             $orders = $query->orderBy('created_at', 'desc')->get();
+
+            if ($orders->isEmpty()) {
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'No orders found',
+                    'data' => []
+                ]);
+            }
 
             return response()->json([
                 'status' => 'success',
@@ -387,17 +386,45 @@ class OrderController extends Controller
      *     )
      * )
      */
-    public function show(int $id): JsonResponse
+    public function show(Request $request, int $id): JsonResponse
     {
-        $order = Order::with(['user', 'restaurant', 'orderItems.menuItem'])
-            ->where('restaurant_id', auth()->user()->restaurant_id)
-            ->findOrFail($id);
+        try {
+            // Validate that the ID exists and is numeric
+            $validator = Validator::make(['id' => $id], [
+                'id' => 'required|numeric|exists:orders,id'
+            ]);
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Order details retrieved successfully',
-            'data' => $order
-        ]);
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $order = Order::with(['user', 'restaurant', 'orderItems.menuItem'])
+                ->where('user_id', auth()->user()->id)
+                ->find($id);
+
+            if (!$order) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Order not found for this user'
+                ], 404);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Order details retrieved successfully',
+                'data' => $order
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to retrieve order details',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -490,6 +517,17 @@ class OrderController extends Controller
      */
     public function update(Request $request, int $id): JsonResponse
     {
+        // First check if the order exists
+        $order = Order::where('user_id', auth()->user()->id)->find($id);
+
+        if (!$order) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Order not found'
+            ], 404);
+        }
+
+        // Then validate the status
         $validator = Validator::make($request->all(), [
             'status' => 'required|in:pending,processing,completed,cancelled'
         ]);
@@ -501,9 +539,6 @@ class OrderController extends Controller
                 'errors' => $validator->errors()
             ], 422);
         }
-
-        $order = Order::where('restaurant_id', auth()->user()->restaurant_id)
-            ->findOrFail($id);
 
         $order->update(['status' => $request->status]);
 
@@ -549,14 +584,29 @@ class OrderController extends Controller
      */
     public function destroy(int $id): JsonResponse
     {
-        $order = Order::where('restaurant_id', auth()->user()->restaurant_id)
-            ->findOrFail($id);
+        try {
+            $order = Order::where('user_id', auth()->user()->id)
+                ->find($id);
 
-        $order->delete();
+            if (!$order) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Order ID not found'
+                ], 404);
+            }
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Order deleted successfully'
-        ]);
+            $order->delete();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Order deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to delete order',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

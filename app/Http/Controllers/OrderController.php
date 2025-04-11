@@ -19,21 +19,17 @@ class OrderController extends Controller
     public function index()
     {
         try {
-            // Get the restaurant ID from the authenticated user
-            $restaurantId = auth()->user()->restaurant_id;
-
-            if (!$restaurantId) {
-                return redirect()->back()->with('error', 'No restaurant associated with your account.');
-            }
-
-            $orders = Order::with(['user', 'restaurant', 'orderItems.menuItem'])
-                ->where('restaurant_id', $restaurantId)
-                ->orderBy('created_at', 'desc')
+            $orders = Order::with(['user'])
+                ->select('orders.*', 'users.first_name', 'users.last_name')
+                ->join('users', 'orders.user_id', '=', 'users.id')
+                ->where('orders.restaurant_id', session('userData')['users']->restaurant_id)
+                ->orderBy('orders.created_at', 'desc')
                 ->get();
 
             return view('manage-orders.index', compact('orders'));
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Error retrieving orders: ' . $e->getMessage());
+            \Log::error('Error fetching orders: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Error fetching orders. Please try again.');
         }
     }
 
@@ -137,27 +133,44 @@ class OrderController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Order $order)
     {
-        $validator = Validator::make($request->all(), [
-            'status' => 'required|in:pending,processing,completed,cancelled'
-        ]);
+        try {
+            // Prevent updating completed orders
+            if ($order->status === 'completed') {
+                return response()->json([
+                    'status' => 400,
+                    'message' => 'Cannot update status of a completed order'
+                ], 400);
+            }
 
-        if ($validator->fails()) {
+            $validator = Validator::make($request->all(), [
+                'status' => 'required|in:pending,processing,completed,cancelled'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => 400,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 400);
+            }
+
+            $order->status = $request->status;
+            $order->save();
+
             return response()->json([
-                'status' => 422,
-                'errors' => $validator->errors(),
-                'message' => 'Validation failed. Please check your input.'
-            ], 422);
+                'status' => 200,
+                'message' => 'Order status updated successfully',
+                'data' => $order
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error updating order status: ' . $e->getMessage());
+            return response()->json([
+                'status' => 500,
+                'message' => 'Error updating order status'
+            ], 500);
         }
-
-        $order = Order::findOrFail($id);
-        $order->update(['status' => $request->status]);
-
-        return response()->json([
-            'status' => 200,
-            'message' => 'Order status updated successfully'
-        ]);
     }
 
     /**
@@ -172,5 +185,48 @@ class OrderController extends Controller
             'status' => 200,
             'message' => 'Order deleted successfully'
         ]);
+    }
+
+    /**
+     * Update the order status.
+     */
+    public function updateStatus(Request $request, Order $order)
+    {
+        try {
+            // Prevent updating completed orders
+            if ($order->status === 'completed') {
+                return response()->json([
+                    'status' => 400,
+                    'message' => 'Cannot update status of a completed order'
+                ], 400);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'status' => 'required|in:pending,processing,completed,cancelled'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => 400,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 400);
+            }
+
+            $order->status = $request->status;
+            $order->save();
+
+            return response()->json([
+                'status' => 200,
+                'message' => 'Order status updated successfully',
+                'data' => $order
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error updating order status: ' . $e->getMessage());
+            return response()->json([
+                'status' => 500,
+                'message' => 'Error updating order status'
+            ], 500);
+        }
     }
 }

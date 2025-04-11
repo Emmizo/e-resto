@@ -14,9 +14,10 @@ class ReservationController extends Controller
      */
     public function index()
     {
-        $reservations = Reservation::with(['user', 'restaurant'])
-            ->where('restaurant_id', session('userData')['users']->restaurant_id)
-            ->orderBy('reservation_time', 'desc')
+        $reservations = Reservation::select('reservations.*', 'users.first_name', 'users.last_name')
+            ->join('users', 'reservations.user_id', '=', 'users.id')
+            ->where('reservations.restaurant_id', session('userData')['users']->restaurant_id)
+            ->orderBy('reservations.reservation_time', 'desc')
             ->get();
 
         return view('manage-reservations.index', compact('reservations'));

@@ -29,8 +29,8 @@ class Reservation extends Model
      * @var array
      */
     protected $casts = [
-        'reservation_time' => 'datetime', // Cast reservation_time to a DateTime object
-        'status' => 'string', // Explicitly cast status to string
+        'reservation_time' => 'datetime',  // Cast reservation_time to a DateTime object
+        'status' => 'string',  // Explicitly cast status to string
     ];
 
     /**

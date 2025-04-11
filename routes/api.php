@@ -1,6 +1,7 @@
 <?php
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\OrderController;
+use App\Http\Controllers\API\ReservationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -33,6 +34,13 @@ Route::group(['namespace' => 'Api', 'prefix' => 'v1', 'middleware' => 'auth:api'
     Route::get('/orders/{id}', [OrderController::class, 'show']);
     Route::put('/orders/{id}', [OrderController::class, 'update']);
     Route::delete('/orders/{id}', [OrderController::class, 'destroy']);
+
+    // Reservation routes
+    Route::get('/reservations', [ReservationController::class, 'index']);
+    Route::post('/reservations', [ReservationController::class, 'store']);
+    Route::get('/reservations/{id}', [ReservationController::class, 'show']);
+    Route::put('/reservations/{id}', [ReservationController::class, 'update']);
+    Route::delete('/reservations/{id}', [ReservationController::class, 'destroy']);
 });
 
 /*
@@ -62,9 +70,9 @@ Route::middleware('auth:api')->group(function () {
 
 // Order Management Routes
 Route::middleware('auth:api')->group(function () {
-    Route::get('/orders', [App\Http\Controllers\API\OrderController::class, 'index']);
-    Route::post('/orders', [App\Http\Controllers\API\OrderController::class, 'store']);
-    Route::get('/orders/{id}', [App\Http\Controllers\API\OrderController::class, 'show']);
-    Route::put('/orders/{id}', [App\Http\Controllers\API\OrderController::class, 'update']);
-    Route::delete('/orders/{id}', [App\Http\Controllers\API\OrderController::class, 'destroy']);
+    Route::get('/orders', [OrderController::class, 'index']);
+    Route::post('/orders', [OrderController::class, 'store']);
+    Route::get('/orders/{id}', [OrderController::class, 'show']);
+    Route::put('/orders/{id}', [OrderController::class, 'update']);
+    Route::delete('/orders/{id}', [OrderController::class, 'destroy']);
 });

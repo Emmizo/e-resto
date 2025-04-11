@@ -297,6 +297,7 @@
     {{-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script> --}}
 
     <!-- Chart Scripts -->
+    @section('scripts')
     <script>
         // User Activity Chart
         const userActivityCtx = document.getElementById('userActivityChart').getContext('2d');

@@ -11,7 +11,7 @@ return [
                 /*
                  * Route for accessing api documentation interface
                  */
-                'api' => 'api/documentation',
+                'api' => 'api-docs',
                 'docs' => 'docs',
                 'oauth2_callback' => 'api/oauth2-callback',
             ],
@@ -133,6 +133,11 @@ return [
                     'refreshUrl' => env('APP_URL', 'http://localhost:8000') . '/oauth/token',
                     'scopes' => [],
                 ],
+                'bearerAuth' => [
+                    'type' => 'http',
+                    'scheme' => 'bearer',
+                    'bearerFormat' => 'JWT',
+                ],
             ],
             'ui' => [
                 'display_doc_expansion' => 'none',
@@ -159,6 +164,11 @@ return [
                         'use_pkce_with_authorization_code_grant' => false,
                     ],
                 ],
+                'configUrl' => null,
+                'layout' => 'BaseLayout',
+                'supportedSubmitMethods' => ['get', 'post', 'put', 'delete', 'patch'],
+                'validatorUrl' => null,
+                'withCredentials' => true,
             ],
         ],
     ],

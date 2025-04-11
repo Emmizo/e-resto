@@ -61,22 +61,22 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($reservations as $reservation)
+                            @forelse ($reservations as $key => $reservation)
                             <tr>
                                 <td>
-                                    <span>#{{ $reservation->id }}</span>
+                                    <span>{{ $key+1 }}</span>
                                 </td>
                                 <td>
-                                    <span>{{ $reservation->user->name }}</span>
+                                    <span>{{ $reservation->first_name }} {{ $reservation->last_name }}</span>
                                 </td>
                                 <td>
-                                    <span>{{ $reservation->reservation_date->format('M d, Y H:i') }}</span>
+                                    <span>{{ $reservation->reservation_time ? $reservation->reservation_time->format('M d, Y H:i') : 'N/A' }}</span>
                                 </td>
                                 <td>
-                                    <span>{{ $reservation->party_size }}</span>
+                                    <span>{{ $reservation->number_of_people }}</span>
                                 </td>
                                 <td>
-                                    <span class="badge badge-{{ $reservation->status === 'confirmed' ? 'success' : ($reservation->status === 'cancelled' ? 'danger' : 'warning') }}">
+                                    <span class="badge rounded-pill bg-{{ $reservation->status === 'confirmed' ? 'success' : ($reservation->status === 'cancelled' ? 'danger' : 'warning') }}">
                                         {{ ucfirst($reservation->status) }}
                                     </span>
                                 </td>
@@ -178,7 +178,7 @@
         </div>
     </div>
 </div>
-
+@section('scripts')
 <script>
 $(document).ready(function() {
     // Initialize DataTable
