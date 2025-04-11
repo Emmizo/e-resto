@@ -20,20 +20,24 @@ class User extends Authenticatable
         'phone_number',
         'profile_picture',
         'preferences',
+        'status',
+        'google2fa_secret',
+        'has_2fa_enabled'
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'google2fa_secret'
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'preferences' => 'array',
+        'status' => 'integer',
+        'has_2fa_enabled' => 'boolean'
+    ];
 
     /**
      * Get the current restaurant ID from session
@@ -51,36 +55,36 @@ class User extends Authenticatable
      * @return bool
      */
     // In your User model
-public function hasRestaurantPermission($permissionName, $restaurantId = null)
-{
-    $restaurantId = session('userData')['users']->restaurant_id;
-    $restaurantId = $restaurantId ?? $this->getCurrentRestaurantId();
+    public function hasRestaurantPermission($permissionName, $restaurantId = null)
+    {
+        $restaurantId = session('userData')['users']->restaurant_id;
+        $restaurantId = $restaurantId ?? $this->getCurrentRestaurantId();
 
-    // Global admin always has full access
-    if ($this->role === 'admin') {
-        return true;
+        // Global admin always has full access
+        if ($this->role === 'admin') {
+            return true;
+        }
+
+        // Restaurant owner has full access to their restaurant
+        if ($this->role === 'restaurant_owner' &&
+            Restaurant::where('owner_id', $this->id)
+                ->where('id', $restaurantId)
+                ->exists()) {
+            return true;
+        }
+
+        // Check Spatie global permissions first
+        if ($this->hasPermissionTo($permissionName)) {
+            return true;
+        }
+
+        // Check restaurant-specific permissions
+        return RestaurantPermission::where('user_id', $this->id)
+            ->where('restaurant_id', $restaurantId)
+            ->where('permission_name', $permissionName)
+            ->active()
+            ->exists();
     }
-
-    // Restaurant owner has full access to their restaurant
-    if ($this->role === 'restaurant_owner' &&
-        Restaurant::where('owner_id', $this->id)
-            ->where('id', $restaurantId)
-            ->exists()) {
-        return true;
-    }
-
-    // Check Spatie global permissions first
-    if ($this->hasPermissionTo($permissionName)) {
-        return true;
-    }
-
-    // Check restaurant-specific permissions
-    return RestaurantPermission::where('user_id', $this->id)
-        ->where('restaurant_id', $restaurantId)
-        ->where('permission_name', $permissionName)
-        ->active()
-        ->exists();
-}
 
     /**
      * Get all permissions for a specific restaurant
@@ -89,7 +93,8 @@ public function hasRestaurantPermission($permissionName, $restaurantId = null)
      * @return array
      */
     public function getRestaurantPermissions($restaurantId = null)
-    { $restaurantId = session('userData')['users']->restaurant_id;
+    {
+        $restaurantId = session('userData')['users']->restaurant_id;
         // Use current restaurant ID if not provided
         $restaurantId = $restaurantId ?? $this->getCurrentRestaurantId();
 

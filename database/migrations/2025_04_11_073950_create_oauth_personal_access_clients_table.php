@@ -14,6 +14,12 @@ return new class extends Migration {
             $table->bigIncrements('id');
             $table->uuid('client_id');
             $table->timestamps();
+
+            $table
+                ->foreign('client_id')
+                ->references('id')
+                ->on('oauth_clients')
+                ->onDelete('cascade');
         });
     }
 

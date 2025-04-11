@@ -27,7 +27,7 @@ class TwoFASetupMail extends Mailable
     {
         return $this
             ->subject('Your 2FA Setup Verification Code')
-            ->view('emails.2fa_setup')
+            ->view('mails.2fa_setup')
             ->with(['otp' => $this->otp]);
     }
 
@@ -44,20 +44,20 @@ class TwoFASetupMail extends Mailable
     /**
      * Get the message content definition.
      */
-   /*  public function content(): Content
-    {
-        return new Content(
-            view: 'view.name',
-        );
-    } */
+    /*  public function content(): Content
+     {
+         return new Content(
+             view: 'view.name',
+         );
+     } */
 
     /**
      * Get the attachments for the message.
      *
      * @return array<int, \Illuminate\Mail\Mailables\Attachment>
      */
-   /*  public function attachments(): array
-    {
-        return [];
-    } */
+    /*  public function attachments(): array
+     {
+         return [];
+     } */
 }

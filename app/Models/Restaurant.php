@@ -21,15 +21,18 @@ class Restaurant extends Model
         'image',
         'owner_id',
         'is_approved',
+        'status'
     ];
+
     /**
      * The attributes that should be cast to native types.
      *
      * @var array
      */
     protected $casts = [
-        'opening_hours' => 'array', // Cast JSON field to array
-        'is_approved' => 'boolean', // Cast boolean field
+        'opening_hours' => 'array',  // Cast JSON field to array
+        'is_approved' => 'boolean',  // Cast boolean field
+        'status' => 'boolean'
     ];
 
     /**
@@ -41,5 +44,16 @@ class Restaurant extends Model
     {
         return $this->belongsTo(User::class, 'owner_id');
     }
+
+    /**
+     * Get the menus for the restaurant.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function menus()
+    {
+        return $this->hasMany(Menu::class);
+    }
+
     //
 }

@@ -30,6 +30,7 @@
                         </div>
                     </div>
                     <div class="btn-options mt-3 mt-xl-0">
+                        <a href="{{ route('orders.create') }}" class="btn btn-primary btn-xsmall font-dmsans fw-medium position-relative rounded-3 me-2" title="Create Order">Create Order</a>
                         <a href="javascript:;" class="btn btn-white btn-xsmall font-dmsans fw-medium position-relative rounded-3 border border-grey-v1 filter-btn" title="Filter">Filter</a>
                     </div>
                 </div>
@@ -184,7 +185,39 @@ $(document).ready(function() {
         },
         dom: '<"top"f>rt<"bottom"lip><"clear">',
         pageLength: 10,
-        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]]
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        processing: true,
+        serverSide: false,
+        data: {!! json_encode($orders) !!},
+        columns: [
+            { data: 'id', name: 'id' },
+            { data: 'user.name', name: 'user.name' },
+            { data: 'total_amount', name: 'total_amount' },
+            { data: 'status', name: 'status' },
+            { data: 'created_at', name: 'created_at' },
+            { data: 'action', name: 'action', orderable: false, searchable: false }
+        ],
+        columnDefs: [
+            {
+                targets: 2, // Total Amount column
+                render: function(data) {
+                    return '$' + parseFloat(data).toFixed(2);
+                }
+            },
+            {
+                targets: 3, // Status column
+                render: function(data) {
+                    var badgeClass = data === 'completed' ? 'success' : (data === 'cancelled' ? 'danger' : 'warning');
+                    return '<span class="badge badge-' + badgeClass + '">' + data.charAt(0).toUpperCase() + data.slice(1) + '</span>';
+                }
+            },
+            {
+                targets: 4, // Order Date column
+                render: function(data) {
+                    return moment(data).format('MMM D, YYYY HH:mm');
+                }
+            }
+        ]
     });
 
     // Handle update status button click

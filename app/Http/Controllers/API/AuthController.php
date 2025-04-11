@@ -5,17 +5,55 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Mail\TwoFASetupMail;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Passport\HasApiTokens;
+use OpenApi\Annotations as OA;
 use OTPHP\TOTP;
 use PragmaRX\Google2FA\Google2FA;
 use Mail;
 use Socialite;
 
+/**
+ * @OA\Tag(
+ *     name="Authentication",
+ *     description="API Endpoints for user authentication"
+ * )
+ */
+
+/**
+ * @OA\Schema(
+ *     schema="User",
+ *     required={"name", "email", "password"},
+ *     @OA\Property(property="id", type="integer", format="int64", example=1),
+ *     @OA\Property(property="name", type="string", example="John Doe"),
+ *     @OA\Property(property="email", type="string", format="email", example="john@example.com"),
+ *     @OA\Property(property="phone", type="string", example="+1234567890"),
+ *     @OA\Property(property="address", type="string", example="123 Main St"),
+ *     @OA\Property(property="role", type="string", example="customer"),
+ *     @OA\Property(property="restaurant_id", type="integer", format="int64", example=1, nullable=true),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time")
+ * )
+ */
+
+/**
+ * @OA\Schema(
+ *     schema="Error",
+ *     @OA\Property(property="status", type="string", example="error"),
+ *     @OA\Property(property="message", type="string", example="Invalid credentials"),
+ *     @OA\Property(
+ *         property="errors",
+ *         type="array",
+ *         @OA\Items(type="string")
+ *     )
+ * )
+ */
 class AuthController extends Controller
 {
     // Google login methods
@@ -25,69 +63,178 @@ class AuthController extends Controller
     }
 
     /**
-     * client sign up.
+     * Register a new user.
+     *
+     * @OA\Post(
+     *     path="/signup",
+     *     summary="Register a new user",
+     *     tags={"Authentication"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name", "email", "password", "password_confirmation", "role"},
+     *             @OA\Property(property="name", type="string", example="John Doe"),
+     *             @OA\Property(property="email", type="string", format="email", example="john@example.com"),
+     *             @OA\Property(property="password", type="string", format="password", example="password123"),
+     *             @OA\Property(property="password_confirmation", type="string", format="password", example="password123"),
+     *             @OA\Property(property="role", type="string", enum={"customer", "restaurant_owner"}, example="customer"),
+     *             @OA\Property(property="phone_number", type="string", example="+1234567890"),
+     *             @OA\Property(property="address", type="string", example="123 Main St")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="User registered successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="message", type="string", example="User registered successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="user",
+     *                     ref="#/components/schemas/User"
+     *                 ),
+     *                 @OA\Property(property="token", type="string", example="eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9...")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(ref="#/components/schemas/Error")
+     *     )
+     * )
      */
-    public function signUp(Request $request)
+    public function signUp(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6|confirmed',
+            'password' => 'required|string|min:8|confirmed',
+            'role' => 'required|string|in:customer,restaurant_owner',
+            'phone_number' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:255'
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 400);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
         }
 
         try {
-            $user = new User();
-            $user->first_name = $request->first_name;
-            $user->last_name = $request->last_name;
-            $user->email = $request->email;
-            $user->password = Hash::make($request->password);
-            $user->save();
+            DB::beginTransaction();
 
-            // Use consistent token name
-            $token = $user->createToken('RestoFinder Personal Access Client')->accessToken;
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'role' => $request->role,
+                'phone_number' => $request->phone_number,
+                'address' => $request->address
+            ]);
 
-            event(new NewUserCreatedEvent($user));
+            // Create access token
+            $token = $user->createToken('auth_token')->accessToken;
 
-            // Auto-login the user
-            auth()->login($user);
+            DB::commit();
 
             return response()->json([
-                'user' => $user,
-                'token' => $token,
-                'success' => true
+                'status' => 'success',
+                'message' => 'User registered successfully',
+                'data' => [
+                    'user' => $user,
+                    'token' => $token
+                ]
             ], 201);
         } catch (\Exception $e) {
-            \Log::error('User registration failed: ' . $e->getMessage());
+            DB::rollBack();
             return response()->json([
-                'message' => 'Registration failed',
-                'success' => false
+                'status' => 'error',
+                'message' => 'Failed to register user',
+                'error' => $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Login function.
+     * Login user and create token.
+     *
+     * @OA\Post(
+     *     path="/login",
+     *     summary="Login user and create token",
+     *     tags={"Authentication"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"email", "password"},
+     *             @OA\Property(property="email", type="string", format="email", example="againtest2020@gmail.com"),
+     *             @OA\Property(property="password", type="string", format="password", example="Kwizera23")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Login successful",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="message", type="string", example="Login successful"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="token", type="string", example="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."),
+     *                 @OA\Property(
+     *                     property="user",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", format="int64", example=1),
+     *                     @OA\Property(property="name", type="string", example="John Doe"),
+     *                     @OA\Property(property="email", type="string", format="email", example="john@example.com"),
+     *                     @OA\Property(property="phone", type="string", example="+1234567890"),
+     *                     @OA\Property(property="address", type="string", example="123 Main St"),
+     *                     @OA\Property(property="role", type="string", example="customer"),
+     *                     @OA\Property(property="restaurant_id", type="integer", format="int64", example=1, nullable=true),
+     *                     @OA\Property(property="created_at", type="string", format="date-time"),
+     *                     @OA\Property(property="updated_at", type="string", format="date-time")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Invalid credentials",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="error"),
+     *             @OA\Property(property="message", type="string", example="Invalid credentials"),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="array",
+     *                 @OA\Items(type="string")
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function login(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|string|email|max:255',
-            'password' => 'required|string|min:6',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()->all()], 422);
-        }
-
         try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|string|email|max:255',
+                'password' => 'required|string|min:6',
+            ]);
+
+            if ($validator->fails()) {
+                \Log::error('Login validation failed', ['errors' => $validator->errors()->all()]);
+                return response()->json(['errors' => $validator->errors()->all()], 422);
+            }
+
+            \Log::info('Login attempt', ['email' => $request->email]);
+
             $user = User::where('email', $request->email)->first();
 
             if (!$user) {
+                \Log::warning('Login failed: User not found', ['email' => $request->email]);
                 return response()->json([
                     'message' => 'User does not exist',
                     'success' => false
@@ -95,6 +242,7 @@ class AuthController extends Controller
             }
 
             if ($user->status != 1) {
+                \Log::warning('Login failed: User inactive', ['email' => $request->email]);
                 return response()->json([
                     'message' => 'You are not allowed to access',
                     'success' => false
@@ -102,14 +250,45 @@ class AuthController extends Controller
             }
 
             if (!Hash::check($request->password, $user->password)) {
+                \Log::warning('Login failed: Password mismatch', ['email' => $request->email]);
                 return response()->json([
                     'message' => 'Password mismatch',
                     'success' => false
                 ], 401);
             }
 
-            // Use consistent token name
-            $token = $user->createToken('RestoFinder Personal Access Client')->accessToken;
+            try {
+                // Revoke any existing tokens
+                $user->tokens()->delete();
+
+                // Create new token with specific scopes
+                $token = $user->createToken('RestoFinder Personal Access Client')->accessToken;
+
+                \Log::info('Token created successfully', [
+                    'user_id' => $user->id,
+                    'token_type' => 'Bearer'
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Token creation failed', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+
+                // Check if it's a key-related error
+                if (str_contains($e->getMessage(), 'key')) {
+                    return response()->json([
+                        'message' => 'Authentication system error. Please contact support.',
+                        'success' => false,
+                        'error' => 'Key configuration error'
+                    ], 500);
+                }
+
+                return response()->json([
+                    'message' => 'Token creation failed: ' . $e->getMessage(),
+                    'success' => false
+                ], 500);
+            }
 
             if ($user->has_2fa_enabled != 1) {
                 // Check if 2FA is enabled
@@ -140,22 +319,67 @@ class AuthController extends Controller
                 $userData['google2fa_secret'] = $currentOtp;
             }
 
+            \Log::info('Login successful', ['user_id' => $user->id]);
             return response()->json([
                 'user' => $userData,
                 'token' => $token,
                 'success' => true
             ], 200);
         } catch (\Exception $e) {
-            \Log::error('Login failed: ' . $e->getMessage());
+            \Log::error('Login failed: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'email' => $request->email ?? 'no email provided'
+            ]);
             return response()->json([
-                'message' => 'Login failed',
+                'message' => 'Login failed: ' . $e->getMessage(),
                 'success' => false
             ], 500);
         }
     }
 
     /**
-     * Display a user info.
+     * Get authenticated user.
+     *
+     * @OA\Get(
+     *     path="/getUserInfo",
+     *     summary="Get authenticated user",
+     *     tags={"Authentication"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="User retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="message", type="string", example="User retrieved successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", format="int64", example=1),
+     *                 @OA\Property(property="name", type="string", example="John Doe"),
+     *                 @OA\Property(property="email", type="string", format="email", example="john@example.com"),
+     *                 @OA\Property(property="phone", type="string", example="+1234567890"),
+     *                 @OA\Property(property="address", type="string", example="123 Main St"),
+     *                 @OA\Property(property="role", type="string", example="customer"),
+     *                 @OA\Property(property="restaurant_id", type="integer", format="int64", example=1, nullable=true),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="error"),
+     *             @OA\Property(property="message", type="string", example="Unauthenticated"),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="array",
+     *                 @OA\Items(type="string")
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function getUsers()
     {
@@ -366,7 +590,35 @@ class AuthController extends Controller
     }
 
     /**
-     * Logout the user and revoke their token.
+     * Logout user (Revoke the token).
+     *
+     * @OA\Post(
+     *     path="/auth/logout",
+     *     summary="Logout user (Revoke the token)",
+     *     tags={"Authentication"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successfully logged out",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Successfully logged out"),
+     *             @OA\Property(property="success", type="boolean", example=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="error"),
+     *             @OA\Property(property="message", type="string", example="Unauthenticated"),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="array",
+     *                 @OA\Items(type="string")
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function logout(Request $request)
     {
