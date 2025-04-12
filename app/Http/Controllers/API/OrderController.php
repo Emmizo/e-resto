@@ -258,6 +258,7 @@ class OrderController extends Controller
             'restaurant_id' => 'required|exists:restaurants,id',
             'delivery_address' => 'required|string',
             'special_instructions' => 'nullable|string',
+            'order_type' => 'required|string|in:dine_in,takeaway,delivery',
             'items' => 'required|array|min:1',
             'items.*.menu_item_id' => 'required|exists:menu_items,id',
             'items.*.quantity' => 'required|integer|min:1'
@@ -292,6 +293,7 @@ class OrderController extends Controller
                 'payment_status' => 'pending',
                 'delivery_address' => $request->delivery_address,
                 'special_instructions' => $request->special_instructions,
+                'order_type' => $request->order_type,
             ]);
 
             // Create order items

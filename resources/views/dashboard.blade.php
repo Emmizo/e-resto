@@ -197,7 +197,6 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-
                                             @foreach($dashboardData['top_menu_items'] as $item)
                                             <tr>
                                                 <td>{{$item->name}}</td>
@@ -220,24 +219,75 @@
                                 <h6 class="m-0 font-weight-bold text-primary">Recent Orders</h6>
                             </div>
                             <div class="card-body">
-                                @foreach($dashboardData['top_restaurants'] as $restaurant)
-                                    @php
-                                        $recentOrders = \App\Models\Order::where('restaurant_id', $restaurant->id)
-                                            ->latest()
-                                            ->limit(3)
-                                            ->get();
-                                    @endphp
-                                    @foreach($recentOrders as $order)
-                                        <div class="alert alert-{{ $order->status === 'completed' ? 'success' : ($order->status === 'pending' ? 'warning' : 'info') }} alert-dismissible fade show" role="alert">
-                                            <strong>Order #{{ $order->id }}:</strong> {{ $order->status }} - {{ $restaurant->name }}
-                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                        </div>
-                                    @endforeach
-                                @endforeach
+                                @forelse($dashboardData['recent_orders'] as $order)
+                                    <div class="alert alert-{{ $order->status === 'completed' ? 'success' : ($order->status === 'pending' ? 'warning' : 'info') }} alert-dismissible fade show" role="alert">
+                                        <strong>Order #{{ $order->id }}</strong>
+                                        @if(auth()->user()->role == 'admin')
+                                            - {{ $order->restaurant->name }}
+                                        @endif
+                                        <br>
+                                        <small>
+                                            Status: {{ ucfirst($order->status) }} |
+                                            Type: {{ ucfirst($order->order_type) }} |
+                                            Amount: ${{ number_format($order->total_amount, 2) }}
+                                        </small>
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    </div>
+                                @empty
+                                    <div class="alert alert-info">
+                                        No recent orders found.
+                                    </div>
+                                @endforelse
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Restaurant Ratings Section -->
+                @if($dashboardData['top_restaurants']->isNotEmpty())
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="card-title">
+                                @if(auth()->user()->role == 'admin')
+                                    Top Rated Restaurants
+                                @else
+                                    Restaurant Rating
+                                @endif
+                            </h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Restaurant</th>
+                                            <th>Cuisine Type</th>
+                                            <th>Rating</th>
+                                            <th>Reviews</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($dashboardData['top_restaurants'] as $restaurant)
+                                        <tr>
+                                            <td>{{$restaurant->name}}</td>
+                                            <td>{{$restaurant->cuisine_type}}</td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fas fa-star text-warning me-1"></i>
+                                                    <span>{{number_format($restaurant->rating ?? 0, 1)}}</span>
+                                                </div>
+                                            </td>
+                                            <td>{{$restaurant->review_count ?? 0}}</td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @endif
             </main>
 
 @endsection

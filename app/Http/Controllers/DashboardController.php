@@ -26,7 +26,7 @@ class DashboardController extends Controller
             $restaurantId = null;
         } else {
             // Other roles can only see their restaurant data
-            $restaurantId = session('userData')['users']->restaurant_id ?? null;
+            $restaurantId = session('userData')['users']->restaurant_id;
         }
 
         // Get date range from request or default to today
@@ -103,9 +103,9 @@ class DashboardController extends Controller
         });
 
         $orderTypes = [
-            'dine_in' => $orderTypesQuery->where('order_type', 'dine_in')->count(),
-            'takeaway' => $orderTypesQuery->where('order_type', 'takeaway')->count(),
-            'delivery' => $orderTypesQuery->where('order_type', 'delivery')->count()
+            'dine_in' => $orderTypesQuery->clone()->where('order_type', 'dine_in')->count(),
+            'takeaway' => $orderTypesQuery->clone()->where('order_type', 'takeaway')->count(),
+            'delivery' => $orderTypesQuery->clone()->where('order_type', 'delivery')->count()
         ];
 
         // Get daily orders count for the selected date range
@@ -146,6 +146,53 @@ class DashboardController extends Controller
             })->get();
         }
 
+        // Get restaurant ratings (admin sees all, owners see their own)
+        $topRestaurants = collect();
+        if ($user->role == 'admin') {
+            // Admin sees all restaurants with ratings
+            $topRestaurants = Restaurant::select('restaurants.id', 'restaurants.name', 'restaurants.cuisine_type')
+                ->leftJoin('reviews', 'restaurants.id', '=', 'reviews.restaurant_id')
+                ->selectRaw('AVG(reviews.rating) as rating')
+                ->selectRaw('COUNT(reviews.id) as review_count')
+                ->groupBy('restaurants.id', 'restaurants.name', 'restaurants.cuisine_type')
+                ->having('review_count', '>', 0)
+                ->orderBy('rating', 'desc')
+                ->limit(4)
+                ->get();
+        } else {
+            // Restaurant owners see their own restaurant's rating
+            $topRestaurants = Restaurant::select('restaurants.id', 'restaurants.name', 'restaurants.cuisine_type')
+                ->leftJoin('reviews', 'restaurants.id', '=', 'reviews.restaurant_id')
+                ->selectRaw('AVG(reviews.rating) as rating')
+                ->selectRaw('COUNT(reviews.id) as review_count')
+                ->where('restaurants.id', $restaurantId)
+                ->groupBy('restaurants.id', 'restaurants.name', 'restaurants.cuisine_type')
+                ->get();
+        }
+
+        // Get recent orders based on user role
+        $recentOrders = collect();
+        if ($user->role == 'admin') {
+            // Admin sees recent orders from all restaurants
+            $recentOrders = Order::with('restaurant')
+                ->when($startDate, function ($query) use ($startDate, $endDate) {
+                    return $query->whereBetween('created_at', [$startDate, $endDate]);
+                })
+                ->latest()
+                ->limit(10)
+                ->get();
+        } else {
+            // Restaurant users see only their restaurant's orders
+            $recentOrders = Order::with('restaurant')
+                ->where('restaurant_id', $restaurantId)
+                ->when($startDate, function ($query) use ($startDate, $endDate) {
+                    return $query->whereBetween('created_at', [$startDate, $endDate]);
+                })
+                ->latest()
+                ->limit(10)
+                ->get();
+        }
+
         // Build dashboard data with restaurant-specific filters
         $dashboardData = [
             'total_users' => $users->count(),
@@ -165,19 +212,9 @@ class DashboardController extends Controller
             'order_activity_data' => $orderActivityData->toArray(),
             'reservation_activity_data' => $reservationActivityData->toArray(),
             'recommendation_data' => array_values($orderTypes),
-            'top_restaurants' => Restaurant::when($restaurantId, function ($query) use ($restaurantId) {
-                return $query->where('restaurants.id', $restaurantId);
-            })
-                ->when(!$restaurantId, function ($query) {
-                    return $query->limit(4);
-                })
-                ->select('restaurants.id', 'restaurants.name', 'restaurants.cuisine_type')
-                ->leftJoin('reviews', 'restaurants.id', '=', 'reviews.restaurant_id')
-                ->selectRaw('AVG(reviews.rating) as rating')
-                ->groupBy('restaurants.id', 'restaurants.name', 'restaurants.cuisine_type')
-                ->orderBy('rating', 'desc')
-                ->get(),
+            'top_restaurants' => $topRestaurants,
             'daily_recommendations' => $dailyOrders,
+            'recent_orders' => $recentOrders,
             'reservations_today' => \App\Models\Reservation::when($restaurantId, function ($query) use ($restaurantId) {
                 return $query->where('restaurant_id', $restaurantId);
             })->when($startDate, function ($query) use ($startDate, $endDate) {

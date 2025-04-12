@@ -22,6 +22,7 @@ class Order extends Model
         'payment_status',
         'delivery_address',
         'special_instructions',
+        'order_type',
     ];
 
     /**
