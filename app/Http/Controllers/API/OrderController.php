@@ -179,6 +179,7 @@ class OrderController extends Controller
      *             @OA\Property(property="restaurant_id", type="integer", example=1),
      *             @OA\Property(property="delivery_address", type="string", example="123 Main St, City"),
      *             @OA\Property(property="special_instructions", type="string", example="Please deliver to back door"),
+     *             @OA\Property(property="order_type", type="string", enum={"dine_in", "takeaway", "delivery"}, example="dine_in"),
      *             @OA\Property(
      *                 property="items",
      *                 type="array",
@@ -208,6 +209,7 @@ class OrderController extends Controller
      *                 @OA\Property(property="payment_status", type="string", example="unpaid"),
      *                 @OA\Property(property="delivery_address", type="string", example="123 Main St"),
      *                 @OA\Property(property="special_instructions", type="string", example="No onions please"),
+     *                 @OA\Property(property="order_type", type="string", example="dine_in"),
      *                 @OA\Property(property="created_at", type="string", format="date-time"),
      *                 @OA\Property(property="updated_at", type="string", format="date-time"),
      *                 @OA\Property(

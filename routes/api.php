@@ -2,6 +2,7 @@
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\OrderController;
 use App\Http\Controllers\API\ReservationController;
+use App\Http\Controllers\API\ReviewController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -41,7 +42,13 @@ Route::group(['namespace' => 'Api', 'prefix' => 'v1', 'middleware' => 'auth:api'
     Route::get('/reservations/{id}', [ReservationController::class, 'show']);
     Route::put('/reservations/{id}', [ReservationController::class, 'update']);
     Route::delete('/reservations/{id}', [ReservationController::class, 'destroy']);
+
+    // Review routes
+    Route::post('/reviews', [ReviewController::class, 'store']);
+    Route::get('/reviews/user', [ReviewController::class, 'userReviews']);
 });
+
+Route::get('/restaurants/{restaurant}/reviews', [ReviewController::class, 'restaurantReviews']);
 
 /*
  * |--------------------------------------------------------------------------
