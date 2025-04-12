@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\RestaurantEmployee;
+use App\Models\User;
+use App\Services\FirebaseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +23,13 @@ use OpenApi\Annotations as OA;
  */
 class OrderController extends Controller
 {
+    protected $firebaseService;
+
+    public function __construct(FirebaseService $firebaseService)
+    {
+        $this->firebaseService = $firebaseService;
+    }
+
     /**
      * List all orders.
      *
@@ -270,7 +280,9 @@ class OrderController extends Controller
                 $menuItem = MenuItem::findOrFail($item['menu_item_id']);
                 $totalAmount += $menuItem->price * $item['quantity'];
             }
+
             $user = auth()->user();
+
             // Create order
             $order = Order::create([
                 'user_id' => $user->id,
@@ -291,6 +303,29 @@ class OrderController extends Controller
                     'quantity' => $item['quantity'],
                     'price' => $menuItem->price
                 ]);
+            }
+
+            // Get all staff members of the restaurant
+            $restaurantStaff = RestaurantEmployee::join('users', 'restaurant_employees.user_id', '=', 'users.id')
+                ->where('restaurant_employees.restaurant_id', $request->restaurant_id)
+                ->whereNotNull('users.fcm_token')
+                ->get();
+
+            // Send notification to each staff member
+            foreach ($restaurantStaff as $staff) {
+                $title = 'New Order Received';
+                $body = "New order #{$order->id} has been placed. Total amount: \$" . number_format($totalAmount, 2);
+                $data = [
+                    'order_id' => $order->id,
+                    'type' => 'new_order'
+                ];
+
+                $this->firebaseService->sendNotification(
+                    $staff->fcm_token,
+                    $title,
+                    $body,
+                    $data
+                );
             }
 
             DB::commit();

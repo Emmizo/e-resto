@@ -16,7 +16,50 @@
                     </div>
                 </div>
                 <div class="header-container-right d-flex align-items-center">
-                    <!-- Dropdown container with correct Bootstrap 5 structure -->
+                    <!-- Notifications Dropdown -->
+                    <div class="dropdown me-3">
+                        <button class="btn btn-link position-relative p-0" type="button" id="notificationsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-bell fa-lg text-primary"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-badge" style="display: none;">
+                                0
+                            </span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end notification-dropdown shadow-lg border-0 rounded-3 py-2" aria-labelledby="notificationsDropdown" style="min-width: 300px; max-height: 400px; overflow-y: auto;">
+                            <li class="px-3 py-2">
+                                <h6 class="dropdown-header text-primary fw-bold px-0 border-bottom pb-2 mb-0">Notifications</h6>
+                            </li>
+                            <div class="notification-list">
+                                <!-- Notifications will be dynamically added here -->
+                            </div>
+                            <li class="px-3 py-2 text-center">
+                                <a href="#" class="text-primary small view-all-notifications">View All</a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Orders Dropdown -->
+                    @if(auth()->user()->role!="admin")
+                    <div class="dropdown me-3">
+                        <button class="btn btn-link position-relative p-0" type="button" id="ordersDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-shopping-cart fa-lg text-primary"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger order-badge" style="display: none;">
+                                0
+                            </span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end order-dropdown shadow-lg border-0 rounded-3 py-2" aria-labelledby="ordersDropdown" style="min-width: 300px; max-height: 400px; overflow-y: auto;">
+                            <li class="px-3 py-2">
+                                <h6 class="dropdown-header text-primary fw-bold px-0 border-bottom pb-2 mb-0">New Orders</h6>
+                            </li>
+                            <div class="order-list">
+                                <!-- Orders will be dynamically added here -->
+                            </div>
+                            <li class="px-3 py-2 text-center">
+                                <a href="{{ route('orders.index') }}" class="text-primary small view-all-orders">View All Orders</a>
+                            </li>
+                        </ul>
+                    </div>
+@endif
+                    <!-- User Profile Dropdown -->
                     <div class="dropdown">
                         <div class="user-profile-details d-flex align-items-center pe-3 pe-sm-4" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false" role="button">
                             <div class="user-image me-2">
@@ -71,3 +114,81 @@
         </div>
     </div>
 </header>
+
+<!-- Firebase Configuration -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js"></script>
+
+<script>
+    // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "{{ config('services.firebase.api_key') }}",
+        authDomain: "{{ config('services.firebase.auth_domain') }}",
+        projectId: "{{ config('services.firebase.project_id') }}",
+        storageBucket: "{{ config('services.firebase.storage_bucket') }}",
+        messagingSenderId: "{{ config('services.firebase.messaging_sender_id') }}",
+        appId: "{{ config('services.firebase.app_id') }}"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const messaging = firebase.messaging();
+
+    // Request permission for notifications
+    function requestNotificationPermission() {
+        messaging.requestPermission()
+            .then(() => {
+                console.log('Notification permission granted.');
+                return messaging.getToken();
+            })
+            .then((token) => {
+                console.log('FCM Token:', token);
+                // Send token to your Laravel backend
+                $.ajax({
+                    url: '/save-fcm-token',
+                    method: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        fcm_token: token,
+                        user_id: '{{ Auth::id() }}'
+                    },
+                    success: function(response) {
+                        console.log('Token saved successfully');
+                    }
+                });
+            })
+            .catch((err) => {
+                console.log('Unable to get permission to notify.', err);
+            });
+    }
+
+    // Handle incoming messages
+    messaging.onMessage((payload) => {
+        console.log('Message received. ', payload);
+
+        // Update notification badge
+        const notificationBadge = $('.notification-badge');
+        const currentCount = parseInt(notificationBadge.text()) || 0;
+        notificationBadge.text(currentCount + 1).show();
+
+        // Add notification to dropdown
+        const notificationList = $('.notification-list');
+        const notification = `
+            <li class="px-3 py-2 border-bottom">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">${payload.notification.title}</h6>
+                        <p class="mb-0 small text-muted">${payload.notification.body}</p>
+                        <small class="text-muted">${new Date().toLocaleTimeString()}</small>
+                    </div>
+                </div>
+            </li>
+        `;
+        notificationList.prepend(notification);
+    });
+
+    // Request notification permission when the page loads
+    $(document).ready(function() {
+        requestNotificationPermission();
+    });
+</script>

@@ -92,3 +92,5 @@ Route::middleware(['auth', 'nocache', 'restaurant.permission:Reservation_Managem
     Route::put('/reservations/{reservation}', [ReservationController::class, 'update'])->name('reservations.update');
     Route::delete('/reservations/{reservation}', [ReservationController::class, 'destroy'])->name('reservations.destroy');
 });
+
+Route::post('/api/store-fcm-token', [App\Http\Controllers\API\AuthController::class, 'storeFcmToken'])->name('store.fcm.token');

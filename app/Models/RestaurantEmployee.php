@@ -28,8 +28,8 @@ class RestaurantEmployee extends Model
      * @var array
      */
     protected $casts = [
-        'permissions' => 'array', // Cast JSON field to array
-        'is_active' => 'boolean', // Cast boolean field
+        'permissions' => 'array',  // Cast JSON field to array
+        'is_active' => 'boolean',  // Cast boolean field
     ];
 
     /**

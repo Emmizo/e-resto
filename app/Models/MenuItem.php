@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
 class MenuItem extends Model
 {
     use HasFactory;
@@ -30,9 +31,9 @@ class MenuItem extends Model
      * @var array
      */
     protected $casts = [
-        'price' => 'decimal:2', // Cast price to a decimal with 2 decimal places
-        'dietary_info' => 'array', // Cast JSON field to array
-        'is_available' => 'boolean', // Cast boolean field
+        'price' => 'decimal:2',  // Cast price to a decimal with 2 decimal places
+        'dietary_info' => 'array',  // Cast JSON field to array
+        'is_available' => 'boolean',  // Cast boolean field
     ];
 
     /**
@@ -43,5 +44,15 @@ class MenuItem extends Model
     public function menu()
     {
         return $this->belongsTo(Menu::class, 'menu_id');
+    }
+
+    public function restaurant()
+    {
+        return $this->belongsTo(Restaurant::class);
+    }
+
+    public function orderItems()
+    {
+        return $this->hasMany(OrderItem::class);
     }
 }

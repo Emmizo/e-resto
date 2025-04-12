@@ -7,12 +7,20 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Restaurant;
 use App\Models\User;
+use App\Services\FirebaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class OrderController extends Controller
 {
+    protected $firebaseService;
+
+    public function __construct(FirebaseService $firebaseService)
+    {
+        $this->firebaseService = $firebaseService;
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -133,42 +141,49 @@ class OrderController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Order $order)
+    public function update(Request $request, $id)
     {
         try {
-            // Prevent updating completed orders
-            if ($order->status === 'completed') {
-                return response()->json([
-                    'status' => 400,
-                    'message' => 'Cannot update status of a completed order'
-                ], 400);
-            }
+            $order = Order::findOrFail($id);
 
-            $validator = Validator::make($request->all(), [
+            $request->validate([
                 'status' => 'required|in:pending,processing,completed,cancelled'
             ]);
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'status' => 400,
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors()
-                ], 400);
-            }
-
+            $oldStatus = $order->status;
             $order->status = $request->status;
             $order->save();
 
+            // Send notification to user if status changed
+            if ($oldStatus !== $request->status) {
+                $user = $order->user;
+                if ($user && $user->fcm_token) {
+                    $title = 'Order Status Updated';
+                    $body = "Your order #{$order->id} status has been updated to: " . ucfirst($request->status);
+                    $data = [
+                        'order_id' => $order->id,
+                        'status' => $request->status
+                    ];
+
+                    $this->firebaseService->sendNotification(
+                        $user->fcm_token,
+                        $title,
+                        $body,
+                        $data
+                    );
+                }
+            }
+
             return response()->json([
-                'status' => 200,
+                'status' => 'success',
                 'message' => 'Order status updated successfully',
                 'data' => $order
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error updating order status: ' . $e->getMessage());
+            \Log::error('Order status update error: ' . $e->getMessage());
             return response()->json([
-                'status' => 500,
-                'message' => 'Error updating order status'
+                'status' => 'error',
+                'message' => 'Failed to update order status'
             ], 500);
         }
     }

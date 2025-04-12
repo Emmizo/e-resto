@@ -1,37 +1,24 @@
 @extends('layouts.app')
 @section('content')
 
-    <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Restaurant Recommendation System - Admin Dashboard</title>
-    <!-- Bootstrap CSS -->
-    {{-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"> --}}
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Font Awesome -->
-    {{-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"> --}}
-    <style>
-
-    </style>
-</head>
-
-
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4 mt-8">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Dashboard Overview</h1>
+                    <h1 class="h2">Restaurant Dashboard</h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
                         <div class="btn-group me-2">
-                            <button type="button" class="btn btn-sm btn-outline-secondary">Today</button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary">Week</button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary">Month</button>
+                            <a href="{{ route('dashboard', ['range' => 'today']) }}"
+                               class="btn btn-sm {{ $dashboardData['current_range'] === 'today' ? 'btn-primary' : 'btn-outline-secondary' }}">
+                                Today
+                            </a>
+                            <a href="{{ route('dashboard', ['range' => 'week']) }}"
+                               class="btn btn-sm {{ $dashboardData['current_range'] === 'week' ? 'btn-primary' : 'btn-outline-secondary' }}">
+                                Week
+                            </a>
+                            <a href="{{ route('dashboard', ['range' => 'month']) }}"
+                               class="btn btn-sm {{ $dashboardData['current_range'] === 'month' ? 'btn-primary' : 'btn-outline-secondary' }}">
+                                Month
+                            </a>
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle">
-                            <i class="fas fa-fw fa-calendar"></i>
-                            This week
-                        </button>
                     </div>
                 </div>
 
@@ -43,11 +30,11 @@
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                            Total Restaurants</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{$dashboardData['total_restaurants']}}</div>
+                                            Total Orders</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{$dashboardData['total_orders']}}</div>
                                     </div>
                                     <div class="col-auto">
-                                        <i class="fas fa-utensils fa-2x text-gray-300"></i>
+                                        <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
                                     </div>
                                 </div>
                             </div>
@@ -59,11 +46,11 @@
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                            Active Users</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{$dashboardData['total_users']}}</div>
+                                            Total Revenue</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">${{number_format($dashboardData['total_revenue'], 2)}}</div>
                                     </div>
                                     <div class="col-auto">
-                                        <i class="fas fa-users fa-2x text-gray-300"></i>
+                                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
                                     </div>
                                 </div>
                             </div>
@@ -75,11 +62,11 @@
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                            Daily Recommendations</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800">8,742</div>
+                                            Daily Orders</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{$dashboardData['daily_recommendations']}}</div>
                                     </div>
                                     <div class="col-auto">
-                                        <i class="fas fa-lightbulb fa-2x text-gray-300"></i>
+                                        <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
                                     </div>
                                 </div>
                             </div>
@@ -91,8 +78,8 @@
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                            Reservations Today</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800">1,284</div>
+                                            Today's Reservations</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{$dashboardData['reservations_today']}}</div>
                                     </div>
                                     <div class="col-auto">
                                         <i class="fas fa-calendar-check fa-2x text-gray-300"></i>
@@ -105,51 +92,41 @@
 
                 <!-- Charts Row -->
                 <div class="row mb-4">
-                    <!-- User Activity Chart -->
+                    <!-- Order Activity Chart -->
                     <div class="col-xl-8 col-lg-7">
                         <div class="card shadow mb-4">
-                            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                <h6 class="m-0 font-weight-bold text-primary">User Activity Overview</h6>
-                                <div class="dropdown no-arrow">
-                                    <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
-                                        data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
-                                    </a>
-                                    <ul class="dropdown-menu dropdown-menu-end shadow animated--fade-in"
-                                        aria-labelledby="dropdownMenuLink">
-                                        <li><a class="dropdown-item" href="#">This Week</a></li>
-                                        <li><a class="dropdown-item" href="#">This Month</a></li>
-                                        <li><a class="dropdown-item" href="#">This Year</a></li>
-                                    </ul>
-                                </div>
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">
+                                    Order Activity - {{ ucfirst($dashboardData['current_range']) }}
+                                </h6>
                             </div>
                             <div class="card-body">
-                                <div class="chart-area">
+                                <div class="chart-area" style="position: relative; height: 300px;">
                                     <canvas id="userActivityChart"></canvas>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Recommendation Types -->
+                    <!-- Order Types -->
                     <div class="col-xl-4 col-lg-5">
                         <div class="card shadow mb-4">
-                            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                <h6 class="m-0 font-weight-bold text-primary">Recommendation Types</h6>
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">Order Distribution</h6>
                             </div>
                             <div class="card-body">
-                                <div class="chart-pie pt-4 pb-2">
+                                <div class="chart-pie pt-4 pb-2" style="position: relative; height: 300px;">
                                     <canvas id="recommendationPieChart"></canvas>
                                 </div>
                                 <div class="mt-4 text-center small">
                                     <span class="mr-2">
-                                        <i class="fas fa-circle text-primary"></i> Cuisine
+                                        <i class="fas fa-circle text-primary"></i> Dine-in
                                     </span>
                                     <span class="mr-2">
-                                        <i class="fas fa-circle text-success"></i> Location
+                                        <i class="fas fa-circle text-success"></i> Takeaway
                                     </span>
                                     <span class="mr-2">
-                                        <i class="fas fa-circle text-info"></i> Rating
+                                        <i class="fas fa-circle text-info"></i> Delivery
                                     </span>
                                 </div>
                             </div>
@@ -157,13 +134,14 @@
                     </div>
                 </div>
 
-                <!-- Restaurant Metrics -->
-                <div class="row">
-                    <!-- Top Rated Restaurants -->
-                    <div class="col-lg-6 mb-4">
+                <!-- Users List -->
+                <div class="row mb-4">
+                    <div class="col-12">
                         <div class="card shadow mb-4">
                             <div class="card-header py-3">
-                                <h6 class="m-0 font-weight-bold text-primary">Top Rated Restaurants</h6>
+                                <h6 class="m-0 font-weight-bold text-primary">
+                                    {{ Auth::user()->role == 'admin' ? 'All Users' : 'Restaurant Employees' }}
+                                </h6>
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
@@ -171,76 +149,63 @@
                                         <thead>
                                             <tr>
                                                 <th>Name</th>
-                                                <th>Cuisine</th>
-                                                <th>Rating</th>
-                                                <th>Actions</th>
+                                                <th>Email</th>
+                                                <th>Role</th>
+                                                <th>Status</th>
+                                                <th>Created At</th>
                                             </tr>
                                         </thead>
                                         <tbody>
+                                            @foreach($dashboardData['users'] as $user)
                                             <tr>
-                                                <td>Gourmet Paradise</td>
-                                                <td>International</td>
+                                                <td>{{$user->first_name}} {{$user->last_name}}</td>
+                                                <td>{{$user->email}}</td>
+                                                <td>{{ucfirst($user->role)}}</td>
                                                 <td>
-                                                    <div class="text-warning">
-                                                        <i class="fas fa-star"></i>
-                                                        <i class="fas fa-star"></i>
-                                                        <i class="fas fa-star"></i>
-                                                        <i class="fas fa-star"></i>
-                                                        <i class="fas fa-star"></i>
-                                                    </div>
+                                                    <span class="badge {{$user->status == 'active' ? 'bg-success' : 'bg-danger'}}">
+                                                        {{ucfirst($user->status)}}
+                                                    </span>
                                                 </td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-primary">View</button>
-                                                </td>
+                                                <td>{{$user->created_at->format('M d, Y')}}</td>
                                             </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Restaurant Details -->
+                <div class="row">
+                    <!-- Top Menu Items -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="card shadow mb-4">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">Top Menu Items</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered" width="100%" cellspacing="0">
+                                        <thead>
                                             <tr>
-                                                <td>Spice Kingdom</td>
-                                                <td>Indian</td>
-                                                <td>
-                                                    <div class="text-warning">
-                                                        <i class="fas fa-star"></i>
-                                                        <i class="fas fa-star"></i>
-                                                        <i class="fas fa-star"></i>
-                                                        <i class="fas fa-star"></i>
-                                                        <i class="fas fa-star-half-alt"></i>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-primary">View</button>
-                                                </td>
+                                                <th>Item Name</th>
+                                                <th>Category</th>
+                                                <th>Orders</th>
+                                                <th>Revenue</th>
                                             </tr>
+                                        </thead>
+                                        <tbody>
+
+                                            @foreach($dashboardData['top_menu_items'] as $item)
                                             <tr>
-                                                <td>Pasta Amore</td>
-                                                <td>Italian</td>
-                                                <td>
-                                                    <div class="text-warning">
-                                                        <i class="fas fa-star"></i>
-                                                        <i class="fas fa-star"></i>
-                                                        <i class="fas fa-star"></i>
-                                                        <i class="fas fa-star"></i>
-                                                        <i class="far fa-star"></i>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-primary">View</button>
-                                                </td>
+                                                <td>{{$item->name}}</td>
+                                                <td>{{$item->category}}</td>
+                                                <td>{{$item->total_orders}}</td>
+                                                <td>${{number_format($item->total_revenue ?? 0, 2)}}</td>
                                             </tr>
-                                            <tr>
-                                                <td>Sushi World</td>
-                                                <td>Japanese</td>
-                                                <td>
-                                                    <div class="text-warning">
-                                                        <i class="fas fa-star"></i>
-                                                        <i class="fas fa-star"></i>
-                                                        <i class="fas fa-star"></i>
-                                                        <i class="fas fa-star"></i>
-                                                        <i class="far fa-star"></i>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-primary">View</button>
-                                                </td>
-                                            </tr>
+                                            @endforeach
                                         </tbody>
                                     </table>
                                 </div>
@@ -248,156 +213,114 @@
                         </div>
                     </div>
 
-                    <!-- Recent Activity -->
+                    <!-- Recent Orders -->
                     <div class="col-lg-6 mb-4">
                         <div class="card shadow mb-4">
-                            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                <h6 class="m-0 font-weight-bold text-primary">System Alerts</h6>
-                                <div class="dropdown no-arrow">
-                                    <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
-                                        data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
-                                    </a>
-                                    <ul class="dropdown-menu dropdown-menu-end shadow animated--fade-in"
-                                        aria-labelledby="dropdownMenuLink">
-                                        <li><a class="dropdown-item" href="#">Mark all as read</a></li>
-                                        <li><a class="dropdown-item" href="#">Settings</a></li>
-                                    </ul>
-                                </div>
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">Recent Orders</h6>
                             </div>
                             <div class="card-body">
-                                <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                                    <strong>AI Model Update:</strong> New cuisine preferences detected in user behavior patterns.
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                </div>
-                                <div class="alert alert-info alert-dismissible fade show" role="alert">
-                                    <strong>New Restaurants Added:</strong> 12 new restaurants registered in the last 24 hours.
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                </div>
-                                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                    <strong>Performance:</strong> Recommendation accuracy improved to 92.4% this week.
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                </div>
-                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                    <strong>API Issue:</strong> Location service experienced brief downtime (2 min).
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                </div>
-                                <div class="alert alert-primary alert-dismissible fade show" role="alert">
-                                    <strong>Maintenance:</strong> Database backup scheduled for tonight at 2:00 AM.
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                </div>
+                                @foreach($dashboardData['top_restaurants'] as $restaurant)
+                                    @php
+                                        $recentOrders = \App\Models\Order::where('restaurant_id', $restaurant->id)
+                                            ->latest()
+                                            ->limit(3)
+                                            ->get();
+                                    @endphp
+                                    @foreach($recentOrders as $order)
+                                        <div class="alert alert-{{ $order->status === 'completed' ? 'success' : ($order->status === 'pending' ? 'warning' : 'info') }} alert-dismissible fade show" role="alert">
+                                            <strong>Order #{{ $order->id }}:</strong> {{ $order->status }} - {{ $restaurant->name }}
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                        </div>
+                                    @endforeach
+                                @endforeach
                             </div>
                         </div>
                     </div>
                 </div>
             </main>
 
+@endsection
 
-    <!-- Bootstrap JS Bundle with Popper -->
-    {{-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script> --}}
+@section('script')
 
-    <!-- Chart Scripts -->
-    @section('scripts')
-    <script>
-        // User Activity Chart
-        const userActivityCtx = document.getElementById('userActivityChart').getContext('2d');
-        const userActivityChart = new Chart(userActivityCtx, {
-            type: 'line',
-            data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                datasets: [{
-                    label: 'Recommendations Generated',
-                    data: [4215, 5312, 6251, 7841, 9821, 14984, 12876, 13452, 15889, 18765, 19543, 21234],
-                    backgroundColor: 'rgba(78, 115, 223, 0.05)',
-                    borderColor: 'rgba(78, 115, 223, 1)',
-                    pointBackgroundColor: 'rgba(78, 115, 223, 1)',
-                    pointBorderColor: '#fff',
-                    pointHoverBackgroundColor: '#fff',
-                    pointHoverBorderColor: 'rgba(78, 115, 223, 1)',
-                    fill: 'origin'
-                }, {
-                    label: 'Reservations Made',
-                    data: [3215, 4312, 5251, 6841, 7821, 9984, 10876, 11452, 12889, 14765, 15543, 17234],
-                    backgroundColor: 'rgba(28, 200, 138, 0.05)',
-                    borderColor: 'rgba(28, 200, 138, 1)',
-                    pointBackgroundColor: 'rgba(28, 200, 138, 1)',
-                    pointBorderColor: '#fff',
-                    pointHoverBackgroundColor: '#fff',
-                    pointHoverBorderColor: 'rgba(28, 200, 138, 1)',
-                    fill: 'origin'
-                }]
-            },
-            options: {
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top'
-                    },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false
-                    }
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Order Activity Chart
+        const userActivityCtx = document.getElementById('userActivityChart');
+        if (userActivityCtx) {
+            const activityChart = new Chart(userActivityCtx, {
+                type: 'line',
+                data: {
+                    labels: @json($dashboardData['activity_labels']),
+                    datasets: [
+                        {
+                            label: 'Orders',
+                            data: @json($dashboardData['order_activity_data']),
+                            borderColor: 'rgb(75, 192, 192)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                            tension: 0.1,
+                            fill: true
+                        },
+                        {
+                            label: 'Reservations',
+                            data: @json($dashboardData['reservation_activity_data']),
+                            borderColor: 'rgb(255, 99, 132)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                            tension: 0.1,
+                            fill: true
+                        }
+                    ]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-
-        // Recommendation Types Pie Chart
-        const recommendationPieCtx = document.getElementById('recommendationPieChart').getContext('2d');
-        const recommendationPieChart = new Chart(recommendationPieCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Cuisine', 'Location', 'Rating', 'Price', 'Ambiance'],
-                datasets: [{
-                    data: [35, 30, 20, 10, 5],
-                    backgroundColor: [
-                        'rgba(78, 115, 223, 0.8)',
-                        'rgba(28, 200, 138, 0.8)',
-                        'rgba(54, 185, 204, 0.8)',
-                        'rgba(246, 194, 62, 0.8)',
-                        'rgba(231, 74, 59, 0.8)'
-                    ],
-                    hoverBackgroundColor: [
-                        'rgba(78, 115, 223, 1)',
-                        'rgba(28, 200, 138, 1)',
-                        'rgba(54, 185, 204, 1)',
-                        'rgba(246, 194, 62, 1)',
-                        'rgba(231, 74, 59, 1)'
-                    ],
-                    hoverBorderColor: "rgba(234, 236, 244, 1)",
-                }],
-            },
-            options: {
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
                     },
-                    tooltip: {
-                        backgroundColor: "rgb(255,255,255)",
-                        bodyColor: "#858796",
-                        borderColor: '#dddfeb',
-                        borderWidth: 1,
-                        padding: 15,
-                        displayColors: false,
-                        caretPadding: 10,
-                        callbacks: {
-                            label: function(tooltipItem) {
-                                return tooltipItem.label + ': ' + tooltipItem.raw + '%';
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
                             }
                         }
                     }
+                }
+            });
+        }
+
+        // Order Types Chart
+        const recommendationCtx = document.getElementById('recommendationPieChart');
+        if (recommendationCtx) {
+            const pieChart = new Chart(recommendationCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Dine-in', 'Takeaway', 'Delivery'],
+                    datasets: [{
+                        data: @json($dashboardData['recommendation_data']),
+                        backgroundColor: [
+                            'rgb(54, 162, 235)',
+                            'rgb(75, 192, 192)',
+                            'rgb(255, 205, 86)'
+                        ]
+                    }]
                 },
-                cutout: '80%',
-            },
-        });
-    </script>
-
-</html>
-
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
 @endsection

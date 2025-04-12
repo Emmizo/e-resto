@@ -113,11 +113,13 @@ class AuthController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'role' => 'required|string|in:customer,restaurant_owner',
-            'phone_number' => 'nullable|string|max:20',
-            'address' => 'nullable|string|max:255'
+            'phone_number' => 'nullable|string|max:20|regex:/^[0-9+\-() ]+$/',
+            'address' => 'nullable|string|max:255',
+            'fcm_token' => 'nullable|string'  // Add FCM token validation
         ]);
 
         if ($validator->fails()) {
+            \Log::error('Signup validation failed', ['errors' => $validator->errors()->all()]);
             return response()->json([
                 'status' => 'error',
                 'message' => 'Validation failed',
@@ -134,7 +136,9 @@ class AuthController extends Controller
                 'password' => Hash::make($request->password),
                 'role' => $request->role,
                 'phone_number' => $request->phone_number,
-                'address' => $request->address
+                'address' => $request->address,
+                'fcm_token' => $request->fcm_token,  // Add FCM token
+                'status' => 1  // Set default status to active
             ]);
 
             // Create access token
@@ -142,16 +146,31 @@ class AuthController extends Controller
 
             DB::commit();
 
+            \Log::info('User registered successfully', ['user_id' => $user->id]);
+
             return response()->json([
                 'status' => 'success',
                 'message' => 'User registered successfully',
                 'data' => [
-                    'user' => $user,
+                    'user' => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'role' => $user->role,
+                        'phone_number' => $user->phone_number,
+                        'address' => $user->address,
+                        'fcm_token' => $user->fcm_token,
+                        'status' => $user->status
+                    ],
                     'token' => $token
                 ]
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('Failed to register user', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'status' => 'error',
                 'message' => 'Failed to register user',
@@ -222,6 +241,7 @@ class AuthController extends Controller
             $validator = Validator::make($request->all(), [
                 'email' => 'required|string|email|max:255',
                 'password' => 'required|string|min:6',
+                'fcm_token' => 'nullable|string'  // Add validation for FCM token
             ]);
 
             if ($validator->fails()) {
@@ -264,10 +284,53 @@ class AuthController extends Controller
                 // Create new token with specific scopes
                 $token = $user->createToken('RestoFinder Personal Access Client')->accessToken;
 
+                // Update FCM token if provided
+                if ($request->has('fcm_token')) {
+                    $user->fcm_token = $request->fcm_token;
+                    $user->save();
+                }
+
                 \Log::info('Token created successfully', [
                     'user_id' => $user->id,
                     'token_type' => 'Bearer'
                 ]);
+
+                if ($user->has_2fa_enabled != 1) {
+                    // Check if 2FA is enabled
+                    $google2fa = new Google2FA();
+                    $secretKey = $google2fa->generateSecretKey();
+
+                    // Save the secret to the user
+                    $user->google2fa_secret = $secretKey;
+
+                    // Get the current valid OTP
+                    $currentOtp = $google2fa->getCurrentOtp($secretKey);
+                    Mail::to($user->email)->send(new TwoFASetupMail($currentOtp));
+
+                    $user->save();
+                }
+
+                $userData = [
+                    'id' => $user->id,
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
+                    'email' => $user->email,
+                    'has_2fa_enabled' => $user->has_2fa_enabled,
+                    'status' => $user->status,
+                    'fcm_token' => $user->fcm_token  // Include FCM token in response
+                ];
+
+                // Only include 2FA details if needed
+                if ($user->has_2fa_enabled != 1) {
+                    $userData['google2fa_secret'] = $currentOtp;
+                }
+
+                \Log::info('Login successful', ['user_id' => $user->id]);
+                return response()->json([
+                    'user' => $userData,
+                    'token' => $token,
+                    'success' => true
+                ], 200);
             } catch (\Exception $e) {
                 \Log::error('Token creation failed', [
                     'user_id' => $user->id,
@@ -289,42 +352,6 @@ class AuthController extends Controller
                     'success' => false
                 ], 500);
             }
-
-            if ($user->has_2fa_enabled != 1) {
-                // Check if 2FA is enabled
-                $google2fa = new Google2FA();
-                $secretKey = $google2fa->generateSecretKey();
-
-                // Save the secret to the user
-                $user->google2fa_secret = $secretKey;
-
-                // Get the current valid OTP
-                $currentOtp = $google2fa->getCurrentOtp($secretKey);
-                Mail::to($user->email)->send(new TwoFASetupMail($currentOtp));
-
-                $user->save();
-            }
-
-            $userData = [
-                'id' => $user->id,
-                'first_name' => $user->first_name,
-                'last_name' => $user->last_name,
-                'email' => $user->email,
-                'has_2fa_enabled' => $user->has_2fa_enabled,
-                'status' => $user->status,
-            ];
-
-            // Only include 2FA details if needed
-            if ($user->has_2fa_enabled != 1) {
-                $userData['google2fa_secret'] = $currentOtp;
-            }
-
-            \Log::info('Login successful', ['user_id' => $user->id]);
-            return response()->json([
-                'user' => $userData,
-                'token' => $token,
-                'success' => true
-            ], 200);
         } catch (\Exception $e) {
             \Log::error('Login failed: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
@@ -633,6 +660,49 @@ class AuthController extends Controller
             return response()->json([
                 'message' => 'Logout failed',
                 'success' => false
+            ], 500);
+        }
+    }
+
+    public function storeFcmToken(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'fcm_token' => 'required|string'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $user = auth()->user();
+            if (!$user) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
+
+            $user->fcm_token = $request->fcm_token;
+            $user->save();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'FCM token stored successfully'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to store FCM token', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to store FCM token',
+                'error' => $e->getMessage()
             ], 500);
         }
     }

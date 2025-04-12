@@ -22,7 +22,8 @@ class User extends Authenticatable
         'preferences',
         'status',
         'google2fa_secret',
-        'has_2fa_enabled'
+        'has_2fa_enabled',
+        'fcm_token',
     ];
 
     protected $hidden = [
@@ -162,5 +163,15 @@ class User extends Authenticatable
             ->update(['is_active' => false]);
 
         return $this;
+    }
+
+    public function restaurant()
+    {
+        return $this->belongsTo(Restaurant::class);
+    }
+
+    public function restaurantEmployees()
+    {
+        return $this->hasMany(RestaurantEmployee::class);
     }
 }
