@@ -26,7 +26,7 @@ class DashboardController extends Controller
             $restaurantId = null;
         } else {
             // Other roles can only see their restaurant data
-            $restaurantId = session('userData')['users']->restaurant_id;
+            $restaurantId = session('userData')['users']->restaurant_id ?? null;
         }
 
         // Get date range from request or default to today
