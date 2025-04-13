@@ -14,16 +14,6 @@ class EventsController extends Controller
         return view('manage-events.index');
     }
 
-    
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
     /**
      * Display the specified resource.
      */
