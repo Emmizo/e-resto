@@ -112,7 +112,6 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'role' => 'required|string|in:customer,restaurant_owner',
             'phone_number' => 'nullable|string|max:20|regex:/^[0-9+\-() ]+$/',
             'address' => 'nullable|string|max:255',
             'fcm_token' => 'nullable|string'  // Add FCM token validation
@@ -134,7 +133,7 @@ class AuthController extends Controller
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
-                'role' => $request->role,
+                'role' => 'Customer',
                 'phone_number' => $request->phone_number,
                 'address' => $request->address,
                 'fcm_token' => $request->fcm_token,  // Add FCM token
@@ -155,6 +154,7 @@ class AuthController extends Controller
                     'user' => [
                         'id' => $user->id,
                         'name' => $user->name,
+                        'profile_picture' => $user->profile_picture,
                         'email' => $user->email,
                         'role' => $user->role,
                         'phone_number' => $user->phone_number,
@@ -314,6 +314,7 @@ class AuthController extends Controller
                     'id' => $user->id,
                     'first_name' => $user->first_name,
                     'last_name' => $user->last_name,
+                    'profile_picture' => $user->profile_picture,
                     'email' => $user->email,
                     'has_2fa_enabled' => $user->has_2fa_enabled,
                     'status' => $user->status,

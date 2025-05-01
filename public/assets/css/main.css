@@ -5,9 +5,9 @@
     --white-v1: #F3F5F8;
     --white-v2: #F9F9F9;
     --black: #000000;
-    --primary: #181D4B;
-    --primary-v1: #06152B;
-    --secondary: #007AFF;
+    --primary: #184C55;
+    --primary-v1: #184C55;
+    --secondary: #FFFFFF;
     --dark-v1: #0C0D16;
     --dark-v2: #1B1B1B;
     --grey-v1: #DFE5EC;
@@ -1284,11 +1284,11 @@ table.dataTable thead>tr>th.sorting:before, table.dataTable thead>tr>th.sorting_
 }
 /* dashboard */
 :root {
-    --primary-color: #4e73df;
-    --secondary-color: #1cc88a;
+    --primary-color: #184C55;
+    --secondary-color: #FFFFFF;
     --danger-color: #e74a3b;
     --warning-color: #f6c23e;
-    --dark-color: #5a5c69;
+    --dark-color: #184C55;
 }
 main{
     margin-top: 50px;
