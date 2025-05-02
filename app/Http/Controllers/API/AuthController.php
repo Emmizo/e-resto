@@ -707,4 +707,98 @@ class AuthController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Update only the authenticated user's profile picture.
+     *
+     * @OA\Post(
+     *     path="/user/profile-picture",
+     *     summary="Update profile picture",
+     *     tags={"Authentication"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"profile_picture"},
+     *                 @OA\Property(
+     *                     property="profile_picture",
+     *                     type="string",
+     *                     format="binary"
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Profile picture updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="message", type="string", example="Profile picture updated successfully"),
+     *             @OA\Property(property="profile_picture", type="string", example="/storage/users_pic/abc.jpg")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="error"),
+     *             @OA\Property(property="message", type="string", example="Validation failed"),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
+    public function updateProfilePicture(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'profile_picture' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = auth()->user();
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User not authenticated'
+            ], 401);
+        }
+
+        // Store the uploaded file in public/users_picture
+        $file = $request->file('profile_picture');
+        $filename = uniqid('profile_') . '.' . $file->getClientOriginalExtension();
+        $destinationPath = public_path('users_picture');
+        if (!file_exists($destinationPath)) {
+            mkdir($destinationPath, 0777, true);
+        }
+        $file->move($destinationPath, $filename);
+        $relativePath = 'users_picture/' . $filename;
+        $fullUrl = rtrim(config('app.url'), '/') . '/' . $relativePath;
+
+        // Optionally, delete the old picture if needed
+        // if ($user->profile_picture) {
+        //     @unlink(public_path($user->profile_picture));
+        // }
+
+        $user->profile_picture = $fullUrl;
+        $user->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Profile picture updated successfully',
+            'profile_picture' => $fullUrl
+        ]);
+    }
 }

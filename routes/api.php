@@ -26,6 +26,9 @@ Route::group(['namespace' => 'Api', 'prefix' => 'v1', 'middleware' => 'auth:api'
     Route::post('/disable-2fa', [AuthController::class, 'disable2FA']);
     Route::post('logout', [AuthController::class, 'logout']);
 
+    // Profile picture update
+    Route::post('user/profile-picture', [AuthController::class, 'updateProfilePicture']);
+
     // Restaurant routes
     Route::get('/restaurants', [App\Http\Controllers\Api\RestaurantController::class, 'index']);
 
