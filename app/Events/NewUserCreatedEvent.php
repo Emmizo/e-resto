@@ -14,14 +14,16 @@ class NewUserCreatedEvent
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
+    public $user;
+    public $plain_password;
+
     /**
      * Create a new event instance.
      */
-    public function __construct($user)
+    public function __construct($user, $plain_password)
     {
         $this->user = $user;
-
-        //
+        $this->plain_password = $plain_password;
     }
 
     /**
@@ -35,6 +37,7 @@ class NewUserCreatedEvent
             new PrivateChannel('channel-name'),
         ];
     }
+
     public function fire($event, $payload = [], $halt = false)
     {
         $responses = [];

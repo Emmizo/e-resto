@@ -256,10 +256,15 @@ input[type="search"]::-moz-search-clear-button {
 }
 .btn-primary {
     color: var(--white);
-    background: var(--secondary);
-    border-color: var(--secondary);
+    background: var(--primary);
+    border-color: var(--primary);
     z-index: 2;
     overflow: hidden;
+}
+#send_btn2{
+    background: var(--primary);
+    color: var(--white);
+    border-color: var(--primary);
 }
 .btn-primary:before {
     content: "";
@@ -270,7 +275,7 @@ input[type="search"]::-moz-search-clear-button {
     width: 0px;
     height: 100%;
     z-index: -1;
-    background: var(--white);
+    background: var(--primary);
     transition: var(--primary-transition);
 }
 .btn-primary:after {

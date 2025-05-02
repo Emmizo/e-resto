@@ -86,3 +86,6 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/orders/{id}', [OrderController::class, 'update']);
     Route::delete('/orders/{id}', [OrderController::class, 'destroy']);
 });
+
+// Public API endpoint for listing cuisines
+Route::get('/cuisines', [\App\Http\Controllers\API\MenuController::class, 'listCuisines']);

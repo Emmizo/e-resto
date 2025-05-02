@@ -247,7 +247,12 @@
                                                     <div class="col-md-12">
                                                         <div class="form-group m-0 mb-3">
                                                             <label for="cuisineType" class="form-label">Cuisine Type</label>
-                                                            <input type="text" class="form-control rounded-3" id="cuisineType" name="restaurant_cuisine_type" placeholder="Enter Cuisine Type">
+                                                            <select class="form-select rounded-3" id="cuisineType" name="restaurant_cuisine_id" required>
+                                                                <option value="">Select Cuisine Type</option>
+                                                                @foreach($cuisines as $cuisine)
+                                                                    <option value="{{ $cuisine->id }}">{{ $cuisine->name }}</option>
+                                                                @endforeach
+                                                            </select>
                                                         </div>
                                                     </div>
                                                     <div class="col-md-12">

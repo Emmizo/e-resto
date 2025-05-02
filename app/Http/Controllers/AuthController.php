@@ -26,7 +26,8 @@ class AuthController extends Controller
      */
     public function index()
     {
-        return view('auth.login');
+        $cuisines = \App\Models\Cuisine::all();
+        return view('auth.login', compact('cuisines'));
     }
 
     /**
@@ -79,7 +80,7 @@ class AuthController extends Controller
             'restaurant_email' => 'required|email|max:255',
             'restaurant_website' => 'nullable|url',
             'restaurant_opening_hours' => 'nullable|string',
-            'restaurant_cuisine_type' => 'required|string',
+            'restaurant_cuisine_id' => 'required|exists:cuisines,id',
             'restaurant_price_range' => 'required|string',
             'restaurant_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
@@ -103,7 +104,6 @@ class AuthController extends Controller
             'last_name' => $request->last_name,
             'email' => $request->email,
             'password' => $encryptpassword,
-            'plain_password' => $password,
             'role' => 'restaurant_owner',
             'phone_number' => $request->phone_number,
             'profile_picture' => $profilePicturePath,
@@ -122,14 +122,15 @@ class AuthController extends Controller
             'email' => $request->restaurant_email,
             'website' => $request->restaurant_website,
             'opening_hours' => $request->restaurant_opening_hours,
-            'cuisine_type' => $request->restaurant_cuisine_type,
+            'cuisine_type' => '',  // Deprecated, keep for now
+            'cuisine_id' => $request->restaurant_cuisine_id,
             'price_range' => $request->restaurant_price_range,
             'image' => $restaurantImagePath,
             'owner_id' => $user->id,
             'is_approved' => false,
         ]);
 
-        event(new NewUserCreatedEvent($user));
+        event(new NewUserCreatedEvent($user, $password));
         auth()->login($user);
 
         return response()->json([
@@ -419,5 +420,35 @@ class AuthController extends Controller
         } catch (Exception $e) {
         }
         //
+    }
+
+    /**
+     * Show the change password form.
+     */
+    public function viewChangePassword()
+    {
+        return view('auth.change-password');
+    }
+
+    /**
+     * Handle the change password form submission.
+     */
+    public function storeNewPassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => 'required',
+            'new_password' => 'required|confirmed|min:8',
+        ]);
+
+        $user = auth()->user();
+
+        if (!\Hash::check($request->current_password, $user->password)) {
+            return back()->withErrors(['current_password' => 'Current password is incorrect.']);
+        }
+
+        $user->password = \Hash::make($request->new_password);
+        $user->save();
+
+        return redirect()->back()->with('success', 'Password changed successfully!');
     }
 }

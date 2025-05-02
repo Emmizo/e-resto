@@ -271,7 +271,7 @@
                                         @foreach($dashboardData['top_restaurants'] as $restaurant)
                                         <tr>
                                             <td>{{$restaurant->name}}</td>
-                                            <td>{{$restaurant->cuisine_type}}</td>
+                                            <td>{{ optional($restaurant->cuisine)->name ?? 'N/A' }}</td>
                                             <td>
                                                 <div class="d-flex align-items-center">
                                                     <i class="fas fa-star text-warning me-1"></i>

@@ -109,12 +109,12 @@ class AuthController extends Controller
     public function signUp(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'phone_number' => 'nullable|string|max:20|regex:/^[0-9+\-() ]+$/',
             'address' => 'nullable|string|max:255',
-            'fcm_token' => 'nullable|string'  // Add FCM token validation
         ]);
 
         if ($validator->fails()) {
@@ -130,10 +130,11 @@ class AuthController extends Controller
             DB::beginTransaction();
 
             $user = User::create([
-                'name' => $request->name,
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
-                'role' => 'Customer',
+                'role' => 'Client',
                 'phone_number' => $request->phone_number,
                 'address' => $request->address,
                 'fcm_token' => $request->fcm_token,  // Add FCM token
@@ -153,7 +154,9 @@ class AuthController extends Controller
                 'data' => [
                     'user' => [
                         'id' => $user->id,
-                        'name' => $user->name,
+                        'first_name' => $user->first_name,
+                        'last_name' => $user->last_name,
+                        'name' => $user->name ?? ($user->first_name . ' ' . $user->last_name),
                         'profile_picture' => $user->profile_picture,
                         'email' => $user->email,
                         'role' => $user->role,

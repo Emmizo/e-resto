@@ -150,23 +150,25 @@ class DashboardController extends Controller
         $topRestaurants = collect();
         if ($user->role == 'admin') {
             // Admin sees all restaurants with ratings
-            $topRestaurants = Restaurant::select('restaurants.id', 'restaurants.name', 'restaurants.cuisine_type')
+            $topRestaurants = Restaurant::select('restaurants.id', 'restaurants.name', 'restaurants.cuisine_id')
                 ->leftJoin('reviews', 'restaurants.id', '=', 'reviews.restaurant_id')
                 ->selectRaw('AVG(reviews.rating) as rating')
                 ->selectRaw('COUNT(reviews.id) as review_count')
-                ->groupBy('restaurants.id', 'restaurants.name', 'restaurants.cuisine_type')
+                ->groupBy('restaurants.id', 'restaurants.name', 'restaurants.cuisine_id')
                 ->having('review_count', '>', 0)
                 ->orderBy('rating', 'desc')
                 ->limit(4)
+                ->with('cuisine')
                 ->get();
         } else {
             // Restaurant owners see their own restaurant's rating
-            $topRestaurants = Restaurant::select('restaurants.id', 'restaurants.name', 'restaurants.cuisine_type')
+            $topRestaurants = Restaurant::select('restaurants.id', 'restaurants.name', 'restaurants.cuisine_id')
                 ->leftJoin('reviews', 'restaurants.id', '=', 'reviews.restaurant_id')
                 ->selectRaw('AVG(reviews.rating) as rating')
                 ->selectRaw('COUNT(reviews.id) as review_count')
                 ->where('restaurants.id', $restaurantId)
-                ->groupBy('restaurants.id', 'restaurants.name', 'restaurants.cuisine_type')
+                ->groupBy('restaurants.id', 'restaurants.name', 'restaurants.cuisine_id')
+                ->with('cuisine')
                 ->get();
         }
 

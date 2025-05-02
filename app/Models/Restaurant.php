@@ -16,7 +16,7 @@ class Restaurant extends Model
         'email',
         'website',
         'opening_hours',
-        'cuisine_type',
+        'cuisine_id',
         'price_range',
         'image',
         'owner_id',
@@ -53,6 +53,11 @@ class Restaurant extends Model
     public function menus()
     {
         return $this->hasMany(Menu::class);
+    }
+
+    public function cuisine()
+    {
+        return $this->belongsTo(\App\Models\Cuisine::class, 'cuisine_id');
     }
 
     //

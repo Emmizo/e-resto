@@ -46,4 +46,16 @@ class MenuController extends Controller
     {
         //
     }
+
+    /**
+     * List all cuisines (API endpoint)
+     */
+    public function listCuisines()
+    {
+        $cuisines = \App\Models\Cuisine::all();
+        return response()->json([
+            'status' => 'success',
+            'data' => $cuisines
+        ]);
+    }
 }
