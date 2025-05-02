@@ -149,24 +149,18 @@ class AuthController extends Controller
             \Log::info('User registered successfully', ['user_id' => $user->id]);
 
             return response()->json([
-                'status' => 'success',
-                'message' => 'User registered successfully',
-                'data' => [
-                    'user' => [
-                        'id' => $user->id,
-                        'first_name' => $user->first_name,
-                        'last_name' => $user->last_name,
-                        'name' => $user->name ?? ($user->first_name . ' ' . $user->last_name),
-                        'profile_picture' => $user->profile_picture,
-                        'email' => $user->email,
-                        'role' => $user->role,
-                        'phone_number' => $user->phone_number,
-                        'address' => $user->address,
-                        'fcm_token' => $user->fcm_token,
-                        'status' => $user->status
-                    ],
-                    'token' => $token
-                ]
+                'user' => [
+                    'id' => $user->id,
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
+                    'profile_picture' => $user->profile_picture,
+                    'email' => $user->email,
+                    'has_2fa_enabled' => $user->has_2fa_enabled ?? 0,
+                    'status' => $user->status,
+                    'fcm_token' => $user->fcm_token ?? null
+                ],
+                'token' => $token,
+                'success' => true
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
