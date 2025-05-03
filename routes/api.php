@@ -15,6 +15,8 @@ Route::group(['namespace' => 'Api', 'prefix' => 'v1'], function () {
     // Social Login Routes
     Route::post('auth/{google}/callback', [AuthController::class, 'handleGoogleCallback']);
     Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('google.login');
+    // Public API endpoint for listing cuisines
+    Route::get('/cuisines', [\App\Http\Controllers\API\MenuController::class, 'listCuisines']);
 });
 
 // Protected Routes (Authentication Required)
@@ -86,6 +88,3 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/orders/{id}', [OrderController::class, 'update']);
     Route::delete('/orders/{id}', [OrderController::class, 'destroy']);
 });
-
-// Public API endpoint for listing cuisines
-Route::get('/cuisines', [\App\Http\Controllers\API\MenuController::class, 'listCuisines']);
