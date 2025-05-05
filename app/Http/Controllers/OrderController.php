@@ -83,7 +83,7 @@ class OrderController extends Controller
             // Create the order
             $order = Order::create([
                 'user_id' => $request->user_id,
-                'restaurant_id' => session('userData')['users']->restaurant_id,
+                'restaurant_id' => $request->restaurant_id,
                 'total_amount' => $request->total_amount,
                 'status' => 'pending',
                 'payment_status' => 'pending',

@@ -78,7 +78,7 @@ class MenuController extends Controller
                 'name' => $item['name'] ?? '',
                 'description' => $item['description'] ?? '',
                 'price' => $item['price'],
-                'image' => $imagePath ?? '',  // Store the image path
+                'image' => config('app.url') . '/' . $imagePath ?? '',  // Store the image path
                 'category' => $item['category'] ?? '',
                 'dietary_info' => $item['dietary_info'] ?? '',
                 'is_available' => 1,
@@ -140,10 +140,11 @@ class MenuController extends Controller
                         'name' => $item->name,
                         'description' => $item->description,
                         'price' => $item->price,
+                        // 'menu_id' => $menu->id,
                         'category' => $item->category,
                         'dietary_info' => $item->dietary_info,
                         'is_available' => $item->is_available,
-                        'image' => $item->image
+                        'image' => config('app.url') . '/' . $item->image
                     ];
                 })
             ]
@@ -179,7 +180,7 @@ class MenuController extends Controller
         $menu->update([
             'name' => $request->name,
             'description' => $request->description,
-            'is_active' => $request->is_active ?? $menu->is_active,
+            // 'is_active' => $request->is_active ?? $menu->is_active,
         ]);
 
         // Handle menu items
@@ -202,6 +203,7 @@ class MenuController extends Controller
                     'name' => $itemData['name'],
                     'description' => $itemData['description'] ?? '',
                     'price' => $itemData['price'],
+                    'menu_id' => $request->id,
                     'category' => $itemData['category'] ?? '',
                     'dietary_info' => $itemData['dietary_info'] ?? '',
                     'is_available' => $itemData['is_available'] ?? 1,
@@ -220,7 +222,12 @@ class MenuController extends Controller
                     $item->update($itemAttributes);
                 } else {
                     // Create new item
-                    $itemAttributes['menu_id'] = $menu->id;
+                    /*  if (!$menu->id) {
+                         \Log::error('Menu ID is null when creating menu item', ['menu' => $menu, 'itemAttributes' => $itemAttributes]);
+                         throw new \Exception('Menu ID is missing when creating a new menu item!');
+                     } */
+
+                    $itemAttributes['menu_id'] = $request->id;
                     MenuItem::create($itemAttributes);
                 }
             }

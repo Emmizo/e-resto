@@ -226,7 +226,7 @@
                                     <textarea class="form-control rounded-3" id="edit_menu_description" name="description" rows="3" placeholder="Enter Menu Description" required></textarea>
                                 </div>
                             </div>
-                            <div class="col-md-12">
+                            {{-- <div class="col-md-12">
                                 <div class="form-group m-0 mb-3">
                                     <label class="form-check-label">Status</label>
                                     <div class="form-check form-switch">
@@ -234,7 +234,7 @@
                                         <label class="form-check-label" for="edit_menu_status">Active</label>
                                     </div>
                                 </div>
-                            </div>
+                            </div> --}}
                         </div>
                         <hr>
                         <div class="d-flex justify-content-between align-items-center mb-3">
