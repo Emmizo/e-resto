@@ -174,4 +174,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(RestaurantEmployee::class);
     }
+
+    public function favoriteMenuItems()
+    {
+        return $this->hasMany(\App\Models\FavoriteMenuItem::class, 'user_id');
+    }
+
+    public function favoriteRestaurants()
+    {
+        return $this->hasMany(\App\Models\FavoriteRestaurant::class, 'user_id');
+    }
 }

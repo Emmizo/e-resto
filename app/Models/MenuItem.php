@@ -46,13 +46,24 @@ class MenuItem extends Model
         return $this->belongsTo(Menu::class, 'menu_id');
     }
 
-    public function restaurant()
+    public function getRestaurantAttribute()
     {
-        return $this->belongsTo(Restaurant::class);
+        // If menu is loaded, get restaurant from menu
+        if ($this->relationLoaded('menu') && $this->menu) {
+            return $this->menu->restaurant;
+        }
+        // Otherwise, try to load via menu
+        $menu = $this->menu()->with('restaurant')->first();
+        return $menu ? $menu->restaurant : null;
     }
 
     public function orderItems()
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function favorites()
+    {
+        return $this->hasMany(\App\Models\FavoriteMenuItem::class, 'menu_item_id');
     }
 }

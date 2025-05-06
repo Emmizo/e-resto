@@ -60,5 +60,10 @@ class Restaurant extends Model
         return $this->belongsTo(\App\Models\Cuisine::class, 'cuisine_id');
     }
 
+    public function reviews()
+    {
+        return $this->hasMany(\App\Models\Review::class, 'restaurant_id');
+    }
+
     //
 }

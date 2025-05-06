@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\FavoriteRestaurant;
 use App\Models\Restaurant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use OpenApi\Annotations as OA;
 
 /**
@@ -42,6 +44,7 @@ class RestaurantController extends Controller
      *                     @OA\Property(property="phone", type="string", example="+1234567890"),
      *                     @OA\Property(property="email", type="string", example="restaurant@example.com"),
      *                     @OA\Property(property="status", type="boolean", example=true),
+     *                     @OA\Property(property="average_rating", type="number", format="float", example=4.5),
      *                     @OA\Property(
      *                         property="menus",
      *                         type="array",
@@ -90,10 +93,17 @@ class RestaurantController extends Controller
                     ->with(['menuItems' => function ($query) {
                         $query->where('is_available', true);
                     }]);
-            }])
-                ->where('status', true)
-                ->get()
-                ->toArray();  // Convert to array to ensure we're working with an array
+            }, 'reviews'])
+                ->where('is_approved', true)
+                ->get();
+
+            // Add average_rating to each restaurant
+            $restaurants = $restaurants->map(function ($restaurant) {
+                $restaurantArray = $restaurant->toArray();
+                $restaurantArray['average_rating'] = round($restaurant->reviews->avg('rating'), 2) ?? null;
+                unset($restaurantArray['reviews']);
+                return $restaurantArray;
+            })->toArray();
 
             if (empty($restaurants)) {
                 return response()->json([
@@ -116,5 +126,59 @@ class RestaurantController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Add a restaurant to user's favorites
+     */
+    public function favoriteRestaurant(Request $request)
+    {
+        $request->validate([
+            'restaurant_id' => 'required|exists:restaurants,id',
+        ]);
+        $user = Auth::user();
+        $favorite = FavoriteRestaurant::firstOrCreate([
+            'user_id' => $user->id,
+            'restaurant_id' => $request->restaurant_id,
+        ]);
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Restaurant added to favorites',
+            'data' => $favorite
+        ], 201);
+    }
+
+    /**
+     * Remove a restaurant from user's favorites
+     */
+    public function unfavoriteRestaurant(Request $request)
+    {
+        $request->validate([
+            'restaurant_id' => 'required|exists:restaurants,id',
+        ]);
+        $user = Auth::user();
+        $deleted = FavoriteRestaurant::where('user_id', $user->id)
+            ->where('restaurant_id', $request->restaurant_id)
+            ->delete();
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Restaurant removed from favorites',
+            'deleted' => $deleted > 0
+        ]);
+    }
+
+    /**
+     * List all favorite restaurants for the authenticated user
+     */
+    public function listFavoriteRestaurants(Request $request)
+    {
+        $user = Auth::user();
+        $favorites = FavoriteRestaurant::with('restaurant')
+            ->where('user_id', $user->id)
+            ->get();
+        return response()->json([
+            'status' => 'success',
+            'data' => $favorites
+        ]);
     }
 }

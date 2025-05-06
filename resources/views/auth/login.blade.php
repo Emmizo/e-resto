@@ -105,9 +105,12 @@
                                                     </div>
                                                 </div>
                                                 <div class="col-md-12">
-                                                    <div class="form-group m-0 mb-3">
+                                                    <div class="form-group m-0 mb-3 position-relative">
                                                         <label for="loginPassword" class="form-label">Password <span class="asterik">*</span></label>
                                                         <input type="password" class="form-control rounded-3" id="loginPassword" placeholder="Enter Password" name="password" required>
+                                                        <span class="toggle-password" style="position:absolute;top:38px;right:15px;cursor:pointer;z-index:2;">
+                                                            <i class="fa fa-eye-slash" id="toggleLoginPassword"></i>
+                                                        </span>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-12">
@@ -1000,6 +1003,16 @@ function resetForm() {
     document.getElementById("registerForm").reset();
     $('#profilePreviewImg, #restaurantPreviewImg').attr('src', '');
 }
+
+// Show/hide password toggle for login
+$(document).ready(function() {
+    $('#toggleLoginPassword').on('click', function() {
+        const passwordInput = $('#loginPassword');
+        const type = passwordInput.attr('type') === 'password' ? 'text' : 'password';
+        passwordInput.attr('type', type);
+        $(this).toggleClass('fa-eye fa-eye-slash');
+    });
+});
 
 });
     </script>

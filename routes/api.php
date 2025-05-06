@@ -51,6 +51,16 @@ Route::group(['namespace' => 'Api', 'prefix' => 'v1', 'middleware' => 'auth:api'
     // Review routes
     Route::post('/reviews', [ReviewController::class, 'store']);
     Route::get('/reviews/user', [ReviewController::class, 'userReviews']);
+
+    // Favorite menu item routes
+    Route::post('/menu-items/favorite', [\App\Http\Controllers\API\MenuController::class, 'favoriteMenuItem']);
+    Route::post('/menu-items/unfavorite', [\App\Http\Controllers\API\MenuController::class, 'unfavoriteMenuItem']);
+    Route::get('/menu-items/favorites', [\App\Http\Controllers\API\MenuController::class, 'listFavoriteMenuItems']);
+
+    // Favorite restaurant routes
+    Route::post('/restaurants/favorite', [\App\Http\Controllers\Api\RestaurantController::class, 'favoriteRestaurant']);
+    Route::post('/restaurants/unfavorite', [\App\Http\Controllers\Api\RestaurantController::class, 'unfavoriteRestaurant']);
+    Route::get('/restaurants/favorites', [\App\Http\Controllers\Api\RestaurantController::class, 'listFavoriteRestaurants']);
 });
 
 Route::get('/restaurants/{restaurant}/reviews', [ReviewController::class, 'restaurantReviews']);
