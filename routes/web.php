@@ -84,7 +84,7 @@ Route::group([
     Route::get('/orders/{order}/edit', [OrderController::class, 'edit'])->name('orders.edit');
     Route::put('/orders/{order}', [OrderController::class, 'update'])->name('orders.update');
     Route::delete('/orders/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');
-    Route::patch('/orders/{order}/status-update', [OrderController::class, 'updateStatus'])->name('orders.status.update');
+    Route::post('/orders/{order}/status-update', [OrderController::class, 'updateStatus']);
 });
 
 // Reservation Management Routes
@@ -96,3 +96,4 @@ Route::middleware(['auth', 'nocache', 'restaurant.permission:Reservation_Managem
 });
 
 Route::post('/api/store-fcm-token', [App\Http\Controllers\API\AuthController::class, 'storeFcmToken'])->name('store.fcm.token');
+Route::post('/save-fcm-token', [FirebaseController::class, 'saveFcmToken']);

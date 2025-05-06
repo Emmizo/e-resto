@@ -26,3 +26,65 @@
 
     </script>
 
+<script>
+    // Request permission for notifications
+    function requestNotificationPermission() {
+        if (!window.messaging) {
+            console.error('Firebase messaging is not initialized');
+            return;
+        }
+        window.messaging.requestPermission()
+            .then(() => {
+                console.log('Notification permission granted.');
+                return window.messaging.getToken();
+            })
+            .then((token) => {
+                console.log('FCM Token:', token);
+                // Send token to your Laravel backend
+                $.ajax({
+                    url: '/save-fcm-token',
+                    method: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        fcm_token: token,
+                        user_id: '{{ Auth::id() }}'
+                    },
+                    success: function(response) {
+                        console.log('Token saved successfully');
+                    }
+                });
+            })
+            .catch((err) => {
+                console.log('Unable to get permission to notify.', err);
+            });
+    }
+
+    // Wait for Firebase messaging to be ready
+    document.addEventListener('messaging-ready', function() {
+        requestNotificationPermission();
+        window.messaging.onMessage((payload) => {
+            console.log('Message received. ', payload);
+
+            // Update notification badge
+            const notificationBadge = $('.notification-badge');
+            const currentCount = parseInt(notificationBadge.text()) || 0;
+            notificationBadge.text(currentCount + 1).show();
+
+            // Add notification to dropdown
+            const notificationList = $('.notification-list');
+            const notification = `
+                <li class=\"px-3 py-2 border-bottom\">
+                    <div class=\"d-flex align-items-center\">
+                        <div class=\"flex-grow-1\">
+                            <h6 class=\"mb-1\">${payload.notification.title}</h6>
+                            <p class=\"mb-0 small text-muted\">${payload.notification.body}</p>
+                            <small class=\"text-muted\">${new Date().toLocaleTimeString()}</small>
+                        </div>
+                    </div>
+                </li>
+            `;
+            notificationList.prepend(notification);
+        });
+    });
+</script>
+

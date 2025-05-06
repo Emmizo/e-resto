@@ -23,4 +23,24 @@ class FirebaseController extends Controller
             'measurementId' => config('services.firebase.measurement_id'),
         ]);
     }
+
+    /**
+     * Save FCM token for a user
+     */
+    public function saveFcmToken(Request $request)
+    {
+        $request->validate([
+            'fcm_token' => 'required|string',
+            'user_id' => 'required|integer'
+        ]);
+
+        $user = \App\Models\User::find($request->user_id);
+        if ($user) {
+            $user->fcm_token = $request->fcm_token;
+            $user->save();
+            return response()->json(['status' => 'success']);
+        }
+
+        return response()->json(['status' => 'error', 'message' => 'User not found'], 404);
+    }
 }

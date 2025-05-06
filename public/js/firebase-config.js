@@ -49,6 +49,10 @@ async function initializeMessaging() {
             console.log('Firebase already initialized');
         }
 
+        // Set window.messaging to the Firebase messaging instance
+        window.messaging = firebase.messaging();
+        document.dispatchEvent(new Event('messaging-ready'));
+
         // Rest of your initialization code remains the same
         // ...
     } catch (error) {

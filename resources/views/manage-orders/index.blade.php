@@ -109,7 +109,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="updateStatusForm">
+                <form id="updateStatusForm" method="POST"><!-- No action attribute: handled by JS only -->
                     @csrf
                     <input type="hidden" name="order_id" id="order_id">
                     <div class="form-group mb-3">
@@ -158,7 +158,9 @@
 
 @section('scripts')
 <script>
+console.log('Script loaded');
 $(document).ready(function() {
+    console.log('Document ready');
     // Check if DataTable is already initialized
     if ($.fn.DataTable.isDataTable('#manageOrdersTable')) {
         $('#manageOrdersTable').DataTable().destroy();
@@ -282,22 +284,22 @@ $(document).ready(function() {
         }
     });
 
-    // Handle update status form submission
-    $('#updateStatusForm').on('submit', function(e) {
+    // Handle update status form submission (delegated for robustness)
+    $(document).on('submit', '#updateStatusForm', function(e) {
+        console.log('Delegated form submit handler triggered');
         e.preventDefault();
         const orderId = $('#order_id').val();
         const status = $('#status').val();
         const order = {!! json_encode($orders) !!}.find(o => o.id === parseInt(orderId));
-
+        alert(orderId);
         // Prevent updating if order is already completed
         if (order && order.status === 'completed') {
             toastr.error('Cannot update status of a completed order');
             return;
         }
-
         $.ajax({
             url: `/orders/${orderId}/status-update`,
-            type: 'PATCH',
+            type: 'POST',
             data: {
                 _token: '{{ csrf_token() }}',
                 status: status
