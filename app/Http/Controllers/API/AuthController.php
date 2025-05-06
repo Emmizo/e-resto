@@ -155,6 +155,7 @@ class AuthController extends Controller
                     'last_name' => $user->last_name,
                     'profile_picture' => $user->profile_picture,
                     'email' => $user->email,
+                    'phone_number' => $user->phone_number,
                     'has_2fa_enabled' => $user->has_2fa_enabled ?? 0,
                     'status' => $user->status,
                     'fcm_token' => $user->fcm_token ?? null
@@ -312,6 +313,7 @@ class AuthController extends Controller
                     'first_name' => $user->first_name,
                     'last_name' => $user->last_name,
                     'profile_picture' => $user->profile_picture,
+                    'phone_number' => $user->phone_number,
                     'email' => $user->email,
                     'has_2fa_enabled' => $user->has_2fa_enabled,
                     'status' => $user->status,

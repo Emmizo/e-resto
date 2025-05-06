@@ -50,6 +50,9 @@
                                     <span>Party Size</span>
                                 </th>
                                 <th>
+                                    <span>Phone Number</span>
+                                </th>
+                                <th>
                                     <span>Status</span>
                                 </th>
                                 <th>
@@ -74,6 +77,9 @@
                                 </td>
                                 <td>
                                     <span>{{ $reservation->number_of_people }}</span>
+                                </td>
+                                <td>
+                                    <span>{{ $reservation->phone_number ?? 'N/A' }}</span>
                                 </td>
                                 <td>
                                     <span class="badge rounded-pill bg-{{ $reservation->status === 'confirmed' ? 'success' : ($reservation->status === 'cancelled' ? 'danger' : 'warning') }}">

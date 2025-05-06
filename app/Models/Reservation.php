@@ -21,6 +21,7 @@ class Reservation extends Model
         'number_of_people',
         'special_requests',
         'status',
+        'phone_number',
     ];
 
     /**

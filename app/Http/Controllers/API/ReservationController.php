@@ -139,7 +139,8 @@ class ReservationController extends Controller
      *             @OA\Property(property="restaurant_id", type="integer", format="int64", example=1),
      *             @OA\Property(property="reservation_time", type="string", format="date-time", example="2024-04-15 19:00:00"),
      *             @OA\Property(property="number_of_guests", type="integer", example=4),
-     *             @OA\Property(property="special_requests", type="string", example="Window seat preferred")
+     *             @OA\Property(property="special_requests", type="string", example="Window seat preferred"),
+     *             @OA\Property(property="phone_number", type="string", example="123-456-7890")
      *         )
      *     ),
      *     @OA\Response(
@@ -180,7 +181,8 @@ class ReservationController extends Controller
             'restaurant_id' => 'required|exists:restaurants,id',
             'reservation_time' => 'required',
             'number_of_guests' => 'required|integer|min:1|max:20',
-            'special_requests' => 'nullable|string|max:500'
+            'special_requests' => 'nullable|string|max:500',
+            'phone_number' => 'nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -198,6 +200,7 @@ class ReservationController extends Controller
                 'reservation_time' => $request->reservation_time,
                 'number_of_people' => $request->number_of_guests,
                 'special_requests' => $request->special_requests,
+                'phone_number' => $request->phone_number,
                 'status' => 'pending'
             ]);
 
@@ -331,7 +334,8 @@ class ReservationController extends Controller
      *             @OA\Property(property="reservation_time", type="string", format="date-time", example="2024-04-15 19:00:00"),
      *             @OA\Property(property="number_of_people", type="integer", example=4),
      *             @OA\Property(property="special_requests", type="string", example="Window seat preferred"),
-     *             @OA\Property(property="status", type="string", enum={"pending", "confirmed", "cancelled", "completed"}, example="confirmed")
+     *             @OA\Property(property="status", type="string", enum={"pending", "confirmed", "cancelled", "completed"}, example="confirmed"),
+     *             @OA\Property(property="phone_number", type="string", example="123-456-7890")
      *         )
      *     ),
      *     @OA\Response(
@@ -376,7 +380,8 @@ class ReservationController extends Controller
             'reservation_time' => 'nullable|date',
             'number_of_guests' => 'nullable|integer|min:1|max:20',
             'special_requests' => 'nullable|string|max:500',
-            'status' => 'nullable|in:pending,confirmed,cancelled,completed'
+            'status' => 'nullable|in:pending,confirmed,cancelled,completed',
+            'phone_number' => 'nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -398,7 +403,24 @@ class ReservationController extends Controller
                 ], 404);
             }
 
-            $reservation->update($request->all());
+            $updateData = [];
+            if ($request->has('reservation_time')) {
+                $updateData['reservation_time'] = $request->reservation_time;
+            }
+            if ($request->has('number_of_guests')) {
+                $updateData['number_of_people'] = $request->number_of_guests;
+            }
+            if ($request->has('special_requests')) {
+                $updateData['special_requests'] = $request->special_requests;
+            }
+            if ($request->has('status')) {
+                $updateData['status'] = $request->status;
+            }
+            if ($request->has('phone_number')) {
+                $updateData['phone_number'] = $request->phone_number;
+            }
+
+            $reservation->update($updateData);
 
             return response()->json([
                 'status' => 'success',
