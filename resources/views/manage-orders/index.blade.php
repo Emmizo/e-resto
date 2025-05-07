@@ -109,7 +109,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="updateStatusForm" method="PUT"><!-- No action attribute: handled by JS only -->
+                <form id="updateStatusForm" method="POST"><!-- No action attribute: handled by JS only -->
                     @csrf
                     <input type="hidden" name="order_id" id="order_id">
                     <div class="form-group mb-3">
@@ -296,7 +296,7 @@ $(document).ready(function() {
         }
         $.ajax({
             url: `/orders/${orderId}/status-update`,
-            type: 'PUT',
+            type: 'POST',
             data: {
                 _token: $('meta[name="csrf-token"]').attr('content'),
                 _method: 'PUT',
