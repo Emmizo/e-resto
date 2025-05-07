@@ -47,6 +47,7 @@ Route::group(['namespace' => 'Api', 'prefix' => 'v1', 'middleware' => 'auth:api'
     Route::get('/reservations/{id}', [ReservationController::class, 'show']);
     Route::put('/reservations/{id}', [ReservationController::class, 'update']);
     Route::delete('/reservations/{id}', [ReservationController::class, 'destroy']);
+    Route::post('/reservations/{id}/cancel', [\App\Http\Controllers\API\ReservationController::class, 'cancel'])->name('api.reservations.cancel');
 
     // Review routes
     Route::post('/reviews', [ReviewController::class, 'store']);
@@ -61,6 +62,9 @@ Route::group(['namespace' => 'Api', 'prefix' => 'v1', 'middleware' => 'auth:api'
     Route::post('/restaurants/favorite', [\App\Http\Controllers\Api\RestaurantController::class, 'favoriteRestaurant']);
     Route::post('/restaurants/unfavorite', [\App\Http\Controllers\Api\RestaurantController::class, 'unfavoriteRestaurant']);
     Route::get('/restaurants/favorites', [\App\Http\Controllers\Api\RestaurantController::class, 'listFavoriteRestaurants']);
+
+    // Final stats summary
+    Route::get('/final-stats', [\App\Http\Controllers\API\StatsController::class, 'finalStats']);
 });
 
 Route::get('/restaurants/{restaurant}/reviews', [ReviewController::class, 'restaurantReviews']);

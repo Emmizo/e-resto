@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->dateTime('reservation_time');
             $table->integer('number_of_people');
             $table->text('special_requests')->nullable();
-            $table->enum('status', ['pending', 'confirmed', 'cancelled'])->default('pending');
+            $table->enum('status', ['pending', 'confirmed', 'cancelled', 'completed'])->default('pending');
             $table->string('phone_number')->nullable();
             $table->timestamps();
 

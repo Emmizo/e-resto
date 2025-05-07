@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ReservationStatusUpdated;
 use App\Models\Reservation;
 use App\Models\Restaurant;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
 class ReservationController extends Controller
@@ -19,7 +22,6 @@ class ReservationController extends Controller
             ->where('reservations.restaurant_id', session('userData')['users']->restaurant_id)
             ->orderBy('reservations.reservation_time', 'desc')
             ->get();
-
         return view('manage-reservations.index', compact('reservations'));
     }
 
@@ -29,7 +31,7 @@ class ReservationController extends Controller
     public function update(Request $request, string $id)
     {
         $validator = Validator::make($request->all(), [
-            'status' => 'required|in:pending,confirmed,cancelled'
+            'status' => 'required|in:pending,confirmed,cancelled,completed'
         ]);
 
         if ($validator->fails()) {
@@ -40,8 +42,19 @@ class ReservationController extends Controller
             ], 422);
         }
 
-        $reservation = Reservation::findOrFail($id);
-        $reservation->update(['status' => $request->status]);
+        $reservation = Reservation::with('user')->findOrFail($id);
+        $oldStatus = $reservation->status;
+
+        $reservation->status = $request->status;
+        $reservation->save();
+
+        if ($oldStatus !== $reservation->status && $reservation->user) {
+            try {
+                Mail::to($reservation->user->email)->send(new ReservationStatusUpdated($reservation));
+            } catch (\Exception $e) {
+                \Log::error('Failed to send reservation status update email: ' . $e->getMessage());
+            }
+        }
 
         return response()->json([
             'status' => 200,

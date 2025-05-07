@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\OrderStatusUpdated;
 use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -10,6 +11,7 @@ use App\Models\User;
 use App\Services\FirebaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
 class OrderController extends Controller
@@ -228,8 +230,40 @@ class OrderController extends Controller
                 ], 400);
             }
 
+            $oldStatus = $order->status;
             $order->status = $request->status;
             $order->save();
+
+            // Send notifications if status changed
+            if ($oldStatus !== $order->status) {
+                $user = $order->user;
+
+                // Send email notification
+                if ($user && $user->email) {
+                    try {
+                        Mail::to($user->email)->send(new OrderStatusUpdated($order));
+                    } catch (\Exception $e) {
+                        \Log::error('Failed to send order status update email: ' . $e->getMessage());
+                    }
+                }
+
+                // Send Firebase push notification
+                if ($user && $user->fcm_token) {
+                    $title = 'Order Status Updated';
+                    $body = "Your order #{$order->id} status has been updated to: " . ucfirst($order->status);
+                    $data = [
+                        'order_id' => $order->id,
+                        'status' => $order->status
+                    ];
+
+                    $this->firebaseService->sendNotification(
+                        $user->fcm_token,
+                        $title,
+                        $body,
+                        $data
+                    );
+                }
+            }
 
             return response()->json([
                 'status' => 200,

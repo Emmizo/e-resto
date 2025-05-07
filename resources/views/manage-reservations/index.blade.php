@@ -33,7 +33,7 @@
                         <a href="javascript:;" class="btn btn-white btn-xsmall font-dmsans fw-medium position-relative rounded-3 border border-grey-v1 filter-btn" title="Filter">Filter</a>
                     </div>
                 </div>
-                <div class="table-block">
+                <div class="table-block" style="overflow-x: auto;">
                     <table id="manageReservationsTable" class="display custom-datatable" style="width:100%">
                         <thead>
                             <tr>
@@ -184,17 +184,19 @@
         </div>
     </div>
 </div>
-@section('scripts')
+@section('script')
 <script>
 $(document).ready(function() {
-    // Initialize DataTable
+    if ($.fn.DataTable.isDataTable('#manageReservationsTable')) {
+        $('#manageReservationsTable').DataTable().destroy();
+    }
     $('#manageReservationsTable').DataTable({
         responsive: true,
         order: [[5, 'desc']], // Sort by created_at descending
         language: {
             emptyTable: "No reservations found"
         },
-        dom: '<"top"f>rt<"bottom"lip><"clear">',
+        dom: 'lrtip', // disables the default search box
         pageLength: 10,
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]]
     });
@@ -211,9 +213,10 @@ $(document).ready(function() {
     });
 
     // Handle status update
-    $('#updateStatusBtn').click(function() {
+    $(document).on('click', '#updateStatusBtn', function() {
         const reservationId = $('#reservation_id').val();
         const status = $('#status').val();
+        console.log('Update Status button clicked', reservationId, status); // Debug log
 
         $.ajax({
             url: `/reservations/${reservationId}`,

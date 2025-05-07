@@ -497,4 +497,63 @@ class ReservationController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Cancel a reservation.
+     *
+     * @OA\Post(
+     *     path="/reservations/{id}/cancel",
+     *     summary="Cancel a reservation",
+     *     tags={"Reservations"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Reservation ID",
+     *         required=true,
+     *         @OA\Schema(type="integer", format="int64")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Reservation cancelled successfully",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="message", type="string", example="Reservation cancelled successfully"),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Reservation not found"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
+    public function cancel(Request $request, $id): JsonResponse
+    {
+        $reservation = Reservation::where('user_id', auth()->id())->find($id);
+        if (!$reservation) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Reservation not found'
+            ], 404);
+        }
+        if ($reservation->status === 'cancelled') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Reservation is already cancelled.'
+            ], 400);
+        }
+        $reservation->status = 'cancelled';
+        $reservation->save();
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Reservation cancelled successfully',
+            'data' => $reservation
+        ]);
+    }
 }

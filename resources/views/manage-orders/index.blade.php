@@ -156,16 +156,14 @@
     </div>
 </div>
 
-@section('scripts')
+@section('script')
 <script>
 console.log('Script loaded');
 $(document).ready(function() {
     console.log('Document ready');
-    // Check if DataTable is already initialized
     if ($.fn.DataTable.isDataTable('#manageOrdersTable')) {
         $('#manageOrdersTable').DataTable().destroy();
     }
-
     // Initialize DataTable with the existing table data
     var table = $('#manageOrdersTable').DataTable({
         responsive: true,
@@ -321,8 +319,8 @@ $(document).ready(function() {
         });
     });
 
-    // Handle view button click
-    $('.view-action').click(function() {
+    // Handle view button click (delegated)
+    $(document).on('click', '.view-action', function() {
         const orderId = $(this).data('order-id');
         window.location.href = `/orders/${orderId}`;
     });
