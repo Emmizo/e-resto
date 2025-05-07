@@ -65,6 +65,9 @@ Route::group(['namespace' => 'Api', 'prefix' => 'v1', 'middleware' => 'auth:api'
 
     // Final stats summary
     Route::get('/final-stats', [\App\Http\Controllers\API\StatsController::class, 'finalStats']);
+
+    // Update user profile
+    Route::put('/user/profile', [\App\Http\Controllers\API\AuthController::class, 'updateProfile']);
 });
 
 Route::get('/restaurants/{restaurant}/reviews', [ReviewController::class, 'restaurantReviews']);

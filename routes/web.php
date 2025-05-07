@@ -84,7 +84,7 @@ Route::group([
     Route::get('/orders/{order}/edit', [OrderController::class, 'edit'])->name('orders.edit');
     Route::put('/orders/{order}', [OrderController::class, 'update'])->name('orders.update');
     Route::delete('/orders/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');
-    Route::post('/orders/{order}/status-update', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
+    Route::put('/orders/{order}/status-update', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
 });
 
 // Reservation Management Routes

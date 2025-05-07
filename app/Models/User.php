@@ -20,6 +20,7 @@ class User extends Authenticatable
         'phone_number',
         'profile_picture',
         'preferences',
+        'address',
         'status',
         'google2fa_secret',
         'has_2fa_enabled',

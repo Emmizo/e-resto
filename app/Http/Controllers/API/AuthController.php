@@ -316,6 +316,7 @@ class AuthController extends Controller
                     'phone_number' => $user->phone_number,
                     'email' => $user->email,
                     'has_2fa_enabled' => $user->has_2fa_enabled,
+                    'address' => $user->address,
                     'status' => $user->status,
                     'fcm_token' => $user->fcm_token  // Include FCM token in response
                 ];
@@ -513,6 +514,9 @@ class AuthController extends Controller
                     'email' => $user->email,
                     'google2fa_secret' => $user->google2fa_secret,
                     'has_2fa_enabled' => $user->has_2fa_enabled,
+                    'profile_picture' => $user->profile_picture,
+                    'phone_number' => $user->phone_number,
+                    'address' => $user->address,
                     'status' => $user->status ?? 1,
                 ],
                 'token' => $token,
@@ -756,7 +760,7 @@ class AuthController extends Controller
     public function updateProfilePicture(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'profile_picture' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'profile_picture' => 'required|image|mimes:jpeg,png,jpg,gif,webp,bmp,svg,tiff,jfif,avif,ico|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -798,6 +802,69 @@ class AuthController extends Controller
             'status' => 'success',
             'message' => 'Profile picture updated successfully',
             'profile_picture' => $fullUrl
+        ]);
+    }
+
+    /**
+     * Update the authenticated user's profile (excluding profile picture).
+     *
+     * @OA\Put(
+     *     path="/user/profile",
+     *     summary="Update user profile",
+     *     tags={"Authentication"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="first_name", type="string", example="John"),
+     *             @OA\Property(property="last_name", type="string", example="Doe"),
+     *             @OA\Property(property="email", type="string", format="email", example="john@example.com"),
+     *             @OA\Property(property="phone_number", type="string", example="+1234567890"),
+     *             @OA\Property(property="address", type="string", example="123 Main St")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Profile updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="message", type="string", example="Profile updated successfully"),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'sometimes|required|string|max:255',
+            'last_name' => 'sometimes|required|string|max:255',
+            'email' => 'sometimes|required|email|max:255|unique:users,email,' . $user->id,
+            'phone_number' => 'nullable|string|max:20|regex:/^[0-9+\-() ]+$/',
+            'address' => 'nullable|string|max:255',
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+        $user->fill($request->only(['first_name', 'last_name', 'email', 'phone_number', 'address']));
+        $user->save();
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Profile updated successfully',
+            'data' => $user
         ]);
     }
 }
