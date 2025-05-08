@@ -111,7 +111,7 @@ class UserController extends Controller
             'plain_password' => $password,
             'role' => $request->position,
             'phone_number' => $request->phone_number,
-            'profile_picture' => $profilePicturePath,
+            'profile_picture' => config('app.url') . '/' . $profilePicturePath,
             'preferences' => json_encode([]),
         ]);
 
@@ -176,7 +176,7 @@ class UserController extends Controller
             'email' => $request->email,
             'role' => $request->position,
             'phone_number' => $request->phone_number,
-            'profile_picture' => $profilePicturePath,
+            'profile_picture' => config('app.url') . '/' . $profilePicturePath,
         ]);
 
         // Update restaurant employee
@@ -303,7 +303,7 @@ class UserController extends Controller
             'last_name' => $request->last_name,
             'email' => $request->email,
             'phone_number' => $request->phone_number,
-            'profile_picture' => $profilePicturePath,
+            'profile_picture' => config('app.url') . '/' . $profilePicturePath,
         ]);
         return redirect()->route('manage-users');
         // Profile picture handling

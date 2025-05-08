@@ -125,7 +125,7 @@ class AuthController extends Controller
             'cuisine_type' => '',  // Deprecated, keep for now
             'cuisine_id' => $request->restaurant_cuisine_id,
             'price_range' => $request->restaurant_price_range,
-            'image' => $restaurantImagePath,
+            'image' => config('app.url') . '/' . $restaurantImagePath,
             'owner_id' => $user->id,
             'is_approved' => false,
         ]);
