@@ -86,6 +86,13 @@ class RestaurantController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
+            $user = Auth::user();
+            $favoriteIds = [];
+            if ($user) {
+                $favoriteIds = FavoriteRestaurant::where('user_id', $user->id)
+                    ->pluck('restaurant_id')
+                    ->toArray();
+            }
             // Get all active restaurants with their active menus and menu items
             $restaurants = Restaurant::with(['menus' => function ($query) {
                 $query
@@ -97,10 +104,11 @@ class RestaurantController extends Controller
                 ->where('is_approved', true)
                 ->get();
 
-            // Add average_rating to each restaurant
-            $restaurants = $restaurants->map(function ($restaurant) {
+            // Add average_rating and is_favorite to each restaurant
+            $restaurants = $restaurants->map(function ($restaurant) use ($favoriteIds) {
                 $restaurantArray = $restaurant->toArray();
                 $restaurantArray['average_rating'] = round($restaurant->reviews->avg('rating'), 2) ?? null;
+                $restaurantArray['is_favorite'] = in_array($restaurant->id, $favoriteIds);
                 unset($restaurantArray['reviews']);
                 return $restaurantArray;
             })->toArray();
@@ -176,9 +184,18 @@ class RestaurantController extends Controller
         $favorites = FavoriteRestaurant::with('restaurant')
             ->where('user_id', $user->id)
             ->get();
+        $result = $favorites->map(function ($favorite) {
+            $restaurant = $favorite->restaurant;
+            $reviews = $restaurant->reviews;
+            return [
+                'restaurant' => $restaurant,
+                'average_rating' => $reviews->avg('rating') ? round($reviews->avg('rating'), 2) : null,
+                'reviews_count' => $reviews->count(),
+            ];
+        });
         return response()->json([
             'status' => 'success',
-            'data' => $favorites
+            'data' => $result
         ]);
     }
 }
