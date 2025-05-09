@@ -6,14 +6,14 @@
         <div class="col-lg-10">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h2>Terms and Conditions</h2>
-                <a href="{{ route('admin.terms.create') }}" class="btn btn-primary">Add New</a>
+                <a href="{{ route('admin.terms.create') }}" class="btn admin-btn-3d">Add New</a>
             </div>
             @if(session('success'))
                 <div class="alert alert-success">{{ session('success') }}</div>
             @endif
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <table class="table table-bordered">
+            <div class="admin-card-3d shadow-3d">
+                <div class="admin-card-body">
+                    <table class="table admin-table-3d">
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -31,7 +31,7 @@
                                 <td>{{ $term->is_active ? 'Yes' : 'No' }}</td>
                                 <td>{{ $term->created_at->format('Y-m-d') }}</td>
                                 <td>
-                                    <a href="{{ route('admin.terms.edit', $term->id) }}" class="btn btn-sm btn-warning">Edit</a>
+                                    <a href="{{ route('admin.terms.edit', $term->id) }}" class="btn btn-sm admin-btn-3d">Edit</a>
                                 </td>
                             </tr>
                         @endforeach

@@ -603,12 +603,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     <input type="number" class="form-control" name="menu_items[${index}][price]"
                            placeholder="Price" value="${item ? item.price : ''}" required>
                 </div>
+
                 <div class="col-md-5">
                     <div class="input-group">
                         <input type="file" class="form-control" name="menu_items[${index}][image]" accept="image/*">
                         ${item && item.image ? `
                             <div class="mt-2 w-100">
-                                <img src="/${item.image}" alt="${item.name}" class="img-thumbnail" style="max-height: 100px;">
+                                <img src="${item.image}" alt="${item.name}" class="img-thumbnail" style="height: 100px; width: 100px;">
                                 <input type="hidden" name="menu_items[${index}][existing_image]" value="${item.image}">
                             </div>
                         ` : ''}

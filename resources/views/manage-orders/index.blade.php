@@ -171,7 +171,7 @@ $(document).ready(function() {
         language: {
             emptyTable: "No orders found"
         },
-        dom: '<"top"f>rt<"bottom"lip><"clear">',
+        dom: 'lrtip',
         pageLength: 10,
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
         processing: false,

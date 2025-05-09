@@ -134,7 +134,7 @@ class UserController extends Controller
                 ]);
             }
         }
-        event(new NewUserCreatedEvent($user));
+        event(new NewUserCreatedEvent($user, $password));
 
         return response()->json([
             'status' => 200,
@@ -309,16 +309,18 @@ class UserController extends Controller
         // Profile picture handling
     }
 
-    public function activateAccount(Request $request)
+    public function activateAccount(Request $request, $userId)
     {
-        $user = User::find($request->id);
+        \Log::info('activateAccount called', ['userId' => $userId, 'status' => $request->status, 'request' => $request->all()]);
+        $user = User::find($userId);
         if ($user) {
             $user->status = $request->status;
-
             $user->save();
-            return response()->json(['success' => true]);
+            \Log::info('User status updated', ['userId' => $userId, 'new_status' => $user->status]);
+            return response()->json(['status' => 200]);
         } else {
-            return response()->json(['success' => false]);
+            \Log::warning('User not found for status update', ['userId' => $userId]);
+            return response()->json(['status' => 404]);
         }
     }
 
@@ -420,13 +422,34 @@ class UserController extends Controller
 
         // Format the response
         $data = $users->items()->map(function ($user) {
+            // Determine if the toggle should be enabled for this user
+            $currentUser = auth()->user();
+            $currentUserRole = $currentUser->role;
+            $targetUserRole = $user->role;
+            $canToggle = false;
+            if ($currentUser->id !== $user->id) {
+                if ($currentUserRole === 'admin' && $targetUserRole === 'restaurant_owner') {
+                    $canToggle = true;
+                } elseif ($currentUserRole === 'restaurant_owner' && $user->id !== $currentUser->id) {
+                    $canToggle = true;
+                } elseif ($currentUserRole === 'manager' && $targetUserRole !== 'restaurant_owner') {
+                    $canToggle = true;
+                }
+            }
             return [
-                'name' => $user->name,
+                'name' => $user->first_name . ' ' . $user->last_name,
                 'email' => $user->email,
                 'phone_number' => $user->phone_number,
                 'restaurant_name' => $user->restaurant ? $user->restaurant->name : '-',
-                'created_at' => $user->created_at->format('M d, Y H:i'),
-                'action' => view('manage-users.partials.action-buttons', ['user' => $user])->render()
+                'restaurant_phone' => $user->restaurant ? $user->restaurant->phone_number : '-',
+                'restaurant_email' => $user->restaurant ? $user->restaurant->email : '-',
+                'restaurant_address' => $user->restaurant ? $user->restaurant->address : '-',
+                'role' => $user->restaurant_position ?? Str::title(str_replace('_', ' ', $user->role)),
+                'created_at' => $user->created_at->format('Y-m-d'),
+                'website' => $user->restaurant ? $user->restaurant->website : '',
+                'request' => '',  // You can add request actions if needed
+                'status' => view('manage-users.partials.status-toggle', compact('user', 'canToggle'))->render(),
+                'action' => view('manage-users.partials.action-buttons', ['user' => $user])->render(),
             ];
         });
 

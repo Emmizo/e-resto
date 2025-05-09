@@ -1343,3 +1343,81 @@ main{
     height: 15rem;
     width: 100%;
 }
+
+/* 3D/Glassmorphism/Neumorphism Styles for Admin Panel */
+
+.admin-card-3d {
+    background: rgba(255,255,255,0.85);
+    border-radius: 18px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18), 0 1.5px 4px 0 rgba(0,0,0,0.08);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255,255,255,0.18);
+    transition: box-shadow 0.3s, transform 0.3s;
+}
+.admin-card-3d:hover {
+    box-shadow: 0 16px 48px 0 rgba(31, 38, 135, 0.22), 0 3px 8px 0 rgba(0,0,0,0.12);
+    transform: translateY(-4px) scale(1.02);
+}
+.admin-card-header {
+    padding: 1.5rem 2rem 1rem 2rem;
+    border-bottom: 1px solid #e3e3e3;
+    background: linear-gradient(90deg, #184C55 0%, #1e6a7b 100%);
+    color: #fff;
+    border-radius: 18px 18px 0 0;
+}
+.admin-card-body {
+    padding: 2rem;
+}
+.admin-btn-3d {
+    background: linear-gradient(90deg, #184C55 0%, #1e6a7b 100%);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 16px 0 rgba(24,76,85,0.18);
+    transition: box-shadow 0.2s, transform 0.2s;
+    font-weight: 600;
+}
+.admin-btn-3d:hover, .admin-btn-3d:focus {
+    box-shadow: 0 8px 32px 0 rgba(24,76,85,0.22);
+    transform: translateY(-2px) scale(1.03);
+    color: #fff;
+}
+.admin-table-3d {
+    background: rgba(255,255,255,0.92);
+    border-radius: 14px;
+    box-shadow: 0 2px 12px 0 rgba(24,76,85,0.10);
+    overflow: hidden;
+}
+.admin-table-3d th {
+    background: linear-gradient(90deg, #184C55 0%, #1e6a7b 100%);
+    color: #fff;
+    border: none;
+}
+.admin-table-3d td {
+    background: rgba(255,255,255,0.92);
+    border: none;
+}
+.admin-sidebar-3d {
+    background: rgba(24,76,85,0.95);
+    box-shadow: 0 8px 32px 0 rgba(24,76,85,0.18);
+    border-radius: 0 24px 24px 0;
+    border-right: 1.5px solid rgba(255,255,255,0.08);
+}
+.modal-content {
+    background: rgba(255,255,255,0.85);
+    box-shadow: 0 8px 32px 0 rgba(24,76,85,0.18);
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.18);
+    backdrop-filter: blur(6px);
+}
+/* Add smooth transitions for all admin elements */
+.admin-card-3d, .admin-btn-3d, .admin-table-3d, .modal-content {
+    transition: box-shadow 0.3s, transform 0.3s, background 0.3s;
+}
+/* Sidebar active link */
+.sidebar .nav-link.active, .sidebar .nav-link:hover {
+    background: linear-gradient(90deg, #184C55 0%, #1e6a7b 100%);
+    color: #fff !important;
+    box-shadow: 0 2px 8px 0 rgba(24,76,85,0.18);
+    border-radius: 8px;
+}

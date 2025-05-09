@@ -2,15 +2,15 @@
 
 @section('content')
 <main class="content-wrapper">
-<div class="main-content manage-users">
+    <div class="main-content manage-users">
     <div class="row justify-content-center">
         <div class="col-lg-12">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h2>All Restaurants</h2>
             </div>
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <table class="table table-bordered">
+            <div class="admin-card-3d shadow-3d">
+                <div class="admin-card-body">
+                    <table class="table admin-table-3d">
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -38,7 +38,7 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <button class="btn btn-sm {{ $restaurant->is_approved ? 'btn-danger' : 'btn-success' }} approve-btn" data-id="{{ $restaurant->id }}" data-approved="{{ $restaurant->is_approved ? 0 : 1 }}">
+                                    <button class="btn btn-sm admin-btn-3d approve-btn" style="min-width: 100px;" data-id="{{ $restaurant->id }}" data-approved="{{ $restaurant->is_approved ? 0 : 1 }}">
                                         {{ $restaurant->is_approved ? 'Unapprove' : 'Approve' }}
                                     </button>
                                 </td>

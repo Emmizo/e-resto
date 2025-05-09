@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Restaurant;
 use App\Models\User;
+use App\Services\FcmService;
 use App\Services\FirebaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -207,75 +208,60 @@ class OrderController extends Controller
     /**
      * Update the order status.
      */
-    public function updateStatus(Request $request, Order $order)
+    public function updateStatus(Request $request, $orderId)
     {
-        try {
-            // Prevent updating completed orders
-            if ($order->status === 'completed') {
-                return response()->json([
-                    'status' => 400,
-                    'message' => 'Cannot update status of a completed order'
-                ], 400);
-            }
+        $order = Order::findOrFail($orderId);
+        $order->status = $request->status;
+        $order->save();
 
-            $validator = Validator::make($request->all(), [
-                'status' => 'required|in:pending,processing,completed,cancelled'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'status' => 400,
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors()
-                ], 400);
-            }
-
-            $oldStatus = $order->status;
-            $order->status = $request->status;
-            $order->save();
-
-            // Send notifications if status changed
-            if ($oldStatus !== $order->status) {
-                $user = $order->user;
-
-                // Send email notification
-                if ($user && $user->email) {
-                    try {
-                        Mail::to($user->email)->send(new OrderStatusUpdated($order));
-                    } catch (\Exception $e) {
-                        \Log::error('Failed to send order status update email: ' . $e->getMessage());
-                    }
-                }
-
-                // Send Firebase push notification
-                if ($user && $user->fcm_token) {
-                    $title = 'Order Status Updated';
-                    $body = "Your order #{$order->id} status has been updated to: " . ucfirst($order->status);
-                    $data = [
-                        'order_id' => $order->id,
-                        'status' => $order->status
-                    ];
-
-                    $this->firebaseService->sendNotification(
-                        $user->fcm_token,
-                        $title,
-                        $body,
-                        $data
-                    );
-                }
-            }
-
-            return response()->json([
-                'status' => 200,
-                'message' => 'Order status updated successfully',
-                'data' => $order
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('Error updating order status: ' . $e->getMessage());
-            return response()->json([
-                'status' => 500,
-                'message' => 'Error updating order status'
-            ], 500);
+        $user = $order->user;
+        $fcmToken = $user->fcm_token;
+        if ($fcmToken) {
+            FcmService::send(
+                $fcmToken,
+                'Order Update',
+                "Your order at {$order->restaurant->name} is now {$order->status}!",
+                [
+                    'type' => 'order_status',
+                    'order_id' => (string) $order->id,
+                    'status' => $order->status,
+                ]
+            );
         }
+
+        // Send notifications if status changed
+        if ($oldStatus !== $order->status) {
+            // Send email notification
+            if ($user && $user->email) {
+                try {
+                    Mail::to($user->email)->send(new OrderStatusUpdated($order));
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send order status update email: ' . $e->getMessage());
+                }
+            }
+
+            // Send Firebase push notification
+            if ($user && $user->fcm_token) {
+                $title = 'Order Status Updated';
+                $body = "Your order #{$order->id} status has been updated to: " . ucfirst($order->status);
+                $data = [
+                    'order_id' => $order->id,
+                    'status' => $order->status
+                ];
+
+                $this->firebaseService->sendNotification(
+                    $user->fcm_token,
+                    $title,
+                    $body,
+                    $data
+                );
+            }
+        }
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Order status updated successfully',
+            'data' => $order
+        ]);
     }
 }

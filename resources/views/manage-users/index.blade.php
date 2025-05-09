@@ -259,7 +259,8 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div id="message-container-login"></div>
-            <form action="" method="POST" id="addUserForm">
+            <form action="{{ route('create-employee') }}" method="POST" id="addUserForm" enctype="multipart/form-data">
+            @csrf
             <div class="modal-body">
                 <div class="user-profile-add pb-3 mb-4">
 
@@ -544,7 +545,7 @@
 </div>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-@section('scripts')
+@section('script')
 <script>
    $(document).ready(function() {
 
@@ -915,7 +916,7 @@ function resetForm() {
 });
 
 // Toggle Status
-$('.status-toggle').change(function() {
+$(document).on('change', '.status-toggle', function() {
         const userId = $(this).data('id');
         const isActive = $(this).is(':checked') ? 1 : 0;
 // console.log(userId);
@@ -927,6 +928,17 @@ $('.status-toggle').change(function() {
                 id: userId,
                 status: isActive,
                 _token: '{{ csrf_token() }}'
+            },
+            success: function(response) {
+                if (response.status === 200) {
+                    toastr.success('User status updated successfully');
+                    table.ajax.reload();
+                } else {
+                    toastr.error('Failed to update user status');
+                }
+            },
+            error: function() {
+                toastr.error('An error occurred while updating user status');
             }
         });
     });
@@ -1070,7 +1082,7 @@ $('.status-toggle').change(function() {
         const isActive = $(this).is(':checked') ? 1 : 0;
 
         $.ajax({
-            url: `/users/${userId}/status`,
+            url: `user/${userId}/status`,
             method: 'PATCH',
             data: {
                 id: userId,

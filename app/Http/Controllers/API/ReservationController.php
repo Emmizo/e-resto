@@ -180,8 +180,8 @@ class ReservationController extends Controller
         $validator = Validator::make($request->all(), [
             'restaurant_id' => 'required|exists:restaurants,id',
             'reservation_time' => 'required',
-            'number_of_guests' => 'required|integer|min:1|max:20',
-            'special_requests' => 'nullable|string|max:500',
+            'number_of_guests' => 'required|integer|min:1',
+            'special_requests' => 'nullable|string',
             'phone_number' => 'nullable|string|max:20',
         ]);
 

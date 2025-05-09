@@ -4,8 +4,8 @@
 <main class="content-wrapper">
     <div class="main-content manage-users">
         <div class="col-lg-8">
-            <div class="card shadow-sm">
-                <div class="card-body">
+            <div class="admin-card-3d shadow-3d">
+                <div class="admin-card-body">
                     <h2 class="mb-4">Add Terms and Conditions</h2>
                     <form method="POST" action="{{ route('admin.terms.store') }}">
                         @csrf
@@ -20,7 +20,7 @@
                             <input class="form-check-input" type="checkbox" name="is_active" id="is_active" {{ old('is_active') ? 'checked' : '' }}>
                             <label class="form-check-label" for="is_active">Active</label>
                         </div>
-                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="submit" class="btn admin-btn-3d">Save</button>
                         <a href="{{ route('admin.terms.index') }}" class="btn btn-secondary">Cancel</a>
                     </form>
                 </div>

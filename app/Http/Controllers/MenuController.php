@@ -144,7 +144,7 @@ class MenuController extends Controller
                         'category' => $item->category,
                         'dietary_info' => $item->dietary_info,
                         'is_available' => $item->is_available,
-                        'image' => config('app.url') . '/' . $item->image
+                        'image' => $item->image
                     ];
                 })
             ]

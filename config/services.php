@@ -38,6 +38,9 @@ return [
         'app_id' => env('FIREBASE_APP_ID'),
         'measurement_id' => env('FIREBASE_MEASUREMENT_ID'),
     ],
+    'fcm' => [
+        'server_key' => env('FCM_SERVER_KEY'),
+    ],
     /* 'firebase' => [
         'api_key' => env('FIREBASE_API_KEY'),
         'auth_domain' => env('FIREBASE_AUTH_DOMAIN'),
