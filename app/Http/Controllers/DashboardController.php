@@ -228,4 +228,24 @@ class DashboardController extends Controller
 
         return view('dashboard', compact('dashboardData'));
     }
+
+    /**
+     * List all restaurants for admin approval
+     */
+    public function listRestaurants()
+    {
+        $restaurants = \App\Models\Restaurant::with('owner')->orderByDesc('created_at')->get();
+        return view('admin.restaurants.index', compact('restaurants'));
+    }
+
+    /**
+     * Approve or unapprove a restaurant (AJAX or POST)
+     */
+    public function approveRestaurant(Request $request, $id)
+    {
+        $restaurant = \App\Models\Restaurant::findOrFail($id);
+        $restaurant->is_approved = $request->input('is_approved', true);
+        $restaurant->save();
+        return response()->json(['status' => 'success', 'is_approved' => $restaurant->is_approved]);
+    }
 }

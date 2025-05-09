@@ -11,7 +11,7 @@
                     <a href="javascript:;" class="breadcrumb-link font-dmsans fw-medium xsmall text-primary-v1" title="Home">Home</a>
                 </li>
                 <li class="breadcrumb-item position-relative">
-                    <a href="javascript:;" class="breadcrumb-link font-dmsans fw-medium xsmall text-primary-v1" title="Manage Users">Manage Users</a>
+                    <a href="javascript:;" class="breadcrumb-link font-dmsans fw-medium xsmall text-primary-v1" title="Manage Users">Manage Roles</a>
                 </li>
             </ul>
         </div>
@@ -20,7 +20,7 @@
         <div class="content-inner">
             <div class="content-header">
                 <div class="heading text-start">
-                    <h4 class="font-dmsans fw-medium text-primary-v1 mb-2">Manage Users</h4>
+                    <h4 class="font-dmsans fw-medium text-primary-v1 mb-2">Manage Roles</h4>
                 </div>
                 <div class="filter-header-options d-flex align-items-center justify-content-between flex-wrap">
                     <div class="search-option">

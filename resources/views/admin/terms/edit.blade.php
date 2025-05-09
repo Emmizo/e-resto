@@ -1,0 +1,31 @@
+@extends('layouts.app')
+@section('content')
+<main class="content-wrapper">
+    <div class="main-content manage-users">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="mb-4">Edit Terms and Conditions</h2>
+                    <form method="POST" action="{{ route('admin.terms.update', $term->id) }}">
+                        @csrf
+                        @method('PUT')
+                        <div class="mb-3">
+                            <label for="content" class="form-label">Content</label>
+                            <textarea name="content" id="content" class="form-control" rows="10" required>{{ old('content', $term->content) }}</textarea>
+                            @error('content')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" name="is_active" id="is_active" {{ old('is_active', $term->is_active) ? 'checked' : '' }}>
+                            <label class="form-check-label" for="is_active">Active</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update</button>
+                        <a href="{{ route('admin.terms.index') }}" class="btn btn-secondary">Cancel</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+@endsection

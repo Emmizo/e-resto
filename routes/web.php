@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminTermsAndConditionsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventsController;
@@ -8,6 +9,7 @@ use App\Http\Controllers\MenuController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\TermsAndConditionsController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -97,3 +99,15 @@ Route::middleware(['auth', 'nocache', 'restaurant.permission:Reservation_Managem
 
 Route::post('/api/store-fcm-token', [App\Http\Controllers\API\AuthController::class, 'storeFcmToken'])->name('store.fcm.token');
 Route::post('/save-fcm-token', [FirebaseController::class, 'saveFcmToken']);
+
+Route::get('/terms-and-conditions', [TermsAndConditionsController::class, 'show'])->name('terms.show');
+
+Route::middleware(['auth', 'nocache'])->group(function () {
+    Route::get('/admin/terms', [AdminTermsAndConditionsController::class, 'index'])->name('admin.terms.index');
+    Route::get('/admin/terms/create', [AdminTermsAndConditionsController::class, 'create'])->name('admin.terms.create');
+    Route::post('/admin/terms', [AdminTermsAndConditionsController::class, 'store'])->name('admin.terms.store');
+    Route::get('/admin/terms/{id}/edit', [AdminTermsAndConditionsController::class, 'edit'])->name('admin.terms.edit');
+    Route::put('/admin/terms/{id}', [AdminTermsAndConditionsController::class, 'update'])->name('admin.terms.update');
+    Route::get('/admin/restaurants', [\App\Http\Controllers\DashboardController::class, 'listRestaurants'])->name('admin.restaurants.index');
+    Route::post('/admin/restaurants/{id}/approve', [\App\Http\Controllers\DashboardController::class, 'approveRestaurant'])->name('admin.restaurants.approve');
+});

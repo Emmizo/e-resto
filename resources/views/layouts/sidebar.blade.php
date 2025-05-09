@@ -65,6 +65,22 @@
                     </li>
                     @endhasrestaurantpermission
                 </ul>
+                @if(auth()->user()->role == 'admin')
+                <ul class="nav mt-4">
+                    <li class="nav-item">
+                        <a class="nav-link font-dmsans fw-medium text-white" href="{{ route('admin.restaurants.index') }}" title="Restaurants">
+                            <i class="fas fa-store-alt me-2"></i>
+                            <span class="menu-title">Restaurants</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link font-dmsans fw-medium text-white" href="{{ route('admin.terms.index') }}" title="Terms and Conditions">
+                            <i class="fas fa-file-contract me-2"></i>
+                            <span class="menu-title">Terms & Conditions</span>
+                        </a>
+                    </li>
+                </ul>
+                @endif
             </nav>
         </div>
     </aside>

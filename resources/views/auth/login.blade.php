@@ -279,6 +279,14 @@
                                                 </div>
 
                                                 <div class="col-md-12 mt-3">
+                                                    <div class="form-check mb-3">
+                                                        <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
+                                                        <label class="form-check-label" for="terms">
+                                                            I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-12 mt-3">
                                                     <button type="submit" class="btn btn-primary btn-small fw-semibold text-uppercase rounded-3 w-100 text-center animate__animated animate__pulse animate__infinite animate__slow" id="send_btn2">
                                                         <span>Register</span>
                                                     </button>
@@ -615,12 +623,14 @@ $('#registerForm').validate({
             required: true,
             minlength: 14,
         },
-
         profile_picture: {
             extension: "jpeg,jpg,png",
             maxsize: 5242880,
         },
         role: {
+            required: true,
+        },
+        terms: {
             required: true,
         },
         "restaurant_name": {
@@ -670,13 +680,15 @@ $('#registerForm').validate({
             required: "Please enter a phone number",
             minlength: "Please enter a valid phone number",
         },
-
         profile_picture: {
             extension: "Please upload jpg, jpeg, or png files only",
             maxsize: "File size must be less than 5 MB",
         },
         role: {
             required: "Please select a role",
+        },
+        terms: {
+            required: "You must agree to the Terms and Conditions",
         },
         "restaurant_name": {
             required: "Please enter restaurant name",
@@ -1058,3 +1070,28 @@ $(document).ready(function() {
     </style>
 {{-- @endsection --}}
 </body>
+
+<!-- Terms and Conditions Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="termsModalLabel">Terms and Conditions</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        @php
+            $terms = \App\Models\TermsAndConditions::where('is_active', true)->latest()->first();
+        @endphp
+        @if($terms)
+            {!! nl2br(e($terms->content)) !!}
+        @else
+            <p>No terms and conditions found.</p>
+        @endif
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

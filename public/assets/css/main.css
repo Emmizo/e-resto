@@ -1314,7 +1314,7 @@ main{
     background-color: var(--primary-color) !important;
 }
 .bg-success {
-    background-color: var(--secondary-color) !important;
+    background-color: var( --dark-color) !important;
 }
 .bg-danger {
     background-color: var(--danger-color) !important;
