@@ -111,3 +111,7 @@ Route::middleware(['auth', 'nocache'])->group(function () {
     Route::get('/admin/restaurants', [\App\Http\Controllers\DashboardController::class, 'listRestaurants'])->name('admin.restaurants.index');
     Route::post('/admin/restaurants/{id}/approve', [\App\Http\Controllers\DashboardController::class, 'approveRestaurant'])->name('admin.restaurants.approve');
 });
+
+Route::middleware(['auth'])->group(function () {
+    Route::resource('promo-banners', \App\Http\Controllers\PromoBannerController::class);
+});

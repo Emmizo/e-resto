@@ -13,7 +13,7 @@
             @endif
             <div class="admin-card-3d shadow-3d">
                 <div class="admin-card-body">
-                    <table class="table admin-table-3d">
+                    <table id="manageUsersTable" class="display custom-datatable" style="width:100%">
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -24,9 +24,9 @@
                             </tr>
                         </thead>
                         <tbody>
-                        @foreach($terms as $term)
+                        @foreach($terms as $key => $term)
                             <tr>
-                                <td>{{ $term->id }}</td>
+                                <td>{{ $key+1 }}</td>
                                 <td>{{ Str::limit($term->content, 60) }}</td>
                                 <td>{{ $term->is_active ? 'Yes' : 'No' }}</td>
                                 <td>{{ $term->created_at->format('Y-m-d') }}</td>

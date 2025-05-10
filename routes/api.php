@@ -17,6 +17,8 @@ Route::group(['namespace' => 'Api', 'prefix' => 'v1'], function () {
     Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('google.login');
     // Public API endpoint for listing cuisines
     Route::get('/cuisines', [\App\Http\Controllers\API\MenuController::class, 'listCuisines']);
+    // Public API endpoint for listing promo banners with restaurant details
+    Route::get('/promo-banners-with-restaurant', [\App\Http\Controllers\API\PromoBannerController::class, 'listWithRestaurant']);
 });
 
 // Protected Routes (Authentication Required)
@@ -68,6 +70,9 @@ Route::group(['namespace' => 'Api', 'prefix' => 'v1', 'middleware' => 'auth:api'
 
     // Update user profile
     Route::put('/user/profile', [\App\Http\Controllers\API\AuthController::class, 'updateProfile']);
+
+    // Promo Banner routes
+    Route::apiResource('/promo-banners', \App\Http\Controllers\API\PromoBannerController::class);
 });
 
 Route::get('/restaurants/{restaurant}/reviews', [ReviewController::class, 'restaurantReviews']);

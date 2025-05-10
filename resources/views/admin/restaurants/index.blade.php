@@ -10,7 +10,7 @@
             </div>
             <div class="admin-card-3d shadow-3d">
                 <div class="admin-card-body">
-                    <table class="table admin-table-3d">
+                    <table id="manageUsersTable" class="display custom-datatable" style="width:100%">
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -24,9 +24,9 @@
                             </tr>
                         </thead>
                         <tbody>
-                        @foreach($restaurants as $restaurant)
+                        @foreach($restaurants as $key => $restaurant)
                             <tr>
-                                <td>{{ $restaurant->id }}</td>
+                                <td>{{ $key+1}}</td>
                                 <td>{{ $restaurant->name }}</td>
                                 <td>{{ $restaurant->owner ? $restaurant->owner->first_name . ' ' . $restaurant->owner->last_name : '-' }}</td>
                                 <td>{{ $restaurant->email }}</td>
