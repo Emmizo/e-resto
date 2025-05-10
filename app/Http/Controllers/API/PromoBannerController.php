@@ -15,6 +15,7 @@ class PromoBannerController extends Controller
     {
         $restaurantId = $request->query('restaurant_id');
         $query = PromoBanner::query();
+        $query->where('is_active', 1);
         if ($restaurantId) {
             $query->where('restaurant_id', $restaurantId);
         }
@@ -27,6 +28,7 @@ class PromoBannerController extends Controller
     {
         $restaurantId = $request->query('restaurant_id');
         $query = PromoBanner::with(['restaurant:id,name,description,address,longitude,latitude,phone_number,email,website,opening_hours,cuisine_id,price_range,image,owner_id,is_approved,status']);
+        $query->where('is_active', 1);
         if ($restaurantId) {
             $query->where('restaurant_id', $restaurantId);
         }
