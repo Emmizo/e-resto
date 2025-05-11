@@ -33,6 +33,9 @@ Route::group(['namespace' => 'Api', 'prefix' => 'v1', 'middleware' => 'auth:api'
     // Profile picture update
     Route::post('user/profile-picture', [AuthController::class, 'updateProfilePicture']);
 
+    // Change password
+    Route::post('user/change-password', [AuthController::class, 'changePassword']);
+
     // Restaurant routes
     Route::get('/restaurants', [App\Http\Controllers\Api\RestaurantController::class, 'index']);
 
