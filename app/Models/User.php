@@ -185,4 +185,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(\App\Models\FavoriteRestaurant::class, 'user_id');
     }
+
+    public function addresses()
+    {
+        return $this->hasMany(Address::class);
+    }
 }

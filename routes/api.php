@@ -76,6 +76,12 @@ Route::group(['namespace' => 'Api', 'prefix' => 'v1', 'middleware' => 'auth:api'
 
     // Promo Banner routes
     Route::apiResource('/promo-banners', \App\Http\Controllers\API\PromoBannerController::class);
+
+    // Address routes
+    Route::get('/addresses', [\App\Http\Controllers\API\AddressController::class, 'index']);
+    Route::post('/addresses', [\App\Http\Controllers\API\AddressController::class, 'store']);
+    Route::put('/addresses/{id}', [\App\Http\Controllers\API\AddressController::class, 'update']);
+    Route::delete('/addresses/{id}', [\App\Http\Controllers\API\AddressController::class, 'destroy']);
 });
 
 Route::get('/restaurants/{restaurant}/reviews', [ReviewController::class, 'restaurantReviews']);
