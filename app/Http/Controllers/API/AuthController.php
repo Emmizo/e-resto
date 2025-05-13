@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Laravel\Passport\HasApiTokens;
 use OpenApi\Annotations as OA;
 use OTPHP\TOTP;
@@ -112,7 +113,6 @@ class AuthController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
             'phone_number' => 'nullable|string|max:20|regex:/^[0-9+\-() ]+$/',
             'address' => 'nullable|string|max:255',
         ]);
@@ -129,17 +129,23 @@ class AuthController extends Controller
         try {
             DB::beginTransaction();
 
+            // Generate a random password
+            $plainPassword = Str::random(10);
             $user = User::create([
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
                 'email' => $request->email,
-                'password' => Hash::make($request->password),
+                'password' => Hash::make($plainPassword),
                 'role' => 'Client',
                 'phone_number' => $request->phone_number,
                 'address' => $request->address,
                 'fcm_token' => $request->fcm_token,  // Add FCM token
                 'status' => 1  // Set default status to active
             ]);
+
+            // Send welcome email with credentials (pass user object)
+            $user->plain_password = $plainPassword;  // for the email template
+            \Mail::to($user->email)->send(new \App\Mail\UserRegistered('Welcome to RestoFinder', $user));
 
             // Create access token
             $token = $user->createToken('auth_token')->accessToken;
