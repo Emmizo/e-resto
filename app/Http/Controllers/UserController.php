@@ -111,7 +111,7 @@ class UserController extends Controller
             'plain_password' => $password,
             'role' => $request->position,
             'phone_number' => $request->phone_number,
-            'profile_picture' => config('app.url') . '/' . $profilePicturePath,
+            'profile_picture' => $profilePicturePath ? config('app.url') . '/' . $profilePicturePath : null,
             'preferences' => json_encode([]),
         ]);
 
@@ -192,22 +192,24 @@ class UserController extends Controller
             ]);
         }
 
-        // Update permissions
-        // First, delete existing permissions
-        RestaurantPermission::where('user_id', $id)
+        // Update permissions: delete and re-create
+        RestaurantPermission::where('user_id', $user->id)
             ->where('restaurant_id', $restaurantId)
             ->delete();
-
-        // Then add new permissions
         if ($request->permissions) {
             foreach ($request->permissions as $permission) {
                 RestaurantPermission::create([
-                    'user_id' => $id,
+                    'user_id' => $user->id,
                     'restaurant_id' => $restaurantId,
                     'permission_name' => $permission,
                     'granted' => true
                 ]);
             }
+            // Grant specific permissions using Spatie package
+            $user->syncPermissions($request->permissions);
+        } else {
+            // If no permissions, remove all
+            $user->syncPermissions([]);
         }
 
         return response()->json([
@@ -303,7 +305,7 @@ class UserController extends Controller
             'last_name' => $request->last_name,
             'email' => $request->email,
             'phone_number' => $request->phone_number,
-            'profile_picture' => config('app.url') . '/' . $profilePicturePath,
+            'profile_picture' => $profilePicturePath ? config('app.url') . '/' . $profilePicturePath : null,
         ]);
         return redirect()->route('manage-users');
         // Profile picture handling
@@ -347,7 +349,7 @@ class UserController extends Controller
                 'message' => 'Validation failed. Please check your input.',
             ], 422);
         }
-
+        $restaurantId = session('userData')['users']->restaurant_id;
         // Handle profile picture
         $profilePicturePath = $this->handleProfilePicture($request);
         if ($profilePicturePath) {
@@ -361,6 +363,7 @@ class UserController extends Controller
             'email' => $request->email,
             'phone_number' => $request->phone_number,
             'role' => $request->position,
+            'profile_picture' => $profilePicturePath ? config('app.url') . '/' . $profilePicturePath : null,
         ]);
 
         // Update restaurant employee details if exists
@@ -371,6 +374,26 @@ class UserController extends Controller
                 'permissions' => json_encode($request->permissions ?? []),
                 'is_active' => $request->is_active,
             ]);
+        }
+
+        // Update permissions: delete and re-create
+        RestaurantPermission::where('user_id', $user->id)
+            ->where('restaurant_id', $restaurantId)
+            ->delete();
+        if ($request->permissions) {
+            foreach ($request->permissions as $permission) {
+                RestaurantPermission::create([
+                    'user_id' => $user->id,
+                    'restaurant_id' => $restaurantId,
+                    'permission_name' => $permission,
+                    'granted' => true
+                ]);
+            }
+            // Grant specific permissions using Spatie package
+            $user->syncPermissions($request->permissions);
+        } else {
+            // If no permissions, remove all
+            $user->syncPermissions([]);
         }
 
         return response()->json([
@@ -458,6 +481,25 @@ class UserController extends Controller
             'recordsTotal' => $users->total(),
             'recordsFiltered' => $users->total(),
             'data' => $data
+        ]);
+    }
+
+    public function edit(User $user)
+    {
+        $restaurantEmployee = \App\Models\RestaurantEmployee::where('user_id', $user->id)->first();
+        $permissions = $restaurantEmployee ? json_decode($restaurantEmployee->permissions, true) : [];
+        return response()->json([
+            'status' => 200,
+            'user' => [
+                'id' => $user->id,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'email' => $user->email,
+                'phone_number' => $user->phone_number,
+                'role' => $user->role,
+                'status' => $user->status,
+                'permissions' => $permissions,
+            ]
         ]);
     }
 }

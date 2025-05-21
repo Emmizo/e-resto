@@ -382,77 +382,116 @@
 
 <!-- Edit User Modal -->
 <div class="modal fade" id="editUser" tabindex="-1" aria-labelledby="editUserLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title font-dmsans fw-medium text-primary-v1" id="editUserLabel">Edit User</h5>
+            <div class="modal-header border-0">
+                <h1 class="modal-title fs-5 font-dmsans fw-bold text-primary-v1" id="editUserLabel">Edit User</h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <form id="editUserForm" method="POST">
-                    @csrf
-                    @method('PUT')
-                    <input type="hidden" name="user_id" id="edit_user_id">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label for="edit_first_name" class="form-label font-dmsans fw-medium text-primary-v1">First Name</label>
-                                <input type="text" class="form-control" id="edit_first_name" name="first_name" required>
+            <div id="edit-message-container"></div>
+            <form id="editUserForm" method="POST" enctype="multipart/form-data">
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="user_id" id="edit_user_id">
+                <div class="modal-body">
+                    <div class="user-profile-add pb-3 mb-4">
+                        <div class="user-profile-icon d-flex align-items-center justify-content-center mx-auto border border-grey-v1 position-relative rounded-circle">
+                            <div class="user-profile-circle w-100 h-100 position-absolute start-0 top-0 overflow-hidden rounded-circle">
+                                <img class="user-profile-pic w-100 h-100 object-fit-cover rounded-circle d-none" src="assets/images/user.png" alt="Profile Image">
+                            </div>
+                            <div class="user-profile-add">
+                                <svg class="upload-button position-relative cursor-pointer" width="32" height="29" viewBox="0 0 32 29" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M3.3238 28.3542C2.5871 28.3542 1.96354 28.099 1.45312 27.5885C0.942708 27.0781 0.6875 26.4546 0.6875 25.7179V9.11547C0.6875 8.37877 0.942708 7.75521 1.45312 7.24479C1.96354 6.73437 2.5871 6.47917 3.3238 6.47917H7.77719L9.68432 4.41234C9.92543 4.15081 10.216 3.94385 10.556 3.79146C10.8958 3.63882 11.2522 3.5625 11.625 3.5625H17.5426C17.8524 3.5625 18.1122 3.66738 18.3217 3.87713C18.5314 4.08689 18.6363 4.34672 18.6363 4.65661C18.6363 4.96675 18.5314 5.22646 18.3217 5.43573C18.1122 5.64524 17.8524 5.75 17.5426 5.75H11.4289L8.75318 8.66667H3.3238C3.1928 8.66667 3.08524 8.70871 3.00115 8.79281C2.91705 8.87691 2.875 8.98446 2.875 9.11547V25.7179C2.875 25.8489 2.91705 25.9564 3.00115 26.0405C3.08524 26.1246 3.1928 26.1667 3.3238 26.1667H25.7595C25.8905 26.1667 25.9981 26.1246 26.0822 26.0405C26.1663 25.9564 26.2083 25.8489 26.2083 25.7179V14.4158C26.2083 14.1059 26.3132 13.8462 26.523 13.6367C26.7327 13.4269 26.9926 13.322 27.3024 13.322C27.6126 13.322 27.8723 13.4269 28.0816 13.6367C28.2911 13.8462 28.3958 14.1059 28.3958 14.4158V25.7179C28.3958 26.4546 28.1406 27.0781 27.6302 27.5885C27.1198 28.099 26.4962 28.3542 25.7595 28.3542H3.3238ZM26.2083 5.75H24.3854C24.0755 5.75 23.8157 5.64512 23.6059 5.43536C23.3964 5.22561 23.2917 4.96578 23.2917 4.65588C23.2917 4.34574 23.3964 4.08604 23.6059 3.87677C23.8157 3.66726 24.0755 3.5625 24.3854 3.5625H26.2083V1.73958C26.2083 1.42969 26.3132 1.16998 26.523 0.960468C26.7327 0.750711 26.9926 0.645832 27.3024 0.645832C27.6126 0.645832 27.8723 0.750711 28.0816 0.960468C28.2911 1.16998 28.3958 1.42969 28.3958 1.73958V3.5625H30.2187C30.5286 3.5625 30.7883 3.66738 30.9979 3.87713C31.2076 4.08689 31.3125 4.34672 31.3125 4.65661C31.3125 4.96675 31.2076 5.22646 30.9979 5.43573C30.7883 5.64524 30.5286 5.75 30.2187 5.75H28.3958V7.57292C28.3958 7.88281 28.291 8.14264 28.0812 8.35239C27.8714 8.56191 27.6116 8.66667 27.3017 8.66667C26.9916 8.66667 26.7319 8.56191 26.5226 8.35239C26.3131 8.14264 26.2083 7.88281 26.2083 7.57292V5.75ZM14.5417 23.4181C16.2151 23.4181 17.6337 22.8362 18.7974 21.6724C19.9612 20.5087 20.5431 19.0901 20.5431 17.4167C20.5431 15.7432 19.9612 14.3246 18.7974 13.1609C17.6337 11.9971 16.2151 11.4153 14.5417 11.4153C12.8682 11.4153 11.4496 11.9971 10.2859 13.1609C9.12214 14.3246 8.54026 15.7432 8.54026 17.4167C8.54026 19.0901 9.12214 20.5087 10.2859 21.6724C11.4496 22.8362 12.8682 23.4181 14.5417 23.4181ZM14.5417 21.2309C13.4647 21.2309 12.5598 20.8644 11.827 20.1314C11.0939 19.3985 10.7274 18.4936 10.7274 17.4167C10.7274 16.3397 11.0939 15.4348 11.827 14.702C12.5598 13.9689 13.4647 13.6024 14.5417 13.6024C15.6186 13.6024 16.5235 13.9689 17.2564 14.702C17.9894 15.4348 18.3559 16.3397 18.3559 17.4167C18.3559 18.4936 17.9894 19.3985 17.2564 20.1314C16.5235 20.8644 15.6186 21.2309 14.5417 21.2309Z" fill="#06152B"/>
+                                </svg>
+                                <input class="file-upload" id="edit_profile_picture" type="file" accept="image/*" name="profile_picture">
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label for="edit_last_name" class="form-label font-dmsans fw-medium text-primary-v1">Last Name</label>
-                                <input type="text" class="form-control" id="edit_last_name" name="last_name" required>
+                    </div>
+                    <div class="modal-form">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group m-0 mb-3 pb-1">
+                                    <label for="edit_first_name" class="form-label">First name <span class="asterik">*</span></label>
+                                    <input type="text" class="form-control rounded-3" id="edit_first_name" placeholder="Enter First Name" name="first_name">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group m-0 mb-3 pb-1">
+                                    <label for="edit_last_name" class="form-label">Last name <span class="asterik">*</span></label>
+                                    <input type="text" class="form-control rounded-3" id="edit_last_name" placeholder="Enter Last Name" name="last_name">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group m-0 mb-3 pb-1">
+                                    <label for="edit_email" class="form-label">Email Address <span class="asterik">*</span></label>
+                                    <input type="email" class="form-control rounded-3" id="edit_email" placeholder="Enter Email" name="email">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group m-0 mb-3 pb-1">
+                                    <label for="edit_phone_number" class="form-label">Phone</label>
+                                    <input type="text" class="form-control rounded-3" id="edit_phone_number" placeholder="Enter Phone" name="phone_number">
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group m-0 mb-3 pb-1">
+                                    <label for="edit_position" class="form-label">User Role <span class="asterik">*</span></label>
+                                    <select class="form-select" aria-label="User Role" name="position" id="edit_position">
+                                        <option selected disabled>Select user role</option>
+                                        <option value="Manager">Manager</option>
+                                        <option value="Chef">Chef</option>
+                                        <option value="Waiter">Waiter</option>
+                                        <option value="Cashier">Cashier</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group m-0 mb-3 pb-1">
+                                    <label for="edit_permissions" class="form-label">Permission <span class="asterik">*</span></label>
+                                    <select class="form-select" aria-label="User Role" name="permissions[]" multiple="multiple" id="edit_permissions">
+                                        @foreach ($permissions as $key => $permission)
+                                            <option value="{{ $permission->name }}">{{ $permission->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group m-0 mb-3 pb-1">
+                                    <div class="d-flex align-items-center pt-0 pt-md-3">
+                                        <div class="form-check custom-radio p-0 m-0 me-3">
+                                            <input type="radio" id="edit_active" name="is_active" value="1" class="input-radio">
+                                            <label for="edit_active" class="form-radio-label">
+                                                <span>
+                                                    <svg viewBox="0 0 12 10" height="10px" width="12px">
+                                                        <polyline points="1.5 6 4.5 9 10.5 1"></polyline>
+                                                    </svg>
+                                                </span>
+                                                <span class="font-dmsans fw-normal text-primary-v1 position-relative d-inline-block">Active</span>
+                                            </label>
+                                        </div>
+                                        <div class="form-check custom-radio p-0 m-0">
+                                            <input type="radio" id="edit_inactive" name="is_active" value="0" class="input-radio">
+                                            <label for="edit_inactive" class="form-radio-label">
+                                                <span>
+                                                    <svg viewBox="0 0 12 10" height="10px" width="12px">
+                                                        <polyline points="1.5 6 4.5 9 10.5 1"></polyline>
+                                                    </svg>
+                                                </span>
+                                                <span class="font-dmsans fw-normal text-primary-v1 position-relative d-inline-block">Inactive</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="form-group mb-3">
-                        <label for="edit_email" class="form-label font-dmsans fw-medium text-primary-v1">Email</label>
-                        <input type="email" class="form-control" id="edit_email" name="email" required>
-                    </div>
-                    <div class="form-group mb-3">
-                        <label for="edit_phone_number" class="form-label font-dmsans fw-medium text-primary-v1">Phone Number</label>
-                        <input type="text" class="form-control" id="edit_phone_number" name="phone_number" required>
-                    </div>
-                    <div class="form-group mb-3">
-                        <label for="edit_position" class="form-label font-dmsans fw-medium text-primary-v1">Position</label>
-                        <select class="form-select" id="edit_position" name="position" required>
-                            <option value="manager">Manager</option>
-                            <option value="chef">Chef</option>
-                            <option value="waiter">Waiter</option>
-                            <option value="cashier">Cashier</option>
-                        </select>
-                    </div>
-                    <div class="form-group mb-3">
-                        <label class="form-label font-dmsans fw-medium text-primary-v1">Permissions</label>
-                        <div class="permissions-checkbox">
-                            @foreach($permissions as $permission)
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="{{ $permission->name }}" id="permission_{{ $permission->id }}">
-                                <label class="form-check-label" for="permission_{{ $permission->id }}">
-                                    {{ $permission->name }}
-                                </label>
-                            </div>
-                            @endforeach
-                        </div>
-                    </div>
-                    <div class="form-group mb-3">
-                        <label for="edit_profile_picture" class="form-label font-dmsans fw-medium text-primary-v1">Profile Picture</label>
-                        <input type="file" class="form-control" id="edit_profile_picture" name="profile_picture" accept="image/*">
-                    </div>
-                    <div class="form-group mb-3">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="edit_is_active" name="is_active" checked>
-                            <label class="form-check-label" for="edit_is_active">Active</label>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="updateUserBtn">Update User</button>
-            </div>
+                </div>
+                <div class="modal-footer border-0 justify-content-start">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="updateUserBtn">Update User</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -552,6 +591,13 @@
 
             //Bootstrap Duallistbox
             $('#Permissions').bootstrapDualListbox({
+                nonSelectedListLabel: 'Non-selected',
+                selectedListLabel: 'Selected',
+                preserveSelectionOnMove: 'moved',
+                moveOnSelect: false
+            });
+            // Initialize Dual Listbox for edit permissions
+            $('#edit_permissions').bootstrapDualListbox({
                 nonSelectedListLabel: 'Non-selected',
                 selectedListLabel: 'Selected',
                 preserveSelectionOnMove: 'moved',
@@ -943,36 +989,24 @@ $(document).on('change', '.status-toggle', function() {
         });
     });
 
-    // Handle edit button click
-    $('.edit-action').click(function() {
-        const userId = $(this).data('user-id');
-        const user = {!! json_encode($users) !!}.find(u => u.id === userId);
 
-        if (user) {
-            $('#edit_user_id').val(user.id);
-            $('#edit_first_name').val(user.first_name);
-            $('#edit_last_name').val(user.last_name);
-            $('#edit_email').val(user.email);
-            $('#edit_phone_number').val(user.phone_number);
-            $('#edit_position').val(user.role);
-            $('#edit_is_active').prop('checked', user.status === 1);
-
-            // Reset permissions checkboxes
-            $('input[name="permissions[]"]').prop('checked', false);
-
-            // Set permissions if they exist
-            if (user.permissions) {
-                const permissions = JSON.parse(user.permissions);
-                permissions.forEach(permission => {
-                    $(`input[name="permissions[]"][value="${permission}"]`).prop('checked', true);
-                });
-            }
-        }
-    });
 
     // Handle update button click
     $('#updateUserBtn').click(function() {
-        const formData = new FormData($('#editUserForm')[0]);
+        // Ensure dual listbox values are synced
+        $('#edit_permissions').val($('#edit_permissions').val());
+
+        // Ensure is_active is set from the checked radio
+        var isActive = $('input[name="is_active"]:checked', '#editUserForm').val();
+        if (typeof isActive !== 'undefined') {
+            // Remove any existing hidden is_active fields to avoid duplicates
+            $('#editUserForm input[type="hidden"][name="is_active"]').remove();
+        } else {
+            // If none checked, add a hidden field with empty value
+            $('#editUserForm').append('<input type="hidden" name="is_active" value="">');
+        }
+
+        var formData = new FormData($('#editUserForm')[0]);
         const userId = $('#edit_user_id').val();
 
         $.ajax({
@@ -987,7 +1021,8 @@ $(document).on('change', '.status-toggle', function() {
             success: function(response) {
                 if (response.status === 200) {
                     $('#editUser').modal('hide');
-                    location.reload();
+                    toastr.success('User updated successfully');
+                    table.ajax.reload();
                 }
             },
             error: function(xhr) {
@@ -997,51 +1032,14 @@ $(document).on('change', '.status-toggle', function() {
                     for (let field in errors) {
                         errorMessage += errors[field][0] + '\n';
                     }
-                    alert(errorMessage);
+                    toastr.error(errorMessage);
                 }
             }
         });
     });
 
     // Initialize DataTable
-    var table = $('#manageUsersTable').DataTable({
-        responsive: true,
-        order: [[8, 'desc']], // Sort by created_at descending
-        language: {
-            emptyTable: "No users found"
-        },
-        dom: '<"top"f>rt<"bottom"lip><"clear">',
-        pageLength: 10,
-        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-        processing: true,
-        serverSide: true,
-        ajax: {
-            url: "{{ route('users.search') }}",
-            type: 'POST',
-            data: function(d) {
-                d.role = $('#roleFilter').val();
-                d.status = $('#statusFilter').val();
-                d.restaurant = $('#restaurantFilter').val();
-                d.search = $('.custom-search').val();
-            }
-        },
-        columns: [
-            { data: 'name', name: 'name' },
-            { data: 'email', name: 'email' },
-            { data: 'phone_number', name: 'phone_number' },
-            { data: 'restaurant_name', name: 'restaurant_name' },
-            { data: 'restaurant_phone', name: 'restaurant_phone' },
-            { data: 'restaurant_email', name: 'restaurant_email' },
-            { data: 'restaurant_address', name: 'restaurant_address' },
-            { data: 'role', name: 'role' },
-            { data: 'created_at', name: 'created_at' },
-            { data: 'website', name: 'website' },
-            { data: 'request', name: 'request', orderable: false, searchable: false },
-            { data: 'status', name: 'status', orderable: false, searchable: false },
-            { data: 'action', name: 'action', orderable: false, searchable: false }
-        ]
-    });
-
+    /*  */
     // Handle filter form submission
     $('#filterForm').on('submit', function(e) {
         e.preventDefault();
@@ -1119,17 +1117,21 @@ $(document).on('change', '.status-toggle', function() {
                     $('#edit_email').val(user.email);
                     $('#edit_phone_number').val(user.phone_number);
                     $('#edit_position').val(user.role);
-                    $('#edit_is_active').prop('checked', user.status === 1);
 
-                    // Reset permissions checkboxes
-                    $('input[name="permissions[]"]').prop('checked', false);
-
-                    // Set permissions if they exist
+                    // Set permissions for dual listbox
                     if (user.permissions) {
-                        const permissions = JSON.parse(user.permissions);
-                        permissions.forEach(permission => {
-                            $(`input[name="permissions[]"][value="${permission}"]`).prop('checked', true);
-                        });
+                        $('#edit_permissions').val(user.permissions);
+                        $('#edit_permissions').bootstrapDualListbox('refresh');
+                    } else {
+                        $('#edit_permissions').val([]);
+                        $('#edit_permissions').bootstrapDualListbox('refresh');
+                    }
+
+                    // Set active/inactive radio
+                    if (user.status == 1) {
+                        $('#edit_active').prop('checked', true);
+                    } else {
+                        $('#edit_inactive').prop('checked', true);
                     }
 
                     $('#editUser').modal('show');
@@ -1140,7 +1142,20 @@ $(document).on('change', '.status-toggle', function() {
 
     // Handle update button click
     $('#updateUserBtn').click(function() {
-        const formData = new FormData($('#editUserForm')[0]);
+        // Ensure dual listbox values are synced
+        $('#edit_permissions').val($('#edit_permissions').val());
+
+        // Ensure is_active is set from the checked radio
+        var isActive = $('input[name="is_active"]:checked', '#editUserForm').val();
+        if (typeof isActive !== 'undefined') {
+            // Remove any existing hidden is_active fields to avoid duplicates
+            $('#editUserForm input[type="hidden"][name="is_active"]').remove();
+        } else {
+            // If none checked, add a hidden field with empty value
+            $('#editUserForm').append('<input type="hidden" name="is_active" value="">');
+        }
+
+        var formData = new FormData($('#editUserForm')[0]);
         const userId = $('#edit_user_id').val();
 
         $.ajax({
@@ -1171,6 +1186,6 @@ $(document).on('change', '.status-toggle', function() {
             }
         });
     });
-});
+// });
 </script>
   @endsection

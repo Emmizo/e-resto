@@ -50,10 +50,10 @@ Route::group([
     Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
     Route::get('/manage-users', [UserController::class, 'index'])->name('manage-users');
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
-    Route::post('/users/search', [UserController::class, 'search'])->name('users.search');
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
     Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
     Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+    Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
 });
 
 Route::group(['middleware' => ['auth', 'nocache', 'restaurant.permission:Role_Management']], function () {

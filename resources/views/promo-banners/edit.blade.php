@@ -29,7 +29,7 @@
             <label for="image" class="form-label">Image</label>
             @if($banner->image_path)
                 <div class="mb-2">
-                    <img src="{{ asset('storage/' . $banner->image_path) }}" alt="Banner Image" width="120">
+                    <img src="{{ asset( $banner->image_path) }}" alt="Banner Image" width="120">
                 </div>
             @endif
             <input type="file" name="image" id="image" class="form-control">
