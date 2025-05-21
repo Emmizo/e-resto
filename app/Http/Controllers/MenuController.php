@@ -256,4 +256,15 @@ class MenuController extends Controller
         $menu->delete();
         return response()->json(['success' => true]);
     }
+
+    /**
+     * Toggle the availability status of a menu item.
+     */
+    public function toggleStatus(Request $request, $id)
+    {
+        $menuItem = \App\Models\MenuItem::findOrFail($id);
+        $menuItem->is_available = $request->input('is_available');
+        $menuItem->save();
+        return response()->json(['status' => 200]);
+    }
 }

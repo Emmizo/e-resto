@@ -65,7 +65,7 @@
                                     <span>{{$menu->menu_name}}</span>
                                 </td>
                                 <td>
-                                    <span>{{ $menu->menu_description }}{{ $menu->is_active}}</span>
+                                    <span>{{ $menu->menu_description }}</span>
                                 </td>
                                 <td>
 
@@ -113,6 +113,9 @@
             <li class="action-menu-item text-start">
                 <a href="javascript:;" class="action-menu-link font-dmsans fw-normal text-primary-v1 xsmall d-block p-1 delete-menu" data-bs-toggle="modal" data-bs-target="#deleteMenuModal" data-menu-id="">Delete</a>
             </li>
+            <li class="action-menu-item text-start">
+                <a href="javascript:;" class="action-menu-link font-dmsans fw-normal text-primary-v1 xsmall d-block p-1 view-menu" data-bs-toggle="modal" data-bs-target="#viewMenuModal" data-menu-id="">View</a>
+            </li>
         </ul>
     </div>
 </div>
@@ -132,8 +135,14 @@
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="form-group m-0 mb-3 pb-1">
-                                    <label for="userName" class="form-label">Name <span class="asterik">*</span></label>
-                                    <input type="text" class="form-control rounded-3" id="userName" placeholder="Enter name" name="name" required>
+                                    <label for="mealTime" class="form-label">Meal Time <span class="asterik">*</span></label>
+                                    <select class="form-control rounded-3" id="mealTime" name="name" required>
+                                        <option value="">Select Meal Time</option>
+                                        <option value="Breakfast">Breakfast</option>
+                                        <option value="Lunch">Lunch</option>
+                                        <option value="Dinner">Dinner</option>
+                                        <option value="Snack">Snack</option>
+                                    </select>
                                 </div>
                             </div>
                             <div class="col-md-12">
@@ -164,7 +173,11 @@
                                     </div>
                                 </div>
                                 <div class="col-md-4 mt-2">
-                                    <input type="text" class="form-control" name="menu_items[0][category]" placeholder="Category">
+                                    <select class="form-control" name="menu_items[0][category]">
+                                        <option value="">Select Category</option>
+                                        <option value="Beverage">Beverage</option>
+                                        <option value="Food">Food</option>
+                                    </select>
                                 </div>
                                 <div class="col-md-3 mt-2">
                                     <input type="text" class="form-control" name="menu_items[0][dietary_info]" placeholder="Dietary Info">
@@ -216,8 +229,14 @@
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="form-group m-0 mb-3 pb-1">
-                                    <label for="edit_menu_name" class="form-label">Name <span class="asterik">*</span></label>
-                                    <input type="text" class="form-control rounded-3" id="edit_menu_name" placeholder="Enter name" name="name" required>
+                                    <label for="edit_mealTime" class="form-label">Meal Time <span class="asterik">*</span></label>
+                                    <select class="form-control rounded-3" id="edit_mealTime" name="name" required>
+                                        <option value="">Select Meal Time</option>
+                                        <option value="Breakfast">Breakfast</option>
+                                        <option value="Lunch">Lunch</option>
+                                        <option value="Dinner">Dinner</option>
+                                        <option value="Snack">Snack</option>
+                                    </select>
                                 </div>
                             </div>
                             <div class="col-md-12">
@@ -276,7 +295,23 @@
     </div>
 </div>
 
-
+<!-- View Menu Modal -->
+<div class="modal fade" id="viewMenuModal" tabindex="-1" aria-labelledby="viewMenuModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h1 class="modal-title fs-5 font-dmsans fw-bold text-primary-v1" id="viewMenuModalLabel">Menu Items</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="viewMenuItemsContainer" class="row g-3"></div>
+            </div>
+            <div class="modal-footer border-0 justify-content-end">
+                <button type="button" class="btn btn-outline btn-small fw-semibold text-uppercase rounded-3 border border-grey-v1" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 </div>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -302,10 +337,7 @@ var selectedList = $('[id="bootstrap-duallistbox-selected-list_Permissions[]"]')
 $('#addMenuForm').validate({
     rules: {
         name: {
-            required: true,
-            minlength: 2,
-            maxlength: 50,
-            pattern: /^[a-zA-Z0-9\s]+$/
+            required: true
         },
         description: {
             required: true,
@@ -336,10 +368,7 @@ $('#addMenuForm').validate({
     },
     messages: {
         name: {
-            required: "Please enter a menu type name",
-            minlength: "Name must be at least 2 characters long",
-            maxlength: "Name cannot exceed 50 characters",
-            pattern: "Name can only contain letters, numbers, and spaces"
+            required: "Please select a meal time"
         },
         description: {
             required: "Please enter a description",
@@ -564,7 +593,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     // Set main menu details
                     $('#edit_menu_id').val(menu.id);
-                    $('#edit_menu_name').val(menu.name);
+                    $('#edit_mealTime').val(menu.name);
                     $('#edit_menu_description').val(menu.description);
                     $('#edit_menu_status').prop('checked', menu.is_active == 1);
 
@@ -577,6 +606,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Add an empty menu item if none exist
                         addEditMenuItem(null, 0);
                     }
+
+                    // Set meal time select value
+                    console.log('Meal Time value for edit:', menu.name);
+                    // $('#edit_mealTime').val(menu.name);
 
                     $('#editMenuModal').modal('show');
                 } else {
@@ -616,8 +649,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
                 <div class="col-md-4 mt-2">
-                    <input type="text" class="form-control" name="menu_items[${index}][category]"
-                           placeholder="Category" value="${item ? item.category || '' : ''}">
+                    <select class="form-control" name="menu_items[${index}][category]">
+                        <option value="">Select Category</option>
+                        <option value="Beverage" ${item && item.category === 'Beverage' ? 'selected' : ''}>Beverage</option>
+                        <option value="Food" ${item && item.category === 'Food' ? 'selected' : ''}>Food</option>
+                    </select>
                 </div>
                 <div class="col-md-3 mt-2">
                     <input type="text" class="form-control" name="menu_items[${index}][dietary_info]"
@@ -766,6 +802,94 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error updating status:', xhr.responseText);
                 // Revert toggle if there was an error
                 $(this).prop('checked', !isActive);
+            }
+        });
+    });
+
+    // View Menu functionality
+    $(document).on('click', '.view-menu', function(e) {
+        e.preventDefault();
+        const menuId = $(document).data('currentMenuId');
+        if (!menuId) {
+            console.error('No menu ID available');
+            return;
+        }
+        // Hide the popover
+        $('[data-bs-toggle="popover"]').popover('hide');
+        // Clear previous menu items
+        $('#viewMenuItemsContainer').empty();
+        // Fetch menu items via AJAX
+        $.ajax({
+            url: `/menu/${menuId}/edit`, // Reuse the edit endpoint to get menu items
+            method: 'GET',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.status === 200) {
+                    const menu = response.menu;
+                    if (menu.menu_items && menu.menu_items.length > 0) {
+                        // Set the modal headline to meal time
+                        $('#viewMenuModalLabel').text(menu.name);
+                        menu.menu_items.forEach(function(item) {
+                            const itemCard = `
+                                <div class="col-md-6 col-lg-4 mb-3">
+                                    <div class="card h-100 shadow-sm border-0">
+                                        <div class="card-body">
+                                            <h5 class="card-title mb-2">${item.name}</h5>
+                                            <p class="card-text mb-1"><strong>Price:</strong> $${item.price}</p>
+                                            <p class="card-text mb-1"><strong>Category:</strong> ${item.category || '-'}</p>
+                                            <p class="card-text mb-1"><strong>Dietary Info:</strong> ${item.dietary_info || '-'}</p>
+                                            <p class="card-text mb-1"><strong>Status:</strong> <button type="button" class="badge toggle-availability-badge ${item.is_available == 1 ? 'bg-success' : 'bg-secondary'}" data-item-id="${item.id}" data-available="${item.is_available}">${item.is_available == 1 ? 'Available' : 'Not Available'}</button></p>
+                                            ${item.image ? `<img src="${item.image}" alt="${item.name}" class="img-fluid rounded mt-2" style="max-height:100px;">` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            $('#viewMenuItemsContainer').append(itemCard);
+                        });
+                    } else {
+                        $('#viewMenuItemsContainer').html('<div class="col-12 text-center text-muted">No menu items found.</div>');
+                    }
+                    $('#viewMenuModal').modal('show');
+                } else {
+                    alert('Failed to load menu items. Please try again.');
+                }
+            },
+            error: function(xhr) {
+                console.error('Error fetching menu items:', xhr.responseText);
+                alert('Failed to load menu items. Please try again.');
+            }
+        });
+    });
+
+    // Add click handler for toggling availability
+    $(document).on('click', '.toggle-availability-badge', function() {
+        var btn = $(this);
+        var itemId = btn.data('item-id');
+        var currentStatus = btn.data('available');
+        var newStatus = currentStatus == 1 ? 0 : 1;
+        $.ajax({
+            url: `/menu-items/${itemId}/toggle-status`,
+            method: 'PATCH',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            data: { is_available: newStatus },
+            success: function(response) {
+                if (response.status === 200) {
+                    btn.data('available', newStatus);
+                    if (newStatus == 1) {
+                        btn.removeClass('bg-secondary').addClass('bg-success').text('Available');
+                    } else {
+                        btn.removeClass('bg-success').addClass('bg-secondary').text('Not Available');
+                    }
+                } else {
+                    alert('Failed to update status.');
+                }
+            },
+            error: function() {
+                alert('Failed to update status.');
             }
         });
     });

@@ -73,6 +73,7 @@ Route::group(['middleware' => ['auth', 'nocache', 'restaurant.permission:Menu_Ma
     Route::delete('/menu/{id}', [MenuController::class, 'destroy'])->name('menu.destroy');
     Route::get('menu/{menuId}/edit', [MenuController::class, 'getMenuItems']);
     Route::patch('user/{userId}/status', [UserController::class, 'activateAccount']);
+    Route::patch('/menu-items/{id}/toggle-status', [App\Http\Controllers\MenuController::class, 'toggleStatus'])->name('menu-items.toggle-status');
 });
 
 // Order Management Routes
