@@ -349,7 +349,14 @@ class UserController extends Controller
                 'message' => 'Validation failed. Please check your input.',
             ], 422);
         }
-        $restaurantId = session('userData')['users']->restaurant_id;
+        $restaurantIds = Restaurant::where('owner_id', $user->id)->pluck('id')->first();
+        return $restaurantIds;
+        // Determine restaurant ID based on permission
+        if (auth()->user()->role === 'admin') {
+            $restaurantId = $restaurantIds->id;
+        } else {
+            $restaurantId = session('userData')['users']->restaurant_id;
+        }
         // Handle profile picture
         $profilePicturePath = $this->handleProfilePicture($request);
         if ($profilePicturePath) {

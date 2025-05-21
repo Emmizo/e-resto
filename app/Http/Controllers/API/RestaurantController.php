@@ -101,7 +101,7 @@ class RestaurantController extends Controller
                         $query->where('is_available', true);
                     }]);
             }, 'reviews'])
-                ->where('is_approved', true)
+                ->where('is_approved', 1)
                 ->get();
 
             // Add average_rating and is_favorite to each restaurant

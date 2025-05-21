@@ -438,6 +438,7 @@
                                     <label for="edit_position" class="form-label">User Role <span class="asterik">*</span></label>
                                     <select class="form-select" aria-label="User Role" name="position" id="edit_position">
                                         <option selected disabled>Select user role</option>
+                                        <option value="Restaurant_owner">Restaurant Owner</option>
                                         <option value="Manager">Manager</option>
                                         <option value="Chef">Chef</option>
                                         <option value="Waiter">Waiter</option>
@@ -991,8 +992,77 @@ $(document).on('change', '.status-toggle', function() {
 
 
 
-    // Handle update button click
-    $('#updateUserBtn').click(function() {
+    // Handle edit button click
+    $(document).on('click', '.edit-action', function() {
+        const userId = $(this).data('user-id');
+
+        // Clear previous form data
+        $('#editUserForm')[0].reset();
+        $('#edit_permissions').val([]).trigger('change');
+        $('#edit_permissions').bootstrapDualListbox('refresh');
+
+        // Clear all select options
+        $('#edit_position').empty().append('<option selected disabled>Select user role</option>');
+
+        // Add role options
+        const roles = [
+            {value: 'admin', label: 'Admin'},
+            {value: 'restaurant_owner', label: 'Restaurant Owner'},
+            {value: 'manager', label: 'Manager'},
+            {value: 'chef', label: 'Chef'},
+            {value: 'waiter', label: 'Waiter'},
+            {value: 'cashier', label: 'Cashier'},
+            {value: 'other', label: 'Other'}
+        ];
+
+        roles.forEach(role => {
+            $('#edit_position').append(new Option(role.label, role.value));
+        });
+
+        $.ajax({
+            url: `/users/${userId}/edit`,
+            method: 'GET',
+            success: function(response) {
+                if (response.status === 200) {
+                    const user = response.user;
+
+                    // Set basic user info
+                    $('#edit_user_id').val(user.id);
+                    $('#edit_first_name').val(user.first_name);
+                    $('#edit_last_name').val(user.last_name);
+                    $('#edit_email').val(user.email);
+                    $('#edit_phone_number').val(user.phone_number);
+
+                    // Set role - convert to lowercase and replace spaces with underscore
+                    const roleValue = user.role.toLowerCase().replace(/ /g, '_');
+                    $('#edit_position').val(roleValue);
+
+                    // Set permissions
+                    if (user.permissions && Array.isArray(user.permissions)) {
+                        $('#edit_permissions').val(user.permissions);
+                    }
+                    $('#edit_permissions').bootstrapDualListbox('refresh');
+
+                    // Set active/inactive radio
+                    if (user.status == 1) {
+                        $('#edit_active').prop('checked', true);
+                        $('#edit_inactive').prop('checked', false);
+                    } else {
+                        $('#edit_active').prop('checked', false);
+                        $('#edit_inactive').prop('checked', true);
+                    }
+
+                    $('#editUser').modal('show');
+                }
+            },
+            error: function(xhr) {
+                toastr.error('Error loading user data');
+            }
+        });
+    });
+
+    // Single update button click handler
+    $(document).on('click', '#updateUserBtn', function() {
         // Ensure dual listbox values are synced
         $('#edit_permissions').val($('#edit_permissions').val());
 
@@ -1100,92 +1170,5 @@ $(document).on('change', '.status-toggle', function() {
             }
         });
     });
-
-    // Handle edit button click
-    $(document).on('click', '.edit-action', function() {
-        const userId = $(this).data('user-id');
-
-        $.ajax({
-            url: `/users/${userId}/edit`,
-            method: 'GET',
-            success: function(response) {
-                if (response.status === 200) {
-                    const user = response.user;
-                    $('#edit_user_id').val(user.id);
-                    $('#edit_first_name').val(user.first_name);
-                    $('#edit_last_name').val(user.last_name);
-                    $('#edit_email').val(user.email);
-                    $('#edit_phone_number').val(user.phone_number);
-                    $('#edit_position').val(user.role);
-
-                    // Set permissions for dual listbox
-                    if (user.permissions) {
-                        $('#edit_permissions').val(user.permissions);
-                        $('#edit_permissions').bootstrapDualListbox('refresh');
-                    } else {
-                        $('#edit_permissions').val([]);
-                        $('#edit_permissions').bootstrapDualListbox('refresh');
-                    }
-
-                    // Set active/inactive radio
-                    if (user.status == 1) {
-                        $('#edit_active').prop('checked', true);
-                    } else {
-                        $('#edit_inactive').prop('checked', true);
-                    }
-
-                    $('#editUser').modal('show');
-                }
-            }
-        });
-    });
-
-    // Handle update button click
-    $('#updateUserBtn').click(function() {
-        // Ensure dual listbox values are synced
-        $('#edit_permissions').val($('#edit_permissions').val());
-
-        // Ensure is_active is set from the checked radio
-        var isActive = $('input[name="is_active"]:checked', '#editUserForm').val();
-        if (typeof isActive !== 'undefined') {
-            // Remove any existing hidden is_active fields to avoid duplicates
-            $('#editUserForm input[type="hidden"][name="is_active"]').remove();
-        } else {
-            // If none checked, add a hidden field with empty value
-            $('#editUserForm').append('<input type="hidden" name="is_active" value="">');
-        }
-
-        var formData = new FormData($('#editUserForm')[0]);
-        const userId = $('#edit_user_id').val();
-
-        $.ajax({
-            url: `/users/${userId}`,
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function(response) {
-                if (response.status === 200) {
-                    $('#editUser').modal('hide');
-                    toastr.success('User updated successfully');
-                    table.ajax.reload();
-                }
-            },
-            error: function(xhr) {
-                if (xhr.status === 422) {
-                    const errors = xhr.responseJSON.errors;
-                    let errorMessage = '';
-                    for (let field in errors) {
-                        errorMessage += errors[field][0] + '\n';
-                    }
-                    toastr.error(errorMessage);
-                }
-            }
-        });
-    });
-// });
 </script>
   @endsection

@@ -29,9 +29,8 @@
                         </div>
                     </div>
                     <div class="btn-options mt-3 mt-xl-0">
-
-                        <a href="javascript:;" class="btn btn-primary btn-xsmall font-dmsans fw-medium position-relative rounded-3" data-bs-toggle="modal" data-bs-target="#addUser" title="Add User">Add Menu</a>
-
+                        <a href="javascript:;" class="btn btn-primary btn-xsmall font-dmsans fw-medium position-relative rounded-3 me-2" data-bs-toggle="modal" data-bs-target="#viewAllMenusModal" title="View All Menus">View All Menus</a>
+                        <a href="javascript:;" class="btn btn-primary btn-xsmall font-dmsans fw-medium position-relative rounded-3" data-bs-toggle="modal" data-bs-target="#addUser" title="Add Menu">Add Menu</a>
                     </div>
                 </div>
                 <div class="filter-col-options">
@@ -308,6 +307,37 @@
             </div>
             <div class="modal-footer border-0 justify-content-end">
                 <button type="button" class="btn btn-outline btn-small fw-semibold text-uppercase rounded-3 border border-grey-v1" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View All Menus Modal -->
+<div class="modal fade" id="viewAllMenusModal" tabindex="-1" aria-labelledby="viewAllMenusModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h1 class="modal-title fs-5 font-dmsans fw-bold text-primary-v1" id="viewAllMenusModalLabel">All Menus</h1>
+                <div class="ms-auto">
+                    <button type="button" class="btn btn-primary btn-sm me-2" onclick="printAllMenus()">
+                        <i class="fas fa-print"></i> Print
+                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div id="printableMenus">
+                    @foreach($menus as $menu)
+                    <div class="menu-section mb-4">
+                        <h3 class="mb-3">{{ $menu->menu_name }}</h3>
+                        <p class="text-muted mb-3">{{ $menu->menu_description }}</p>
+                        <div class="menu-items-grid row g-3" id="menuItems{{ $menu->id }}">
+                            <!-- Menu items will be loaded here -->
+                        </div>
+                        <hr class="my-4">
+                    </div>
+                    @endforeach
+                </div>
             </div>
         </div>
     </div>
@@ -839,7 +869,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                             <h5 class="card-title mb-2">${item.name}</h5>
                                             <p class="card-text mb-1"><strong>Price:</strong> $${item.price}</p>
                                             <p class="card-text mb-1"><strong>Category:</strong> ${item.category || '-'}</p>
-                                            <p class="card-text mb-1"><strong>Dietary Info:</strong> ${item.dietary_info || '-'}</p>
+                                            <p class="card-text mb-1"><strong>Dietary Info:</strong> ${formatDietaryInfo(item.dietary_info)}</p>
                                             <p class="card-text mb-1"><strong>Status:</strong> <button type="button" class="badge toggle-availability-badge ${item.is_available == 1 ? 'bg-success' : 'bg-secondary'}" data-item-id="${item.id}" data-available="${item.is_available}">${item.is_available == 1 ? 'Available' : 'Not Available'}</button></p>
                                             ${item.image ? `<img src="${item.image}" alt="${item.name}" class="img-fluid rounded mt-2" style="max-height:100px;">` : ''}
                                         </div>
@@ -894,6 +924,84 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+// Load menu items when View All Menus modal is opened
+$('#viewAllMenusModal').on('show.bs.modal', function () {
+    @foreach($menus as $menu)
+        $.ajax({
+            url: `/menu/${{{ $menu->id }}}/edit`,
+            method: 'GET',
+            success: function(response) {
+                if (response.status === 200) {
+                    const menuItems = response.menu.menu_items;
+                    let itemsHtml = '';
+
+                    menuItems.forEach(function(item) {
+                        itemsHtml += `
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card h-100 shadow-sm border-0">
+                                    ${item.image ? `<img src="${item.image}" class="card-img-top" alt="${item.name}" style="height: 200px; object-fit: cover;">` : ''}
+                                    <div class="card-body">
+                                        <h5 class="card-title">${item.name}</h5>
+                                        <p class="card-text mb-1">${item.description || ''}</p>
+                                        <p class="card-text mb-1"><strong>Price:</strong> $${item.price}</p>
+                                        <p class="card-text mb-1"><strong>Category:</strong> ${item.category || '-'}</p>
+                                        <p class="card-text mb-1"><strong>Dietary Info:</strong> ${formatDietaryInfo(item.dietary_info)}</p>
+                                        <span class="badge ${item.is_available == 1 ? 'bg-success' : 'bg-secondary'}">${item.is_available == 1 ? 'Available' : 'Not Available'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    $(`#menuItems${response.menu.id}`).html(itemsHtml);
+                }
+            }
+        });
+    @endforeach
+});
+
+function printAllMenus() {
+    const printContent = document.getElementById('printableMenus').innerHTML;
+    const originalContent = document.body.innerHTML;
+
+    document.body.innerHTML = `
+        <div class="container p-4">
+            <h1 class="text-center mb-4">Restaurant Menu</h1>
+            ${printContent}
+        </div>
+    `;
+
+    window.print();
+    document.body.innerHTML = originalContent;
+
+    // Reinitialize necessary JavaScript after restoring content
+    location.reload();
+}
+
+function formatDietaryInfo(dietaryInfo) {
+    if (!dietaryInfo) return '-';
+    let obj;
+    try {
+        obj = typeof dietaryInfo === 'string' ? JSON.parse(dietaryInfo) : dietaryInfo;
+    } catch (e) {
+        return `<code>${dietaryInfo}</code>`;
+    }
+    let html = '<ul class="mb-0">';
+    for (const key in obj) {
+        if (Array.isArray(obj[key])) {
+            html += `<li><strong>${key}:</strong><ul>`;
+            obj[key].forEach(val => {
+                html += `<li>${val}</li>`;
+            });
+            html += '</ul></li>';
+        } else {
+            html += `<li><strong>${key}:</strong> ${obj[key]}</li>`;
+        }
+    }
+    html += '</ul>';
+    return html;
+}
 
   </script>
 @endsection
