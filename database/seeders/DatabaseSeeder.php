@@ -20,5 +20,6 @@ class DatabaseSeeder extends Seeder
         $this->call(TermsAndConditionsSeeder::class);
         $this->call(MenusTableSeeder::class);
         $this->call(MenuItemsTableSeeder::class);
+        $this->call(FavoriteMenuItemsTableSeeder::class);
     }
 }

@@ -890,8 +890,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error fetching menu items:', xhr.responseText);
                 alert('Failed to load menu items. Please try again.');
             }
-        });
     });
+});
 
     // Add click handler for toggling availability
     $(document).on('click', '.toggle-availability-badge', function() {

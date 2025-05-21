@@ -12,6 +12,11 @@ class FavoriteMenuItem extends Model
     protected $fillable = [
         'user_id',
         'menu_item_id',
+        'status',
+    ];
+
+    protected $casts = [
+        'status' => 'boolean',
     ];
 
     public function user()
