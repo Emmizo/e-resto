@@ -178,8 +178,21 @@
                                         <option value="Food">Food</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3 mt-2">
-                                    <input type="text" class="form-control" name="menu_items[0][dietary_info]" placeholder="Dietary Info">
+                                <div class="col-md-3 mt-2 food-dietary-options" style="display:none;">
+                                    @foreach(config('dietary.food') as $option)
+                                        <label class="me-2">
+                                            <input type="checkbox" name="menu_items[0][suitable_for][]" value="{{ $option }}">
+                                            {{ ucfirst($option) }}
+                                        </label>
+                                    @endforeach
+                                </div>
+                                <div class="col-md-3 mt-2 beverage-dietary-options" style="display:none;">
+                                    @foreach(config('dietary.beverage') as $option)
+                                        <label class="me-2">
+                                            <input type="checkbox" name="menu_items[0][suitable_for][]" value="{{ $option }}">
+                                            {{ ucfirst($option) }}
+                                        </label>
+                                    @endforeach
                                 </div>
                                 <div class="col-md-3 mt-2">
                                     <select class="form-control" name="menu_items[0][is_available]">
@@ -655,55 +668,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Function to add menu item in edit form
     function addEditMenuItem(item, index) {
+        const dietaryOptions = ['vegan', 'vegetarian', 'gluten-free', 'halal', 'kosher'];
+        let suitableFor = [];
+        if (item && item.dietary_info && item.dietary_info.suitable_for) {
+            suitableFor = item.dietary_info.suitable_for;
+        }
+        let dietaryCheckboxes = dietaryOptions.map(option => `
+            <label class=\"me-2\">
+                <input type=\"checkbox\" name=\"menu_items[${index}][suitable_for][]\" value=\"${option}\" ${suitableFor.includes(option) ? 'checked' : ''}>
+                ${option.charAt(0).toUpperCase() + option.slice(1)}
+            </label>
+        `).join('');
         const menuItem = `
-            <div class="menu-item row mb-3" data-index="${index}">
-                <input type="hidden" name="menu_items[${index}][id]" value="${item ? item.id : ''}">
-                <div class="col-md-4">
-                    <input type="text" class="form-control" name="menu_items[${index}][name]"
-                           placeholder="Item Name" value="${item ? item.name : ''}" required>
-                </div>
-                <div class="col-md-3">
-                    <input type="number" class="form-control" name="menu_items[${index}][price]"
-                           placeholder="Price" value="${item ? item.price : ''}" required>
-                </div>
-
-                <div class="col-md-5">
-                    <div class="input-group">
-                        <input type="file" class="form-control" name="menu_items[${index}][image]" accept="image/*">
-                        ${item && item.image ? `
-                            <div class="mt-2 w-100">
-                                <img src="${item.image}" alt="${item.name}" class="img-thumbnail" style="height: 100px; width: 100px;">
-                                <input type="hidden" name="menu_items[${index}][existing_image]" value="${item.image}">
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-                <div class="col-md-4 mt-2">
-                    <select class="form-control" name="menu_items[${index}][category]">
-                        <option value="">Select Category</option>
-                        <option value="Beverage" ${item && item.category === 'Beverage' ? 'selected' : ''}>Beverage</option>
-                        <option value="Food" ${item && item.category === 'Food' ? 'selected' : ''}>Food</option>
-                    </select>
-                </div>
-                <div class="col-md-3 mt-2">
-                    <input type="text" class="form-control" name="menu_items[${index}][dietary_info]"
-                           placeholder="Dietary Info" value="${item ? item.dietary_info || '' : ''}">
-                </div>
-                <div class="col-md-3 mt-2">
-                    <select class="form-control" name="menu_items[${index}][is_available]">
-                        <option value="1" ${item && item.is_available == 1 ? 'selected' : ''}>Available</option>
-                        <option value="0" ${item && item.is_available == 0 ? 'selected' : ''}>Not Available</option>
-                    </select>
-                </div>
-                <div class="col-md-2 mt-2">
-                    <button type="button" class="btn btn-danger remove-edit-item-btn" onclick="removeEditItem(this)">
-                        <i class="fa fa-trash"></i>
-                    </button>
-                </div>
-            </div>
-            <hr>
-        `;
-
+            <div class=\"menu-item row mb-3\" data-index=\"${index}\">\n                <input type=\"hidden\" name=\"menu_items[${index}][id]\" value=\"${item ? item.id : ''}\">\n                <div class=\"col-md-4\">\n                    <input type=\"text\" class=\"form-control\" name=\"menu_items[${index}][name]\"\n                           placeholder=\"Item Name\" value=\"${item ? item.name : ''}\" required>\n                </div>\n                <div class=\"col-md-3\">\n                    <input type=\"number\" class=\"form-control\" name=\"menu_items[${index}][price]\"\n                           placeholder=\"Price\" value=\"${item ? item.price : ''}\" required>\n                </div>\n\n                <div class=\"col-md-5\">\n                    <div class=\"input-group\">\n                        <input type=\"file\" class=\"form-control\" name=\"menu_items[${index}][image]\" accept=\"image/*\">\n                        ${item && item.image ? `\n                            <div class=\"mt-2 w-100\">\n                                <img src=\"${item.image}\" alt=\"${item.name}\" class=\"img-thumbnail\" style=\"height: 100px; width: 100px;\">\n                                <input type=\"hidden\" name=\"menu_items[${index}][existing_image]\" value=\"${item.image}\">\n                            </div>\n                        ` : ''}\n                    </div>\n                </div>\n                <div class=\"col-md-4 mt-2\">\n                    <select class=\"form-control\" name=\"menu_items[${index}][category]\">\n                        <option value=\"\">Select Category</option>\n                        <option value=\"Beverage\" ${item && item.category === 'Beverage' ? 'selected' : ''}>Beverage</option>\n                        <option value=\"Food\" ${item && item.category === 'Food' ? 'selected' : ''}>Food</option>\n                    </select>\n                </div>\n                <div class=\"col-md-3 mt-2\">\n                    ${dietaryCheckboxes}\n                </div>\n                <div class=\"col-md-3 mt-2\">\n                    <select class=\"form-control\" name=\"menu_items[${index}][is_available]\">\n                        <option value=\"1\" ${item && item.is_available == 1 ? 'selected' : ''}>Available</option>\n                        <option value=\"0\" ${item && item.is_available == 0 ? 'selected' : ''}>Not Available</option>\n                    </select>\n                </div>\n                <div class=\"col-md-2 mt-2\">\n                    <button type=\"button\" class=\"btn btn-danger remove-edit-item-btn\" onclick=\"removeEditItem(this)\">\n                        <i class=\"fa fa-trash\"></i>\n                    </button>\n                </div>\n            </div>\n            <hr>\n        `;
         $('#editMenuItemsContainer').append(menuItem);
     }
 
@@ -1002,6 +979,13 @@ function formatDietaryInfo(dietaryInfo) {
     html += '</ul>';
     return html;
 }
+
+$(document).on('change', 'select[name^="menu_items"][name$="[category]"]', function() {
+    var $row = $(this).closest('.menu-item');
+    var category = $(this).val();
+    $row.find('.food-dietary-options').toggle(category === 'Food');
+    $row.find('.beverage-dietary-options').toggle(category === 'Beverage');
+});
 
   </script>
 @endsection

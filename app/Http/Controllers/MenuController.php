@@ -46,11 +46,11 @@ class MenuController extends Controller
             'description' => 'required|string|max:255',
             'menu_items' => 'required|array',
             'menu_items.*.name' => 'required|string|max:255',
-            // 'menu_items.*.description' => 'required|string|max:255',
             'menu_items.*.price' => 'required|numeric|min:0',
             'menu_items.*.category' => 'required|string|max:255',
-            'menu_items.*.dietary_info' => 'nullable|string|max:255',
-            'menu_items.*.image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',  // Each item MUST have an image
+            'menu_items.*.suitable_for' => 'array',
+            'menu_items.*.suitable_for.*' => 'string',
+            'menu_items.*.image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -71,16 +71,17 @@ class MenuController extends Controller
 
         // Save each menu item with its own image
         foreach ($request->menu_items as $item) {
-            $imagePath = $this->handleMenuItemImage($item['image']);  // Process image
-
+            $imagePath = $this->handleMenuItemImage($item['image']);
             MenuItem::create([
                 'menu_id' => $menu->id,
                 'name' => $item['name'] ?? '',
                 'description' => $item['description'] ?? '',
                 'price' => $item['price'],
-                'image' => config('app.url') . '/' . $imagePath ?? '',  // Store the image path
+                'image' => config('app.url') . '/' . $imagePath ?? '',
                 'category' => $item['category'] ?? '',
-                'dietary_info' => $item['dietary_info'] ?? '',
+                'dietary_info' => [
+                    'suitable_for' => $item['suitable_for'] ?? [],
+                ],
                 'is_available' => 1,
             ]);
         }
@@ -164,7 +165,8 @@ class MenuController extends Controller
             'menu_items.*.name' => 'required|string|max:255',
             'menu_items.*.price' => 'required|numeric|min:0',
             'menu_items.*.category' => 'required|string|max:255',
-            'menu_items.*.dietary_info' => 'nullable|string|max:255',
+            'menu_items.*.suitable_for' => 'array',
+            'menu_items.*.suitable_for.*' => 'string',
             'menu_items.*.image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
@@ -205,7 +207,9 @@ class MenuController extends Controller
                     'price' => $itemData['price'],
                     'menu_id' => $request->id,
                     'category' => $itemData['category'] ?? '',
-                    'dietary_info' => $itemData['dietary_info'] ?? '',
+                    'dietary_info' => [
+                        'suitable_for' => $itemData['suitable_for'] ?? [],
+                    ],
                     'is_available' => $itemData['is_available'] ?? 1,
                 ];
 
