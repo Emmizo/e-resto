@@ -58,4 +58,12 @@ class OrderStatusUpdated extends Mailable
     {
         return [];
     }
+
+    public function build()
+    {
+        $subject = 'Order Status Updated';
+        return $this
+            ->subject($subject)
+            ->view('mails.order-status-updated');
+    }
 }

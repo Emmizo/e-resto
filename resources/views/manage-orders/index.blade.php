@@ -53,39 +53,45 @@
                                 <td>{{ $order->first_name }} {{ $order->last_name }}</td>
                                 <td>${{ number_format($order->total_amount, 2) }}</td>
                                 <td>
-                                    <span class="badge rounded-pill bg-{{ $order->status === 'completed' ? 'success' : ($order->status === 'cancelled' ? 'danger' : 'warning') }}">
+                                    <span class="badge rounded-pill
+                                        {{
+                                            $order->status === 'completed' ? 'bg-success' :
+                                            ($order->status === 'cancelled' ? 'bg-danger' :
+                                            ($order->status === 'processing' ? 'bg-info' :
+                                            ($order->status === 'pending' ? 'bg-warning text-dark' : 'bg-secondary')))
+                                        }}">
                                         {{ ucfirst($order->status) }}
                                     </span>
                                 </td>
                                 <td>{{ $order->created_at->format('M d, Y H:i') }}</td>
                                 <td>
                                     <div class="dropdown">
-                                        <button class="btn btn-sm btn-link" type="button" data-bs-toggle="dropdown" {{ $order->status === 'completed' ? 'disabled' : '' }}>
+                                        <button class="btn btn-sm btn-link" type="button" data-bs-toggle="dropdown">
                                             <i class="fas fa-ellipsis-v"></i>
                                         </button>
                                         <ul class="dropdown-menu">
                                             <li>
-                                                <a class="dropdown-item view-action" href="#" data-order-id="{{ $order->id }}">
+                                                <button type="button" class="dropdown-item view-action" data-order-id="{{ $order->id }}">
                                                     <i class="fas fa-eye"></i> View
-                                                </a>
+                                                </button>
                                             </li>
                                             <li>
-                                                <a class="dropdown-item update-status-action" href="#"
-                                                   data-bs-toggle="modal"
-                                                   data-bs-target="#updateStatus"
-                                                   data-order-id="{{ $order->id }}"
-                                                   {{ $order->status === 'completed' ? 'style="pointer-events: none; opacity: 0.5;"' : '' }}>
-                                                    <i class="fas fa-edit"></i> Update Status
-                                                </a>
+                                                <button type="button" class="dropdown-item update-status-action"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#updateStatus"
+                                                    data-order-id="{{ $order->id }}"
+                                                    {{ $order->status === 'completed' ? 'disabled style="pointer-events: none; opacity: 0.5;"' : '' }}>
+                                                    <i class="fas fa-edit"></i> <span class="update-status-text">Update Status</span>
+                                                    <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+                                                </button>
                                             </li>
                                             <li>
-                                                <a class="dropdown-item delete-action" href="#"
-                                                   data-bs-toggle="modal"
-                                                   data-bs-target="#deleteOrder"
-                                                   data-order-id="{{ $order->id }}"
-                                                   {{ $order->status === 'completed' ? 'style="pointer-events: none; opacity: 0.5;"' : '' }}>
+                                                <button type="button" class="dropdown-item delete-action"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#deleteOrder"
+                                                    data-order-id="{{ $order->id }}">
                                                     <i class="fas fa-trash"></i> Delete
-                                                </a>
+                                                </button>
                                             </li>
                                         </ul>
                                     </div>
@@ -109,7 +115,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="updateStatusForm" method="POST"><!-- No action attribute: handled by JS only -->
+                <form id="updateStatusForm" action="javascript:void(0);" method="POST"><!-- No action attribute: handled by JS only -->
                     @csrf
                     <input type="hidden" name="order_id" id="order_id">
                     <div class="form-group mb-3">
@@ -157,6 +163,7 @@
 </div>
 
 @section('script')
+
 <script>
 console.log('Script loaded');
 $(document).ready(function() {
@@ -179,9 +186,40 @@ $(document).ready(function() {
         data: {!! json_encode($orders) !!},
         columns: [
             { data: 'id', name: 'id' },
-            { data: 'customer', name: 'customer' },
+            {
+                data: null,
+                name: 'customer',
+                render: function(data, type, row) {
+                    return row.first_name + ' ' + row.last_name;
+                }
+            },
             { data: 'total_amount', name: 'total_amount' },
-            { data: 'status', name: 'status' },
+            {
+                data: 'status',
+                name: 'status',
+                render: function(data, type, row) {
+                    let badgeClass = '';
+                    let textClass = '';
+                    switch (data) {
+                        case 'completed':
+                            badgeClass = 'bg-success';
+                            break;
+                        case 'cancelled':
+                            badgeClass = 'bg-danger';
+                            break;
+                        case 'processing':
+                            badgeClass = 'bg-info';
+                            break;
+                        case 'pending':
+                            badgeClass = 'bg-warning';
+                            textClass = 'text-dark';
+                            break;
+                        default:
+                            badgeClass = 'bg-secondary';
+                    }
+                    return `<span class="badge rounded-pill ${badgeClass} ${textClass}">${data.charAt(0).toUpperCase() + data.slice(1)}</span>`;
+                }
+            },
             { data: 'created_at', name: 'created_at' },
             {
                 data: null,
@@ -192,32 +230,32 @@ $(document).ready(function() {
                     const isCompleted = row.status === 'completed';
                     return `
                         <div class="dropdown">
-                            <button class="btn btn-sm btn-link" type="button" data-bs-toggle="dropdown" ${isCompleted ? 'disabled' : ''}>
+                            <button class="btn btn-sm btn-link" type="button" data-bs-toggle="dropdown">
                                 <i class="fas fa-ellipsis-v"></i>
                             </button>
                             <ul class="dropdown-menu">
                                 <li>
-                                    <a class="dropdown-item view-action" href="#" data-order-id="${row.id}">
+                                    <button type="button" class="dropdown-item view-action" data-order-id="${row.id}">
                                         <i class="fas fa-eye"></i> View
-                                    </a>
+                                    </button>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item update-status-action" href="#"
-                                       data-bs-toggle="modal"
-                                       data-bs-target="#updateStatus"
-                                       data-order-id="${row.id}"
-                                       ${isCompleted ? 'style="pointer-events: none; opacity: 0.5;"' : ''}>
-                                        <i class="fas fa-edit"></i> Update Status
-                                    </a>
+                                    <button type="button" class="dropdown-item update-status-action"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#updateStatus"
+                                        data-order-id="${row.id}"
+                                        ${isCompleted ? 'disabled style="pointer-events: none; opacity: 0.5;"' : ''}>
+                                        <i class="fas fa-edit"></i> <span class="update-status-text">Update Status</span>
+                                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+                                    </button>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item delete-action" href="#"
-                                       data-bs-toggle="modal"
-                                       data-bs-target="#deleteOrder"
-                                       data-order-id="${row.id}"
-                                       ${isCompleted ? 'style="pointer-events: none; opacity: 0.5;"' : ''}>
+                                    <button type="button" class="dropdown-item delete-action"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#deleteOrder"
+                                        data-order-id="${row.id}">
                                         <i class="fas fa-trash"></i> Delete
-                                    </a>
+                                    </button>
                                 </li>
                             </ul>
                         </div>
@@ -284,16 +322,15 @@ $(document).ready(function() {
 
     // Handle update status form submission (delegated for robustness)
     $(document).on('submit', '#updateStatusForm', function(e) {
-        console.log('Delegated form submit handler triggered');
         e.preventDefault();
         const orderId = $('#order_id').val();
         const status = $('#status').val();
-        const order = {!! json_encode($orders) !!}.find(o => o.id === parseInt(orderId));
-        // Prevent updating if order is already completed
-        if (order && order.status === 'completed') {
-            toastr.error('Cannot update status of a completed order');
-            return;
-        }
+        const updateBtn = $('#updateStatusForm button[type="submit"]');
+        const spinner = updateBtn.find('.spinner-border');
+        const btnText = updateBtn.find('.update-status-text');
+        updateBtn.prop('disabled', true);
+        spinner.removeClass('d-none');
+        btnText.text('Updating...');
         $.ajax({
             url: `/orders/${orderId}/status-update`,
             type: 'POST',
@@ -315,6 +352,11 @@ $(document).ready(function() {
                 console.error('Update Status Error:', xhr);
                 const errorMessage = xhr.responseJSON?.message || 'Error updating order status';
                 toastr.error(errorMessage);
+            },
+            complete: function() {
+                updateBtn.prop('disabled', false);
+                spinner.addClass('d-none');
+                btnText.text('Update Status');
             }
         });
     });
@@ -323,6 +365,12 @@ $(document).ready(function() {
     $(document).on('click', '.view-action', function() {
         const orderId = $(this).data('order-id');
         window.location.href = `/orders/${orderId}`;
+    });
+
+    // Ensure order ID is set when clicking Update Status button
+    $(document).on('click', '.update-status-action', function() {
+        const orderId = $(this).data('order-id');
+        $('#order_id').val(orderId);
     });
 });
 </script>

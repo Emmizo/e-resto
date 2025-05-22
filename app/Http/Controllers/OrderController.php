@@ -219,6 +219,7 @@ class OrderController extends Controller
     public function updateStatus(Request $request, $orderId)
     {
         $order = Order::findOrFail($orderId);
+        $oldStatus = $order->status;
         $order->status = $request->status;
         $order->save();
 

@@ -17,6 +17,7 @@ class OrderItem extends Model
         'order_id',
         'menu_item_id',
         'quantity',
+        'dietary_info',
         'price',
     ];
 
@@ -26,7 +27,8 @@ class OrderItem extends Model
      * @var array
      */
     protected $casts = [
-        'price' => 'decimal:2', // Cast price to a decimal with 2 decimal places
+        'price' => 'decimal:2',  // Cast price to a decimal with 2 decimal places
+        'dietary_info' => 'array',
     ];
 
     /**

@@ -297,7 +297,6 @@ class OrderController extends Controller
                 'delivery_address' => $request->delivery_address,
                 'special_instructions' => $request->special_instructions,
                 'order_type' => $request->order_type,
-                'dietary_info' => $request->dietary_info ?? null,
             ]);
 
             // Create order items
@@ -307,6 +306,7 @@ class OrderController extends Controller
                     'order_id' => $order->id,
                     'menu_item_id' => $item['menu_item_id'],
                     'quantity' => $item['quantity'],
+                    'dietary_info' => $item['dietary_info'] ?? null,
                     'price' => $menuItem->price
                 ]);
             }
@@ -592,7 +592,16 @@ class OrderController extends Controller
             ], 422);
         }
 
+        $oldStatus = $order->status;
         $order->update(['status' => $request->status]);
+
+        if ($oldStatus !== $order->status && $order->user && $order->user->email) {
+            try {
+                \Mail::to($order->user->email)->send(new \App\Mail\OrderStatusUpdated($order));
+            } catch (\Exception $e) {
+                \Log::error('Failed to send order status update email: ' . $e->getMessage());
+            }
+        }
 
         return response()->json([
             'status' => 'success',

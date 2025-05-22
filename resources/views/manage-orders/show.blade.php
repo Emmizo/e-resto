@@ -1,7 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid">
+<main class="content-wrapper">
+    <div class="main-content manage-users">
     <div class="row">
         <div class="col-12">
             <div class="card">
@@ -25,9 +26,15 @@
                                 <tr>
                                     <th>Status:</th>
                                     <td>
-                                        <span class="badge badge-{{ $order->status === 'completed' ? 'success' : ($order->status === 'cancelled' ? 'danger' : 'warning') }}">
-                                            {{ ucfirst($order->status) }}
-                                        </span>
+                                        <span class="badge rounded-pill
+                                        {{
+                                            $order->status === 'completed' ? 'bg-success' :
+                                            ($order->status === 'cancelled' ? 'bg-danger' :
+                                            ($order->status === 'processing' ? 'bg-info' :
+                                            ($order->status === 'pending' ? 'bg-warning text-dark' : 'bg-secondary')))
+                                        }}">
+                                        {{ ucfirst($order->status) }}
+                                    </span>
                                     </td>
                                 </tr>
                                 <tr>
@@ -45,7 +52,7 @@
                             <table class="table table-bordered">
                                 <tr>
                                     <th>Name:</th>
-                                    <td>{{ $order->user->name }}</td>
+                                    <td>{{ $order->user->first_name }} {{ $order->user->last_name    }}</td>
                                 </tr>
                                 <tr>
                                     <th>Email:</th>
@@ -97,4 +104,5 @@
         </div>
     </div>
 </div>
+</main>
 @endsection
