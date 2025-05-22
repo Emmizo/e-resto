@@ -204,6 +204,16 @@ class ReservationController extends Controller
                 'status' => 'pending'
             ]);
 
+            $restaurant = $reservation->restaurant;
+            if ($restaurant && $restaurant->email) {
+                try {
+                    \Mail::to($restaurant->email)->send(new \App\Mail\NewReservationNotification($reservation));
+                    \Log::info('Reservation email sent to: ' . $restaurant->email);
+                } catch (\Exception $e) {
+                    \Log::error('Reservation email failed: ' . $e->getMessage());
+                }
+            }
+
             return response()->json([
                 'status' => 'success',
                 'message' => 'Reservation created successfully',
@@ -403,6 +413,10 @@ class ReservationController extends Controller
                 ], 404);
             }
 
+            $oldStatus = $reservation->getOriginal('status');
+            if ($request->has('status')) {
+                $reservation->status = $request->status;
+            }
             $updateData = [];
             if ($request->has('reservation_time')) {
                 $updateData['reservation_time'] = $request->reservation_time;
@@ -413,14 +427,19 @@ class ReservationController extends Controller
             if ($request->has('special_requests')) {
                 $updateData['special_requests'] = $request->special_requests;
             }
-            if ($request->has('status')) {
-                $updateData['status'] = $request->status;
-            }
             if ($request->has('phone_number')) {
                 $updateData['phone_number'] = $request->phone_number;
             }
 
             $reservation->update($updateData);
+
+            if ($oldStatus !== $reservation->status && $reservation->user) {
+                try {
+                    \Mail::to($reservation->user->email)->send(new \App\Mail\ReservationStatusUpdated($reservation));
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send reservation status update email: ' . $e->getMessage());
+                }
+            }
 
             return response()->json([
                 'status' => 'success',

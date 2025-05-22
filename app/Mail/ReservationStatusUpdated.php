@@ -24,6 +24,14 @@ class ReservationStatusUpdated extends Mailable
         $this->reservation = $reservation;
     }
 
+    public function build()
+    {
+        $subject = 'Your Reservation Status Has Been Updated';
+        return $this
+            ->subject($subject)
+            ->view('mails.reservation-status-updated');
+    }
+
     /**
      * Get the message envelope.
      */

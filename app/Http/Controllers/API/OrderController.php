@@ -263,7 +263,8 @@ class OrderController extends Controller
             'order_type' => 'required|string|in:dine_in,takeaway,delivery',
             'items' => 'required|array|min:1',
             'items.*.menu_item_id' => 'required|exists:menu_items,id',
-            'items.*.quantity' => 'required|integer|min:1'
+            'items.*.quantity' => 'required|integer|min:1',
+            'dietary_info' => 'nullable|array',
         ]);
 
         if ($validator->fails()) {
@@ -296,6 +297,7 @@ class OrderController extends Controller
                 'delivery_address' => $request->delivery_address,
                 'special_instructions' => $request->special_instructions,
                 'order_type' => $request->order_type,
+                'dietary_info' => $request->dietary_info ?? null,
             ]);
 
             // Create order items
@@ -330,6 +332,17 @@ class OrderController extends Controller
                     $body,
                     $data
                 );
+            }
+
+            // Send email to the restaurant
+            $restaurant = $order->restaurant;
+            if ($restaurant && $restaurant->email) {
+                try {
+                    \Mail::to($restaurant->email)->send(new \App\Mail\NewOrderNotification($order));
+                    \Log::info('Order email sent to: ' . $restaurant->email);
+                } catch (\Exception $e) {
+                    \Log::error('Order email failed: ' . $e->getMessage());
+                }
             }
 
             DB::commit();

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\NewOrderNotification;
 use App\Mail\OrderStatusUpdated;
 use App\Models\MenuItem;
 use App\Models\Order;
@@ -69,7 +70,8 @@ class OrderController extends Controller
             'items' => 'required|array|min:1',
             'items.*.menu_item_id' => 'required|exists:menu_items,id',
             'items.*.quantity' => 'required|integer|min:1',
-            'total_amount' => 'required|numeric|min:0'
+            'total_amount' => 'required|numeric|min:0',
+            'dietary_info' => 'nullable|array',
         ]);
 
         if ($validator->fails()) {
@@ -92,6 +94,7 @@ class OrderController extends Controller
                 'payment_status' => 'pending',
                 'delivery_address' => $request->delivery_address,
                 'special_instructions' => $request->special_instructions,
+                'dietary_info' => $request->dietary_info ?? null,
             ]);
 
             // Create order items
@@ -106,6 +109,11 @@ class OrderController extends Controller
             }
 
             DB::commit();
+
+            $restaurant = $order->restaurant;
+            if ($restaurant && $restaurant->email) {
+                \Mail::to($restaurant->email)->send(new NewOrderNotification($order));
+            }
 
             return response()->json([
                 'status' => 200,

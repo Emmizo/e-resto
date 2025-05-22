@@ -23,6 +23,7 @@ class Order extends Model
         'delivery_address',
         'special_instructions',
         'order_type',
+        'dietary_info',
     ];
 
     /**
@@ -34,6 +35,7 @@ class Order extends Model
         'total_amount' => 'decimal:2',  // Cast total_amount to a decimal with 2 decimal places
         'status' => 'string',  // Explicitly cast status to string
         'payment_status' => 'string',  // Explicitly cast payment_status to string
+        'dietary_info' => 'array',
     ];
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\RestaurantApprovedMail;
 use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\Restaurant;
@@ -9,6 +10,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 
 class DashboardController extends Controller
 {
@@ -243,9 +245,13 @@ class DashboardController extends Controller
      */
     public function approveRestaurant(Request $request, $id)
     {
-        $restaurant = \App\Models\Restaurant::findOrFail($id);
+        $restaurant = \App\Models\Restaurant::with('owner')->findOrFail($id);
         $restaurant->is_approved = $request->input('is_approved', true);
         $restaurant->save();
+        // Send email to owner on approval/unapproval
+        if ($restaurant->owner && $restaurant->owner->email) {
+            Mail::to($restaurant->owner->email)->send(new RestaurantApprovedMail($restaurant, $restaurant->is_approved));
+        }
         return response()->json(['status' => 'success', 'is_approved' => $restaurant->is_approved]);
     }
 }

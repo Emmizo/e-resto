@@ -19,7 +19,9 @@ return new class extends Migration {
             $table->enum('status', ['pending', 'processing', 'completed', 'cancelled'])->default('pending');
             $table->enum('payment_status', ['pending', 'paid', 'failed'])->default('pending');
             $table->text('delivery_address')->nullable();
+
             $table->text('special_instructions')->nullable();
+            $table->json('dietary_info')->nullable();
             $table->timestamps();
 
             // Add indexes for order filtering
