@@ -94,21 +94,27 @@ class RestaurantController extends Controller
                     ->toArray();
             }
             // Get all active restaurants with their active menus and menu items
-            $restaurants = Restaurant::with(['menus' => function ($query) {
-                $query
-                    ->where('is_active', true)
-                    ->with(['menuItems' => function ($query) {
-                        $query->where('is_available', true);
-                    }]);
-            }, 'reviews'])
+            $restaurants = Restaurant::with([
+                'cuisine',
+                'menus' => function ($query) {
+                    $query
+                        ->where('is_active', true)
+                        ->with(['menuItems' => function ($query) {
+                            $query->where('is_available', true);
+                        }]);
+                },
+                'reviews'
+            ])
                 ->where('is_approved', 1)
                 ->get();
 
-            // Add average_rating and is_favorite to each restaurant
+            // Add average_rating, is_favorite, cuisine_id, and cuisine_name to each restaurant
             $restaurants = $restaurants->map(function ($restaurant) use ($favoriteIds) {
                 $restaurantArray = $restaurant->toArray();
                 $restaurantArray['average_rating'] = round($restaurant->reviews->avg('rating'), 2) ?? null;
                 $restaurantArray['is_favorite'] = in_array($restaurant->id, $favoriteIds);
+                $restaurantArray['cuisine_id'] = $restaurant->cuisine_id;
+                $restaurantArray['cuisine_name'] = $restaurant->cuisine ? $restaurant->cuisine->name : null;
                 unset($restaurantArray['reviews']);
                 return $restaurantArray;
             })->toArray();
