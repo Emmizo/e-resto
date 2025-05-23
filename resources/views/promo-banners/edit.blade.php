@@ -43,7 +43,7 @@
             <input type="date" name="end_date" id="end_date" class="form-control" value="{{ $banner->end_date }}">
         </div>
         <div class="mb-3 form-check">
-            <input type="checkbox" name="is_active" id="is_active" class="form-check-input" {{ $banner->is_active ? 'checked' : '' }}>
+            <input type="checkbox" name="is_active" id="is_active" class="form-check-input" value="1" {{ $banner->is_active ? 'checked' : '' }}>
             <label for="is_active" class="form-check-label">Active</label>
         </div>
         <button type="submit" class="btn btn-primary">Update</button>

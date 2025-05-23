@@ -71,7 +71,7 @@ class ReviewController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'restaurant_id' => 'required|exists:restaurants,id',
-            'rating' => 'required|numeric|min:1|max:5',
+            'rating' => 'required|numeric|min:1|max:15',
             'comment' => 'nullable|string|max:500'
         ]);
 

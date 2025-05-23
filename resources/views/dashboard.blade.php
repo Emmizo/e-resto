@@ -288,6 +288,46 @@
                     </div>
                 </div>
                 @endif
+
+                @if($dashboardData['top_restaurants']->isNotEmpty())
+                    <div class="col-12">
+                        <div class="card mt-4">
+                            <div class="card-header bg-light">
+                                <strong>Reviewer Comments for Each Restaurant</strong>
+                            </div>
+                            <div class="card-body">
+                                @foreach($dashboardData['top_restaurants'] as $restaurant)
+                                    <div class="mb-4">
+                                        <h5>{{ $restaurant->name }}</h5>
+                                        @if($restaurant->reviews && $restaurant->reviews->isNotEmpty())
+                                            <ul class="list-group mb-3">
+                                                @foreach($restaurant->reviews as $review)
+                                                    <li class="list-group-item">
+                                                        <strong>
+                                                            {{ $review->user->first_name ?? 'Anonymous' }}
+                                                            {{ $review->user->last_name ?? '' }}:
+                                                        </strong>
+                                                        <span class="text-warning">
+                                                            @for($i = 0; $i < $review->rating; $i++)
+                                                                ★
+                                                            @endfor
+                                                        </span>
+                                                        <br>
+                                                        <span>{{ $review->comment }}</span>
+                                                        <br>
+                                                        <small class="text-muted">{{ $review->created_at->format('M d, Y H:i') }}</small>
+                                                    </li>
+                                                @endforeach
+                                            </ul>
+                                        @else
+                                            <p class="text-muted">No reviews yet.</p>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                @endif
             </main>
 
 @endsection
