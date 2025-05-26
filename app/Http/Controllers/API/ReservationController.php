@@ -462,6 +462,8 @@ class ReservationController extends Controller
      */
     public function update(Request $request, int $id): JsonResponse
     {
+        \Log::info('API ReservationController@update called', ['reservation_id' => $id, 'user_id' => auth()->id(), 'request' => $request->all()]);
+
         $validator = Validator::make($request->all(), [
             'reservation_time' => 'nullable|date',
             'number_of_guests' => 'nullable|integer|min:1|max:20',
