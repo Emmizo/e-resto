@@ -32,7 +32,7 @@
                                 <!-- Notifications will be dynamically added here -->
                             </div>
                             <li class="px-3 py-2 text-center">
-                                <a href="#" class="text-primary small view-all-notifications">View All</a>
+                                <a href="{{ url('/notifications') }}" class="text-primary small view-all-notifications">View All</a>
                             </li>
                         </ul>
                     </div>

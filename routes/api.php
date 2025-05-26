@@ -1,5 +1,6 @@
 <?php
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\OrderController;
 use App\Http\Controllers\API\ReservationController;
 use App\Http\Controllers\API\ReviewController;
@@ -82,6 +83,10 @@ Route::group(['namespace' => 'Api', 'prefix' => 'v1', 'middleware' => 'auth:api'
     Route::post('/addresses', [\App\Http\Controllers\API\AddressController::class, 'store']);
     Route::put('/addresses/{id}', [\App\Http\Controllers\API\AddressController::class, 'update']);
     Route::delete('/addresses/{id}', [\App\Http\Controllers\API\AddressController::class, 'destroy']);
+
+    // Notification routes
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAsRead']);
 });
 
 Route::get('/restaurants/{restaurant}/reviews', [ReviewController::class, 'restaurantReviews']);

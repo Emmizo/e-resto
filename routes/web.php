@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\AdminTermsAndConditionsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
@@ -116,3 +117,7 @@ Route::middleware(['auth', 'nocache'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::resource('promo-banners', \App\Http\Controllers\PromoBannerController::class);
 });
+
+Route::middleware('auth')->get('/notifications', [NotificationController::class, 'all'])->name('notifications.all');
+Route::middleware('auth')->get('/notifications/{id}', [NotificationController::class, 'show'])->name('notifications.show');
+Route::middleware('auth')->post('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAllAsRead');

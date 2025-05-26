@@ -64,7 +64,9 @@
     document.addEventListener('messaging-ready', function() {
         requestNotificationPermission();
         window.messaging.onMessage((payload) => {
-            console.log('Message received. ', payload);
+            // Play notification sound
+            const audio = new Audio('/assets/sounds/notification.mp3');
+            audio.play();
 
             // Update notification badge
             const notificationBadge = $('.notification-badge');
@@ -88,4 +90,71 @@
         });
     });
 </script>
+
+<script>
+$(document).ready(function() {
+    // Fetch notifications on page load
+    let notificationsUrl = '/api/v1/notifications';
+    if (window.currentRestaurantId) {
+        notificationsUrl += '?restaurant_id=' + window.currentRestaurantId;
+    }
+    $.ajax({
+        url: notificationsUrl,
+        method: 'GET',
+        success: function(response) {
+            const notificationBadge = $('.notification-badge');
+            const notificationList = $('.notification-list');
+            notificationList.empty();
+            let unreadCount = response.unread_count || 0;
+            if (unreadCount > 0) {
+                notificationBadge.text(unreadCount).show();
+            } else {
+                notificationBadge.text(0).hide();
+            }
+            response.notifications.forEach(function(notification) {
+                const isUnread = !notification.is_read;
+                const item = `
+                    <li class="px-3 py-2 border-bottom${isUnread ? ' bg-light' : ''}" data-id="${notification.id}">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">${notification.title}</h6>
+                                <p class="mb-0 small text-muted">${notification.body}</p>
+                                <small class="text-muted">${new Date(notification.created_at).toLocaleTimeString()}</small>
+                            </div>
+                        </div>
+                    </li>
+                `;
+                notificationList.append(item);
+            });
+        }
+    });
+
+    // Mark notifications as read when dropdown is opened
+    $('#notificationsDropdown').on('show.bs.dropdown', function() {
+        // Get all unread notification IDs
+        const ids = [];
+        $('.notification-list li.bg-light').each(function() {
+            const notificationId = $(this).data('id');
+            if (notificationId) ids.push(notificationId);
+        });
+        if (ids.length > 0) {
+            $.ajax({
+                url: '/api/v1/notifications/mark-as-read',
+                method: 'POST',
+                data: { ids: ids },
+                success: function() {
+                    $('.notification-badge').text(0).hide();
+                    $('.notification-list li.bg-light').removeClass('bg-light');
+                }
+            });
+        }
+    });
+});
+</script>
+
+@if(session('userData.users.restaurant_id'))
+<script>
+    window.currentRestaurantId = {{ session('userData.users.restaurant_id') }};
+</script>
+@endif
 

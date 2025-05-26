@@ -311,13 +311,31 @@ class OrderController extends Controller
                 ]);
             }
 
-            // Get all staff members of the restaurant
+            // Get all staff members of the restaurant (manager, chef, waiter)
             $restaurantStaff = RestaurantEmployee::join('users', 'restaurant_employees.user_id', '=', 'users.id')
                 ->where('restaurant_employees.restaurant_id', $request->restaurant_id)
+                ->whereIn('restaurant_employees.position', ['manager', 'chef', 'waiter'])
                 ->whereNotNull('users.fcm_token')
                 ->get();
 
-            // Send notification to each staff member
+            // Get the restaurant owner
+            $restaurant = $order->restaurant;
+            $owner = null;
+            if ($restaurant && $restaurant->owner_id) {
+                $owner = \App\Models\User::where('id', $restaurant->owner_id)
+                    ->where('role', 'restaurant_owner')
+                    ->whereNotNull('fcm_token')
+                    ->first();
+            }
+
+            \Log::info('Order FCM: Staff to notify', [
+                'restaurant_id' => $request->restaurant_id,
+                'staff_ids' => $restaurantStaff->pluck('id')->toArray(),
+                'owner_id' => $owner ? $owner->id : null,
+                'count' => $restaurantStaff->count() + ($owner ? 1 : 0)
+            ]);
+
+            $notifiedUserIds = $restaurantStaff->pluck('user_id')->toArray();
             foreach ($restaurantStaff as $staff) {
                 $title = 'New Order Received';
                 $body = "New order #{$order->id} has been placed. Total amount: \$" . number_format($totalAmount, 2);
@@ -332,10 +350,36 @@ class OrderController extends Controller
                     $body,
                     $data
                 );
+
+                \Log::info('Order FCM: Sent notification', [
+                    'staff_user_id' => $staff->id,
+                    'fcm_token' => $staff->fcm_token,
+                    'order_id' => $order->id
+                ]);
+            }
+
+            // Notify owner if not already notified
+            if ($owner && !in_array($owner->id, $notifiedUserIds)) {
+                $title = 'New Order Received';
+                $body = "New order #{$order->id} has been placed. Total amount: \$" . number_format($totalAmount, 2);
+                $data = [
+                    'order_id' => $order->id,
+                    'type' => 'new_order'
+                ];
+                $this->firebaseService->sendNotification(
+                    $owner->fcm_token,
+                    $title,
+                    $body,
+                    $data
+                );
+                \Log::info('Order FCM: Sent notification to owner', [
+                    'owner_id' => $owner->id,
+                    'fcm_token' => $owner->fcm_token,
+                    'order_id' => $order->id
+                ]);
             }
 
             // Send email to the restaurant
-            $restaurant = $order->restaurant;
             if ($restaurant && $restaurant->email) {
                 try {
                     \Mail::to($restaurant->email)->send(new \App\Mail\NewOrderNotification($order));
@@ -600,6 +644,24 @@ class OrderController extends Controller
                 \Mail::to($order->user->email)->send(new \App\Mail\OrderStatusUpdated($order));
             } catch (\Exception $e) {
                 \Log::error('Failed to send order status update email: ' . $e->getMessage());
+            }
+            // Send FCM and persistent notification
+            if ($order->user->fcm_token) {
+                $title = 'Order Status Updated';
+                $body = "Your order #{$order->id} status has been updated to: " . ucfirst($order->status);
+                $data = [
+                    'order_id' => $order->id,
+                    'restaurant_id' => $order->restaurant_id,
+                    'status' => $order->status,
+                    'type' => 'order_status',
+                ];
+                $this->firebaseService->sendNotification(
+                    $order->user->fcm_token,
+                    $title,
+                    $body,
+                    $data,
+                    $order->user_id
+                );
             }
         }
 

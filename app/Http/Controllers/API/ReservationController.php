@@ -4,6 +4,8 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Reservation;
+use App\Models\RestaurantEmployee;
+use App\Services\FirebaseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -17,6 +19,13 @@ use OpenApi\Annotations as OA;
  */
 class ReservationController extends Controller
 {
+    protected $firebaseService;
+
+    public function __construct(FirebaseService $firebaseService)
+    {
+        $this->firebaseService = $firebaseService;
+    }
+
     /**
      * Display a listing of reservations.
      *
@@ -212,6 +221,73 @@ class ReservationController extends Controller
                 } catch (\Exception $e) {
                     \Log::error('Reservation email failed: ' . $e->getMessage());
                 }
+            }
+
+            // Send FCM notification to managers, chefs, waiters, and the restaurant owner
+            $restaurantStaff = RestaurantEmployee::join('users', 'restaurant_employees.user_id', '=', 'users.id')
+                ->where('restaurant_employees.restaurant_id', $request->restaurant_id)
+                ->whereIn('restaurant_employees.position', ['manager', 'chef', 'waiter'])
+                ->whereNotNull('users.fcm_token')
+                ->get();
+
+            // Get the restaurant owner
+            $owner = null;
+            if ($restaurant && $restaurant->owner_id) {
+                $owner = \App\Models\User::where('id', $restaurant->owner_id)
+                    ->where('role', 'restaurant_owner')
+                    ->whereNotNull('fcm_token')
+                    ->first();
+            }
+
+            \Log::info('Reservation FCM: Staff to notify', [
+                'restaurant_id' => $request->restaurant_id,
+                'staff_ids' => $restaurantStaff->pluck('id')->toArray(),
+                'owner_id' => $owner ? $owner->id : null,
+                'count' => $restaurantStaff->count() + ($owner ? 1 : 0)
+            ]);
+
+            $notifiedUserIds = $restaurantStaff->pluck('user_id')->toArray();
+            foreach ($restaurantStaff as $staff) {
+                $title = 'New Reservation Received';
+                $body = "New reservation #{$reservation->id} for {$reservation->number_of_people} people at {$reservation->reservation_time}.";
+                $data = [
+                    'reservation_id' => $reservation->id,
+                    'type' => 'new_reservation'
+                ];
+
+                $this->firebaseService->sendNotification(
+                    $staff->fcm_token,
+                    $title,
+                    $body,
+                    $data
+                );
+
+                \Log::info('Reservation FCM: Sent notification', [
+                    'staff_user_id' => $staff->id,
+                    'fcm_token' => $staff->fcm_token,
+                    'reservation_id' => $reservation->id
+                ]);
+            }
+
+            // Notify owner if not already notified
+            if ($owner && !in_array($owner->id, $notifiedUserIds)) {
+                $title = 'New Reservation Received';
+                $body = "New reservation #{$reservation->id} for {$reservation->number_of_people} people at {$reservation->reservation_time}.";
+                $data = [
+                    'reservation_id' => $reservation->id,
+                    'type' => 'new_reservation'
+                ];
+                $this->firebaseService->sendNotification(
+                    $owner->fcm_token,
+                    $title,
+                    $body,
+                    $data
+                );
+                \Log::info('Reservation FCM: Sent notification to owner', [
+                    'owner_id' => $owner->id,
+                    'fcm_token' => $owner->fcm_token,
+                    'reservation_id' => $reservation->id
+                ]);
             }
 
             return response()->json([
@@ -438,6 +514,24 @@ class ReservationController extends Controller
                     \Mail::to($reservation->user->email)->send(new \App\Mail\ReservationStatusUpdated($reservation));
                 } catch (\Exception $e) {
                     \Log::error('Failed to send reservation status update email: ' . $e->getMessage());
+                }
+                // Send FCM and persistent notification
+                if ($reservation->user->fcm_token) {
+                    $title = 'Reservation Status Updated';
+                    $body = "Your reservation #{$reservation->id} status has been updated to: " . ucfirst($reservation->status);
+                    $data = [
+                        'reservation_id' => $reservation->id,
+                        'restaurant_id' => $reservation->restaurant_id,
+                        'status' => $reservation->status,
+                        'type' => 'reservation_status',
+                    ];
+                    $this->firebaseService->sendNotification(
+                        $reservation->user->fcm_token,
+                        $title,
+                        $body,
+                        $data,
+                        $reservation->user_id
+                    );
                 }
             }
 
