@@ -228,7 +228,12 @@ class DashboardController extends Controller
             'current_range' => $dateRange
         ];
 
-        return view('dashboard', compact('dashboardData'));
+        $restaurant = null;
+        if ($user->role !== 'admin' && $restaurantId) {
+            $restaurant = Restaurant::find($restaurantId);
+        }
+
+        return view('dashboard', compact('dashboardData', 'restaurant'));
     }
 
     /**
@@ -253,5 +258,33 @@ class DashboardController extends Controller
             Mail::to($restaurant->owner->email)->send(new RestaurantApprovedMail($restaurant, $restaurant->is_approved));
         }
         return response()->json(['status' => 'success', 'is_approved' => $restaurant->is_approved]);
+    }
+
+    /**
+     * Toggle accepts_reservations or accepts_delivery for the owner's restaurant
+     */
+    public function toggleService(Request $request)
+    {
+        $user = Auth::user();
+        $restaurantId = session('userData')['users']->restaurant_id ?? null;
+        if (!$restaurantId) {
+            return response()->json(['status' => 'error', 'message' => 'No restaurant found.'], 404);
+        }
+        $restaurant = Restaurant::find($restaurantId);
+        if (!$restaurant) {
+            return response()->json(['status' => 'error', 'message' => 'Restaurant not found.'], 404);
+        }
+        $type = $request->input('type');
+        if ($type === 'reservations') {
+            $restaurant->accepts_reservations = !$restaurant->accepts_reservations;
+            $restaurant->save();
+            return response()->json(['status' => 'success', 'value' => $restaurant->accepts_reservations]);
+        } elseif ($type === 'delivery') {
+            $restaurant->accepts_delivery = !$restaurant->accepts_delivery;
+            $restaurant->save();
+            return response()->json(['status' => 'success', 'value' => $restaurant->accepts_delivery]);
+        } else {
+            return response()->json(['status' => 'error', 'message' => 'Invalid type.'], 400);
+        }
     }
 }

@@ -21,7 +21,9 @@ class Restaurant extends Model
         'image',
         'owner_id',
         'is_approved',
-        'status'
+        'status',
+        'accepts_reservations',
+        'accepts_delivery'
     ];
 
     /**
@@ -32,7 +34,9 @@ class Restaurant extends Model
     protected $casts = [
         'opening_hours' => 'array',  // Cast JSON field to array
         'is_approved' => 'boolean',  // Cast boolean field
-        'status' => 'boolean'
+        'status' => 'boolean',
+        'accepts_reservations' => 'boolean',
+        'accepts_delivery' => 'boolean'
     ];
 
     /**

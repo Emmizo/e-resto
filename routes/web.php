@@ -112,6 +112,7 @@ Route::middleware(['auth', 'nocache'])->group(function () {
     Route::put('/admin/terms/{id}', [AdminTermsAndConditionsController::class, 'update'])->name('admin.terms.update');
     Route::get('/admin/restaurants', [\App\Http\Controllers\DashboardController::class, 'listRestaurants'])->name('admin.restaurants.index');
     Route::post('/admin/restaurants/{id}/approve', [\App\Http\Controllers\DashboardController::class, 'approveRestaurant'])->name('admin.restaurants.approve');
+    Route::post('/dashboard/toggle-service', [\App\Http\Controllers\DashboardController::class, 'toggleService'])->name('dashboard.toggle-service');
 });
 
 Route::middleware(['auth'])->group(function () {

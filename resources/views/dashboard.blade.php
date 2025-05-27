@@ -5,6 +5,16 @@
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">Restaurant Dashboard</h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group ms-2 align-items-center">
+                            @if(isset($restaurant))
+                                <button id="toggle-reservations" class="btn btn-sm {{ $restaurant->accepts_reservations ? 'btn-success' : 'btn-danger' }}" data-state="{{ $restaurant->accepts_reservations ? '1' : '0' }}">
+                                    Reservations: {{ $restaurant->accepts_reservations ? 'Open' : 'Close' }}
+                                </button>
+                                <button id="toggle-delivery" class="btn btn-sm ms-2 {{ $restaurant->accepts_delivery ? 'btn-success' : 'btn-danger' }}" data-state="{{ $restaurant->accepts_delivery ? '1' : '0' }}">
+                                    Delivery: {{ $restaurant->accepts_delivery ? 'Open' : 'Close' }}
+                                </button>
+                            @endif
+                        </div>
                         <div class="btn-group me-2">
                             <a href="{{ route('dashboard', ['range' => 'today']) }}"
                                class="btn btn-sm {{ $dashboardData['current_range'] === 'today' ? 'btn-primary' : 'btn-outline-secondary' }}">
@@ -19,6 +29,7 @@
                                 Month
                             </a>
                         </div>
+
                     </div>
                 </div>
 
@@ -409,6 +420,40 @@
                         }
                     }
                 }
+            });
+        }
+
+        function toggleService(type, btn) {
+            var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            fetch('/dashboard/toggle-service', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token
+                },
+                body: JSON.stringify({ type: type })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    // Update button state
+                    btn.classList.toggle('btn-success');
+                    btn.classList.toggle('btn-danger');
+                    btn.setAttribute('data-state', data.value ? '1' : '0');
+                    btn.textContent = (type.charAt(0).toUpperCase() + type.slice(1)) + ': ' + (data.value ? 'Open' : 'Close');
+                }
+            });
+        }
+        var resBtn = document.getElementById('toggle-reservations');
+        var delBtn = document.getElementById('toggle-delivery');
+        if(resBtn) {
+            resBtn.addEventListener('click', function() {
+                toggleService('reservations', this);
+            });
+        }
+        if(delBtn) {
+            delBtn.addEventListener('click', function() {
+                toggleService('delivery', this);
             });
         }
     });
