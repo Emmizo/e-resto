@@ -73,7 +73,7 @@
                                     <span>{{ $reservation->first_name }} {{ $reservation->last_name }}</span>
                                 </td>
                                 <td>
-                                    <span>{{ $reservation->reservation_time ? $reservation->reservation_time->format('M d, Y H:i') : 'N/A' }}</span>
+                                    <span>{{ $reservation->reservation_time ? $reservation->reservation_time->timezone(auth()->user()->timezone ?? session('user_timezone') ?? config('app.timezone'))->format('M d, Y H:i') : 'N/A' }}</span>
                                 </td>
                                 <td>
                                     <span>{{ $reservation->number_of_people }}</span>
@@ -87,7 +87,7 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <span>{{ $reservation->created_at->format('M d, Y H:i') }}</span>
+                                    <span>{{ $reservation->created_at->timezone(auth()->user()->timezone ?? session('user_timezone') ?? config('app.timezone'))->format('M d, Y H:i') }}</span>
                                 </td>
                                 <td class="action-cell text-center">
                                     <div class="action-col position-relative d-inline-block">

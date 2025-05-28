@@ -30,7 +30,7 @@
                                             }}">
                                             <i class="fas fa-circle me-1"></i>{{ ucfirst($order->status) }}
                                         </span></li>
-                                        <li class="mb-2"><strong>Order Date:</strong> {{ $order->created_at->format('M d, Y H:i') }}</li>
+                                        <li class="mb-2"><strong>Order Date:</strong> {{ $order->created_at->timezone(auth()->user()->timezone ?? session('user_timezone') ?? config('app.timezone'))->format('M d, Y H:i') }}</li>
                                         <li class="mb-2"><strong>Total Amount:</strong> <span class="fw-bold text-success">${{ number_format($order->total_amount, 2) }}</span></li>
                                         <li class="mb-2"><strong>Payment Status:</strong> <span class="badge bg-secondary text-uppercase">{{ ucfirst($order->payment_status ?? 'N/A') }}</span></li>
                                         <li class="mb-2"><strong>Order Type:</strong> <span class="badge bg-primary text-uppercase">{{ ucfirst($order->order_type ?? 'N/A') }}</span></li>

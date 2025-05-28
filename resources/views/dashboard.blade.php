@@ -177,7 +177,7 @@
                                                         {{ucfirst($user->status)}}
                                                     </span>
                                                 </td>
-                                                <td>{{$user->created_at->format('M d, Y')}}</td>
+                                                <td>{{$user->created_at->timezone(auth()->user()->timezone ?? session('user_timezone') ?? config('app.timezone'))->format('M d, Y')}}</td>
                                             </tr>
                                             @endforeach
                                         </tbody>
@@ -326,7 +326,7 @@
                                                         <br>
                                                         <span>{{ $review->comment }}</span>
                                                         <br>
-                                                        <small class="text-muted">{{ $review->created_at->format('M d, Y H:i') }}</small>
+                                                        <small class="text-muted">{{ $review->created_at->timezone(auth()->user()->timezone ?? session('user_timezone') ?? config('app.timezone'))->format('M d, Y H:i') }}</small>
                                                     </li>
                                                 @endforeach
                                             </ul>

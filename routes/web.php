@@ -122,3 +122,5 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware('auth')->get('/notifications', [NotificationController::class, 'all'])->name('notifications.all');
 Route::middleware('auth')->get('/notifications/{id}', [NotificationController::class, 'show'])->name('notifications.show');
 Route::middleware('auth')->post('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAllAsRead');
+
+Route::post('/set-timezone', [App\Http\Controllers\UserController::class, 'setTimezone'])->name('set-timezone');

@@ -25,6 +25,7 @@ class User extends Authenticatable
         'google2fa_secret',
         'has_2fa_enabled',
         'fcm_token',
+        'timezone',
     ];
 
     protected $hidden = [

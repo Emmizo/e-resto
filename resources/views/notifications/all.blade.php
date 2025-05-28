@@ -12,7 +12,7 @@
                             <div class="flex-grow-1">
                                 <h6 class="mb-1">{{ $notification->title }}</h6>
                                 <p class="mb-0 small text-muted">{{ $notification->body }}</p>
-                                <small class="text-muted">{{ $notification->created_at->format('M d, Y H:i') }}</small>
+                                <small class="text-muted">{{ $notification->created_at->timezone(auth()->user()->timezone ?? session('user_timezone') ?? config('app.timezone'))->format('M d, Y H:i') }}</small>
                             </div>
                         </div>
                     </li>

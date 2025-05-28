@@ -1,5 +1,5 @@
 <h2>New Order Received</h2>
-<p>You have received a new order (ID: {{ $order->id }}) at {{ $order->created_at->format('Y-m-d H:i') }}.</p>
+<p>You have received a new order (ID: {{ $order->id }}) at {{ $order->created_at->timezone($order->user->timezone ?? config('app.timezone'))->format('Y-m-d H:i') }}.</p>
 <p><strong>Customer:</strong> {{ $order->user->first_name }} {{ $order->user->last_name }}</p>
 <p><strong>Order Details:</strong></p>
 <ul>

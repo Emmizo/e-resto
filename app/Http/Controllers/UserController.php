@@ -509,4 +509,19 @@ class UserController extends Controller
             ]
         ]);
     }
+
+    /**
+     * Set the user's timezone from the browser
+     */
+    public function setTimezone(Request $request)
+    {
+        $request->validate(['timezone' => 'required|string']);
+        session(['user_timezone' => $request->timezone]);
+        if (auth()->check()) {
+            $user = auth()->user();
+            $user->timezone = $request->timezone;
+            $user->save();
+        }
+        return response()->json(['status' => 'success']);
+    }
 }

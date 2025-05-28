@@ -63,7 +63,7 @@
                                         {{ ucfirst($order->status) }}
                                     </span>
                                 </td>
-                                <td>{{ $order->created_at->format('M d, Y H:i') }}</td>
+                                <td>{{ $order->created_at->timezone(auth()->user()->timezone ?? session('user_timezone') ?? config('app.timezone'))->format('M d, Y H:i') }}</td>
                                 <td>
                                     <div class="dropdown">
                                         <button class="btn btn-sm btn-link" type="button" data-bs-toggle="dropdown">

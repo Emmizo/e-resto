@@ -80,7 +80,8 @@ class AuthController extends Controller
      *             @OA\Property(property="password_confirmation", type="string", format="password", example="password123"),
      *             @OA\Property(property="role", type="string", enum={"customer", "restaurant_owner"}, example="customer"),
      *             @OA\Property(property="phone_number", type="string", example="+1234567890"),
-     *             @OA\Property(property="address", type="string", example="123 Main St")
+     *             @OA\Property(property="address", type="string", example="123 Main St"),
+     *             @OA\Property(property="timezone", type="string", example="UTC")
      *         )
      *     ),
      *     @OA\Response(
@@ -115,6 +116,7 @@ class AuthController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'phone_number' => 'nullable|string|max:20|regex:/^[0-9+\-() ]+$/',
             'address' => 'nullable|string|max:255',
+            'timezone' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -140,7 +142,8 @@ class AuthController extends Controller
                 'phone_number' => $request->phone_number,
                 'address' => $request->address,
                 'fcm_token' => $request->fcm_token,  // Add FCM token
-                'status' => 1  // Set default status to active
+                'status' => 1,  // Set default status to active
+                'timezone' => $request->timezone,
             ]);
 
             // Send welcome email with credentials (pass user object)
@@ -195,7 +198,8 @@ class AuthController extends Controller
      *         @OA\JsonContent(
      *             required={"email", "password"},
      *             @OA\Property(property="email", type="string", format="email", example="againtest2020@gmail.com"),
-     *             @OA\Property(property="password", type="string", format="password", example="Kwizera23")
+     *             @OA\Property(property="password", type="string", format="password", example="Kwizera23"),
+     *             @OA\Property(property="timezone", type="string", example="UTC")
      *         )
      *     ),
      *     @OA\Response(
@@ -245,7 +249,8 @@ class AuthController extends Controller
             $validator = Validator::make($request->all(), [
                 'email' => 'required|string|email|max:255',
                 'password' => 'required|string|min:6',
-                'fcm_token' => 'nullable|string'  // Add validation for FCM token
+                'fcm_token' => 'nullable|string',  // Add validation for FCM token
+                'timezone' => 'required|string',
             ]);
 
             if ($validator->fails()) {
@@ -291,8 +296,14 @@ class AuthController extends Controller
                 // Update FCM token if provided
                 if ($request->has('fcm_token')) {
                     $user->fcm_token = $request->fcm_token;
-                    $user->save();
                 }
+
+                // Update timezone if provided
+                if ($request->has('timezone')) {
+                    $user->timezone = $request->timezone;
+                }
+
+                $user->save();
 
                 \Log::info('Token created successfully', [
                     'user_id' => $user->id,

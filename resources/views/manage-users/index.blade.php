@@ -162,7 +162,7 @@
                                     <span>{{ $user->restaurant_position?? Str::title(str_replace('_', ' ',$user->role))}}</span>
                                 </td>
                                 <td>
-                                    <span>{{ $user->created_at}}</span>
+                                    <span>{{ $user->created_at->timezone(auth()->user()->timezone ?? session('user_timezone') ?? config('app.timezone'))->format('M d, Y H:i') }}</span>
                                 </td>
                                 <td>
                                     <span>{{ $user->website??''}}</span>
