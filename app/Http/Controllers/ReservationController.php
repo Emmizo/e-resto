@@ -91,4 +91,13 @@ class ReservationController extends Controller
             'message' => 'Reservation deleted successfully'
         ]);
     }
+
+    /**
+     * Display the specified reservation.
+     */
+    public function show($id)
+    {
+        $reservation = \App\Models\Reservation::with(['user', 'restaurant'])->findOrFail($id);
+        return view('manage-reservations.show', compact('reservation'));
+    }
 }
