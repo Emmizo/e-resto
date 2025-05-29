@@ -5,25 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { background: #f3f5f8; font-family: 'DM Sans', Arial, sans-serif; margin: 0; padding: 0; }
-        .mail-container { max-width: 420px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(24,76,85,0.08); padding: 32px 24px 24px 24px; text-align: center; }
-        .brand { font-size: 28px; font-weight: bold; color: #184C55; margin-bottom: 12px; letter-spacing: 1px; }
-        .heading { font-size: 20px; color: #184C55; margin-bottom: 8px; font-weight: 600; }
-        .desc { color: #444; font-size: 15px; margin-bottom: 24px; }
-        .footer { font-size: 13px; color: #888; margin-top: 24px; }
-        @media (max-width: 500px) { .mail-container { padding: 18px 4vw; } }
+        .mail-container { max-width: 480px; margin: 40px auto; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(24,76,85,0.10); padding: 0 0 32px 0; overflow: hidden; }
+        .header { background: linear-gradient(90deg, #184C55 60%, #2e7d91 100%); padding: 32px 24px 16px 24px; text-align: center; }
+        .logo { height: 48px; margin-bottom: 8px; }
+        .restaurant-logo { height: 40px; border-radius: 8px; background: #fff; margin-bottom: 8px; }
+        .heading { font-size: 22px; color: #fff; font-weight: 700; margin-bottom: 4px; }
+        .subheading { color: #e0f7fa; font-size: 15px; margin-bottom: 0; }
+        .divider { border: none; border-top: 1px solid #e0e0e0; margin: 24px 0; }
+        .content { padding: 0 24px; }
+        .card { background: #f8fafb; border-radius: 12px; padding: 20px 18px; margin-bottom: 18px; box-shadow: 0 2px 8px rgba(24,76,85,0.04); }
+        .card strong { color: #184C55; }
+        .desc { color: #444; font-size: 15px; margin-bottom: 18px; }
+        .cta-btn { display: inline-block; background: #184C55; color: #fff !important; font-size: 16px; font-weight: 600; border-radius: 8px; padding: 12px 32px; text-decoration: none; margin: 18px 0 0 0; box-shadow: 0 2px 8px rgba(24,76,85,0.08); transition: background 0.2s; }
+        .cta-btn:hover { background: #133a41; }
+        .footer { font-size: 13px; color: #888; margin-top: 32px; text-align: center; padding: 0 24px; }
+        @media (max-width: 600px) { .mail-container { padding: 0; } .content { padding: 0 4vw; } }
     </style>
 </head>
 <body>
     <div class="mail-container">
-        <div class="brand">RestoFinder</div>
-        <div class="heading">Welcome to the Team, {{ $user->first_name }}!</div>
-        <div class="desc">
-            We’re delighted to officially welcome you to <b>{{ $data['users']->restaurant_name }}</b>!<br><br>
-            It’s great to have you as part of our team, and we’re excited about the journey ahead. We truly believe that your skills and talents will be a valuable addition to our company.<br><br>
-            We hope you’ve been settling in well and getting to know your colleagues. If there’s anything you need or any questions you have, please don’t hesitate to reach out. We’re all here to support you and ensure you have a smooth transition.<br><br>
-            Looking forward to achieving great things together!<br>Once again, welcome aboard!
+        <div class="header">
+            <img src="{{ asset('assets/images/logo.png') }}" alt="Platform Logo" class="logo">
+            @if(isset($data['users']->restaurant_image) && $data['users']->restaurant_image)
+                <img src="{{ $data['users']->restaurant_image }}" alt="{{ $data['users']->restaurant_name }} Logo" class="restaurant-logo">
+            @endif
+            <div class="heading">Welcome to the Team, {{ $user->first_name }}!</div>
+            <div class="subheading">{{ $data['users']->restaurant_name ?? config('app.name') }}</div>
+            @if(isset($data['users']->restaurant_address) && $data['users']->restaurant_address)
+                <div style="color:#fff; font-size:13px; margin-top:2px;">{{ $data['users']->restaurant_address }}</div>
+            @endif
         </div>
-        <div class="footer">&copy; {{ date('Y') }} {{ $data['users']->restaurant_name }}<br>Powered by RestoFinder</div>
+        <div class="content">
+            <div class="card">
+                <div class="desc">
+                    We're delighted to officially welcome you to <b>{{ $data['users']->restaurant_name }}</b>!<br><br>
+                    It's great to have you as part of our team, and we're excited about the journey ahead. We truly believe that your skills and talents will be a valuable addition to our company.<br><br>
+                    We hope you've been settling in well and getting to know your colleagues. If there's anything you need or any questions you have, please don't hesitate to reach out. We're all here to support you and ensure you have a smooth transition.<br><br>
+                    Looking forward to achieving great things together!<br>Once again, welcome aboard!
+                </div>
+            </div>
+            <a href="{{ url('/login') }}" class="cta-btn">Login to Your Account</a>
+            <hr class="divider">
+        </div>
+        <div class="footer">
+            Best regards,<br>{{ config('app.name') }} Team<br>
+            <span style="color:#184C55; font-weight:600;">Support:</span> <a href="mailto:support@restofinder.com" style="color:#184C55; text-decoration:underline;">support@restofinder.com</a><br>
+            &copy; {{ date('Y') }} RestoFinder
+        </div>
     </div>
 </body>
 </html>

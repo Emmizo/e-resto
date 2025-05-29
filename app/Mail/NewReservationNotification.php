@@ -19,8 +19,15 @@ class NewReservationNotification extends Mailable
 
     public function build()
     {
+        $restaurant = $this->reservation->restaurant;
         return $this
             ->subject('New Reservation Received')
-            ->view('mails.new-reservation-notification');
+            ->view('mails.new-reservation-notification')
+            ->with([
+                'reservation' => $this->reservation,
+                'restaurant_image' => $restaurant && $restaurant->image ? url($restaurant->image) : null,
+                'restaurant_name' => $restaurant ? $restaurant->name : null,
+                'restaurant_address' => $restaurant ? $restaurant->address : null,
+            ]);
     }
 }

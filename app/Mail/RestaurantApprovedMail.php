@@ -22,8 +22,16 @@ class RestaurantApprovedMail extends Mailable
     public function build()
     {
         $subject = $this->approved ? 'Your Restaurant Has Been Approved!' : 'Your Restaurant Has Been Unapproved';
+        $restaurant = $this->restaurant;
         return $this
             ->subject($subject)
-            ->view('mails.restaurant-approved');
+            ->view('mails.restaurant-approved')
+            ->with([
+                'restaurant' => $restaurant,
+                'approved' => $this->approved,
+                'restaurant_image' => $restaurant && $restaurant->image ? url($restaurant->image) : null,
+                'restaurant_name' => $restaurant ? $restaurant->name : null,
+                'restaurant_address' => $restaurant ? $restaurant->address : null,
+            ]);
     }
 }

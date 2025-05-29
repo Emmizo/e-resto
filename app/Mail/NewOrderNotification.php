@@ -19,8 +19,15 @@ class NewOrderNotification extends Mailable
 
     public function build()
     {
+        $restaurant = $this->order->restaurant;
         return $this
             ->subject('New Order Received')
-            ->view('mails.new-order-notification');
+            ->view('mails.new-order-notification')
+            ->with([
+                'order' => $this->order,
+                'restaurant_image' => $restaurant && $restaurant->image ? url($restaurant->image) : null,
+                'restaurant_name' => $restaurant ? $restaurant->name : null,
+                'restaurant_address' => $restaurant ? $restaurant->address : null,
+            ]);
     }
 }

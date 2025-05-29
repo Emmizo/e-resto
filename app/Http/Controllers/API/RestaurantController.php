@@ -187,7 +187,7 @@ class RestaurantController extends Controller
     public function listFavoriteRestaurants(Request $request)
     {
         $user = Auth::user();
-        $favorites = FavoriteRestaurant::with('restaurant')
+        $favorites = FavoriteRestaurant::with(['restaurant.menus.menuItems', 'restaurant.reviews'])
             ->where('user_id', $user->id)
             ->get();
         $result = $favorites->map(function ($favorite) {
@@ -195,6 +195,7 @@ class RestaurantController extends Controller
             $reviews = $restaurant->reviews;
             return [
                 'restaurant' => $restaurant,
+                'menus' => $restaurant->menus,
                 'average_rating' => $reviews->avg('rating') ? round($reviews->avg('rating'), 2) : null,
                 'reviews_count' => $reviews->count(),
             ];

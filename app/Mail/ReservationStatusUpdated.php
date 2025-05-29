@@ -26,10 +26,16 @@ class ReservationStatusUpdated extends Mailable
 
     public function build()
     {
-        $subject = 'Your Reservation Status Has Been Updated';
+        $restaurant = $this->reservation->restaurant;
         return $this
-            ->subject($subject)
-            ->view('mails.reservation-status-updated');
+            ->subject('Your Reservation Status Has Been Updated')
+            ->view('mails.reservation-status-updated')
+            ->with([
+                'reservation' => $this->reservation,
+                'restaurant_image' => $restaurant && $restaurant->image ? url($restaurant->image) : null,
+                'restaurant_name' => $restaurant ? $restaurant->name : null,
+                'restaurant_address' => $restaurant ? $restaurant->address : null,
+            ]);
     }
 
     /**
