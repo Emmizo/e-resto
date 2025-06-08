@@ -4,7 +4,9 @@ namespace App\Providers;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Passport\Passport;
 
@@ -23,6 +25,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Schema::defaultStringLength(191);
+
+        // Increase memory limit for this request
+        ini_set('memory_limit', '512M');
+
+        // Optimize database connection
+        DB::connection()->disableQueryLog();
         // $this->registerPolicies();
 
         // / Passport::routes();

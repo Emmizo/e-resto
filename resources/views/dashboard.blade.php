@@ -191,7 +191,7 @@
                 <!-- Restaurant Details -->
                 <div class="row">
                     <!-- Top Menu Items -->
-                    <div class="col-lg-6 mb-4">
+                    <div class="col-lg-12 mb-4">
                         <div class="card shadow mb-4">
                             <div class="card-header py-3">
                                 <h6 class="m-0 font-weight-bold text-primary">Top Menu Items</h6>
@@ -222,16 +222,87 @@
                             </div>
                         </div>
                     </div>
-
+<!-- Restaurant Ratings and Reviewer Comments Section -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white fw-bold">Restaurant Rating</div>
+            <div class="card-body p-2">
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Restaurant</th>
+                                <th>Cuisine Type</th>
+                                <th>Rating</th>
+                                <th>Reviews</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($dashboardData['top_restaurants'] as $restaurant)
+                            <tr>
+                                <td>{{ $restaurant->name }}</td>
+                                <td>{{ optional($restaurant->cuisine)->name ?? 'N/A' }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-star text-warning me-1"></i>
+                                        <span>{{ number_format($restaurant->rating ?? 0, 1) }}</span>
+                                    </div>
+                                </td>
+                                <td>{{ $restaurant->review_count ?? 0 }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white fw-bold">Reviewer Comments for Each Restaurant</div>
+            <div class="card-body p-2">
+                @foreach($dashboardData['top_restaurants'] as $restaurant)
+                    <div class="mb-4">
+                        <h5>{{ $restaurant->name }}</h5>
+                        @if($restaurant->reviews && $restaurant->reviews->isNotEmpty())
+                            <ul class="list-group mb-3">
+                                @foreach($restaurant->reviews as $review)
+                                    <li class="list-group-item">
+                                        <strong>
+                                            {{ $review->user->first_name ?? 'Anonymous' }}
+                                            {{ $review->user->last_name ?? '' }}:
+                                        </strong>
+                                        <span class="text-warning">
+                                            @for($i = 0; $i < $review->rating; $i++)
+                                                ★
+                                            @endfor
+                                        </span>
+                                        <br>
+                                        <span>{{ $review->comment }}</span>
+                                        <br>
+                                        <small class="text-muted">{{ $review->created_at->timezone(auth()->user()->timezone ?? session('user_timezone') ?? config('app.timezone'))->format('M d, Y H:i') }}</small>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @else
+                            <p class="text-muted">No reviews yet.</p>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
                     <!-- Recent Orders -->
-                    <div class="col-lg-6 mb-4">
+                    <div class="col-lg-12 mb-4">
                         <div class="card shadow mb-4">
                             <div class="card-header py-3">
                                 <h6 class="m-0 font-weight-bold text-primary">Recent Orders</h6>
                             </div>
                             <div class="card-body">
+                            <div class="row col-12">
                                 @forelse($dashboardData['recent_orders'] as $order)
-                                    <div class="alert alert-{{ $order->status === 'completed' ? 'success' : ($order->status === 'pending' ? 'warning' : 'info') }} alert-dismissible fade show" role="alert">
+                                    <div class="alert alert-{{ $order->status === 'completed' ? 'success' : ($order->status === 'pending' ? 'warning' : 'info') }} alert-dismissible fade show col-6 p-2" role="alert">
                                         <strong>Order #{{ $order->id }}</strong>
                                         @if(auth()->user()->role == 'admin')
                                             - {{ $order->restaurant->name }}
@@ -250,95 +321,13 @@
                                     </div>
                                 @endforelse
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Restaurant Ratings Section -->
-                @if($dashboardData['top_restaurants']->isNotEmpty())
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h4 class="card-title">
-                                @if(auth()->user()->role == 'admin')
-                                    Top Rated Restaurants
-                                @else
-                                    Restaurant Rating
-                                @endif
-                            </h4>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Restaurant</th>
-                                            <th>Cuisine Type</th>
-                                            <th>Rating</th>
-                                            <th>Reviews</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($dashboardData['top_restaurants'] as $restaurant)
-                                        <tr>
-                                            <td>{{$restaurant->name}}</td>
-                                            <td>{{ optional($restaurant->cuisine)->name ?? 'N/A' }}</td>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <i class="fas fa-star text-warning me-1"></i>
-                                                    <span>{{number_format($restaurant->rating ?? 0, 1)}}</span>
-                                                </div>
-                                            </td>
-                                            <td>{{$restaurant->review_count ?? 0}}</td>
-                                        </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
                             </div>
                         </div>
                     </div>
                 </div>
-                @endif
 
-                @if($dashboardData['top_restaurants']->isNotEmpty())
-                    <div class="col-12">
-                        <div class="card mt-4">
-                            <div class="card-header bg-light">
-                                <strong>Reviewer Comments for Each Restaurant</strong>
-                            </div>
-                            <div class="card-body">
-                                @foreach($dashboardData['top_restaurants'] as $restaurant)
-                                    <div class="mb-4">
-                                        <h5>{{ $restaurant->name }}</h5>
-                                        @if($restaurant->reviews && $restaurant->reviews->isNotEmpty())
-                                            <ul class="list-group mb-3">
-                                                @foreach($restaurant->reviews as $review)
-                                                    <li class="list-group-item">
-                                                        <strong>
-                                                            {{ $review->user->first_name ?? 'Anonymous' }}
-                                                            {{ $review->user->last_name ?? '' }}:
-                                                        </strong>
-                                                        <span class="text-warning">
-                                                            @for($i = 0; $i < $review->rating; $i++)
-                                                                ★
-                                                            @endfor
-                                                        </span>
-                                                        <br>
-                                                        <span>{{ $review->comment }}</span>
-                                                        <br>
-                                                        <small class="text-muted">{{ $review->created_at->timezone(auth()->user()->timezone ?? session('user_timezone') ?? config('app.timezone'))->format('M d, Y H:i') }}</small>
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                        @else
-                                            <p class="text-muted">No reviews yet.</p>
-                                        @endif
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
-                @endif
+
+                </div>
             </main>
 
 @endsection

@@ -17,6 +17,7 @@
         "laravel/socialite": "^5.19",
         "laravel/tinker": "^2.10.1",
         "pragmarx/google2fa-laravel": "^2.3",
+        "pusher/pusher-php-server": "^7.2",
         "spatie/laravel-permission": "^6.16"
     },
     "require-dev": {
