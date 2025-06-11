@@ -326,6 +326,70 @@
                     </div>
                 </div>
 
+                <!-- Promo Banners Section -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card shadow mb-4">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-primary">Active Promo Banners</h6>
+                                <a href="{{ route('promo-banners.create') }}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-plus"></i> Add New Banner
+                                </a>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered" width="100%" cellspacing="0">
+                                        <thead>
+                                            <tr>
+                                                <th>Title</th>
+                                                <th>Description</th>
+                                                <th>Image</th>
+                                                <th>Start Date</th>
+                                                <th>End Date</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="promo-banners-table">
+                                            @foreach($dashboardData['promo_banners'] ?? [] as $banner)
+                                            <tr id="banner-{{ $banner->id }}">
+                                                <td>{{ $banner->title }}</td>
+                                                <td>{{ $banner->description }}</td>
+                                                <td>
+                                                    @if($banner->image_path)
+                                                        <img src="{{ $banner->image_path }}" alt="{{ $banner->title }}" style="max-width: 100px;">
+                                                    @else
+                                                        No Image
+                                                    @endif
+                                                </td>
+                                                <td>{{ $banner->start_date ? $banner->start_date->format('M d, Y') : 'N/A' }}</td>
+                                                <td>{{ $banner->end_date ? $banner->end_date->format('M d, Y') : 'N/A' }}</td>
+                                                <td>
+                                                    <span class="badge {{ $banner->is_active ? 'bg-success' : 'bg-danger' }}">
+                                                        {{ $banner->is_active ? 'Active' : 'Inactive' }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <a href="{{ route('promo-banners.edit', $banner->id) }}" class="btn btn-sm btn-primary">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <form action="{{ route('promo-banners.destroy', $banner->id) }}" method="POST" class="d-inline">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 </div>
             </main>
@@ -333,9 +397,140 @@
 @endsection
 
 @section('script')
-
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Pusher
+        const pusher = new Pusher('{{ config('broadcasting.connections.pusher.key') }}', {
+            cluster: '{{ config('broadcasting.connections.pusher.options.cluster') }}'
+        });
+
+        // Subscribe to the orders channel
+        const ordersChannel = pusher.subscribe('orders');
+
+        // Listen for new orders
+        ordersChannel.bind('OrderCreated', function(data) {
+            const order = data.order;
+            const orderHtml = `
+                <div class="alert alert-${order.status === 'completed' ? 'success' : (order.status === 'pending' ? 'warning' : 'info')} alert-dismissible fade show col-6 p-2" role="alert">
+                    <strong>Order #${order.id}</strong>
+                    ${order.restaurant ? `- ${order.restaurant.name}` : ''}
+                    <br>
+                    <small>
+                        Status: ${order.status.charAt(0).toUpperCase() + order.status.slice(1)} |
+                        Type: ${order.order_type.charAt(0).toUpperCase() + order.order_type.slice(1)} |
+                        Amount: $${parseFloat(order.total_amount).toFixed(2)}
+                    </small>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+
+            // Add the new order to the top of the recent orders section
+            const recentOrdersContainer = document.querySelector('.card-body .row');
+            if (recentOrdersContainer) {
+                recentOrdersContainer.insertAdjacentHTML('afterbegin', orderHtml);
+
+                // Remove the last order if there are more than 10 orders
+                const alerts = recentOrdersContainer.querySelectorAll('.alert');
+                if (alerts.length > 10) {
+                    alerts[alerts.length - 1].remove();
+                }
+            }
+
+            // Update order activity chart
+            updateOrderActivityChart();
+        });
+
+        // Subscribe to restaurant channel for service updates
+        const restaurantChannel = pusher.subscribe('restaurant.{{ $restaurant->id ?? "" }}');
+
+        // Listen for service status updates
+        restaurantChannel.bind('ServiceStatusUpdated', function(data) {
+            const serviceType = data.service_type;
+            const status = data.status;
+            const button = document.getElementById(`toggle-${serviceType}`);
+
+            if (button) {
+                button.classList.toggle('btn-success', status);
+                button.classList.toggle('btn-danger', !status);
+                button.setAttribute('data-state', status ? '1' : '0');
+                button.textContent = `${serviceType.charAt(0).toUpperCase() + serviceType.slice(1)}: ${status ? 'Open' : 'Close'}`;
+            }
+        });
+
+        // Listen for menu item updates
+        restaurantChannel.bind('MenuItemUpdated', function(data) {
+            const menuItem = data.menu_item;
+            const action = data.action;
+
+            // Update top menu items table
+            const menuItemsTable = document.querySelector('.table-responsive table tbody');
+            if (menuItemsTable) {
+                if (action === 'created' || action === 'updated') {
+                    updateMenuItemInTable(menuItem);
+                } else if (action === 'deleted') {
+                    removeMenuItemFromTable(menuItem.id);
+                }
+            }
+        });
+
+        // Listen for reservation updates
+        restaurantChannel.bind('ReservationCreated', function(data) {
+            const reservation = data.reservation;
+
+            // Update reservations count in the stats card
+            const reservationsCard = document.querySelector('.stat-card .h5.mb-0.font-weight-bold.text-gray-800');
+            if (reservationsCard) {
+                const currentCount = parseInt(reservationsCard.textContent);
+                if (!isNaN(currentCount)) {
+                    reservationsCard.textContent = currentCount + 1;
+                }
+            }
+
+            // Update reservation activity chart
+            updateOrderActivityChart();
+        });
+
+        // Function to update menu item in table
+        function updateMenuItemInTable(menuItem) {
+            const existingRow = document.querySelector(`tr[data-menu-item-id="${menuItem.id}"]`);
+            const rowHtml = `
+                <tr data-menu-item-id="${menuItem.id}">
+                    <td>${menuItem.name}</td>
+                    <td>${menuItem.category}</td>
+                    <td>${menuItem.total_orders || 0}</td>
+                    <td>$${parseFloat(menuItem.total_revenue || 0).toFixed(2)}</td>
+                </tr>
+            `;
+
+            if (existingRow) {
+                existingRow.outerHTML = rowHtml;
+            } else {
+                menuItemsTable.insertAdjacentHTML('beforeend', rowHtml);
+            }
+        }
+
+        // Function to remove menu item from table
+        function removeMenuItemFromTable(menuItemId) {
+            const row = document.querySelector(`tr[data-menu-item-id="${menuItemId}"]`);
+            if (row) {
+                row.remove();
+            }
+        }
+
+        // Function to update order activity chart
+        function updateOrderActivityChart() {
+            // Fetch updated chart data
+            fetch('/dashboard/chart-data')
+                .then(response => response.json())
+                .then(data => {
+                    activityChart.data.labels = data.activity_labels;
+                    activityChart.data.datasets[0].data = data.order_activity_data;
+                    activityChart.data.datasets[1].data = data.reservation_activity_data;
+                    activityChart.update();
+                });
+        }
+
         // Order Activity Chart
         const userActivityCtx = document.getElementById('userActivityChart');
         if (userActivityCtx) {
@@ -444,6 +639,62 @@
             delBtn.addEventListener('click', function() {
                 toggleService('delivery', this);
             });
+        }
+
+        // Listen for promo banner updates
+        Echo.channel('restaurant.{{ session('userData')['users']->restaurant_id }}')
+            .listen('PromoBannerUpdated', (e) => {
+                const banner = e.promo_banner;
+                const action = e.action;
+                const tableBody = document.getElementById('promo-banners-table');
+                const bannerRow = document.getElementById(`banner-${banner.id}`);
+
+                if (action === 'created') {
+                    const newRow = createBannerRow(banner);
+                    tableBody.insertBefore(newRow, tableBody.firstChild);
+                } else if (action === 'updated') {
+                    if (bannerRow) {
+                        bannerRow.replaceWith(createBannerRow(banner));
+                    }
+                } else if (action === 'deleted') {
+                    if (bannerRow) {
+                        bannerRow.remove();
+                    }
+                }
+            });
+
+        function createBannerRow(banner) {
+            const row = document.createElement('tr');
+            row.id = `banner-${banner.id}`;
+            row.innerHTML = `
+                <td>${banner.title}</td>
+                <td>${banner.description || ''}</td>
+                <td>
+                    ${banner.image_url ?
+                        `<img src="${banner.image_url}" alt="${banner.title}" style="max-width: 100px;">` :
+                        'No Image'}
+                </td>
+                <td>${banner.start_date ? new Date(banner.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}</td>
+                <td>${banner.end_date ? new Date(banner.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}</td>
+                <td>
+                    <span class="badge ${banner.is_active ? 'bg-success' : 'bg-danger'}">
+                        ${banner.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                </td>
+                <td>
+                    <a href="/promo-banners/${banner.id}/edit" class="btn btn-sm btn-primary">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <form action="/promo-banners/${banner.id}" method="POST" class="d-inline">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </td>
+            `;
+            return row;
         }
     });
 </script>

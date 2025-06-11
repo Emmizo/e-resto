@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ServiceStatusUpdated;
 use App\Mail\RestaurantApprovedMail;
 use App\Models\MenuItem;
 use App\Models\Order;
+use App\Models\PromoBanner;
 use App\Models\Restaurant;
 use App\Models\User;
 use Carbon\Carbon;
@@ -225,7 +227,10 @@ class DashboardController extends Controller
                 return $query->whereBetween('created_at', [$startDate, $endDate]);
             })->count(),
             'top_menu_items' => $topMenuItems,
-            'current_range' => $dateRange
+            'current_range' => $dateRange,
+            'promo_banners' => PromoBanner::when($restaurantId, function ($query) use ($restaurantId) {
+                return $query->where('restaurant_id', $restaurantId);
+            })->latest()->get()
         ];
 
         $restaurant = null;
@@ -278,13 +283,29 @@ class DashboardController extends Controller
         if ($type === 'reservations') {
             $restaurant->accepts_reservations = !$restaurant->accepts_reservations;
             $restaurant->save();
+            // Broadcast the service status update
+            event(new ServiceStatusUpdated('reservations', $restaurant->accepts_reservations, $restaurant->id));
             return response()->json(['status' => 'success', 'value' => $restaurant->accepts_reservations]);
         } elseif ($type === 'delivery') {
             $restaurant->accepts_delivery = !$restaurant->accepts_delivery;
             $restaurant->save();
+            // Broadcast the service status update
+            event(new ServiceStatusUpdated('delivery', $restaurant->accepts_delivery, $restaurant->id));
             return response()->json(['status' => 'success', 'value' => $restaurant->accepts_delivery]);
         } else {
             return response()->json(['status' => 'error', 'message' => 'Invalid type.'], 400);
         }
+    }
+
+    public function getChartData()
+    {
+        $range = request('range', 'today');
+        $data = $this->getDashboardData($range);
+
+        return response()->json([
+            'activity_labels' => $data['activity_labels'],
+            'order_activity_data' => $data['order_activity_data'],
+            'reservation_activity_data' => $data['reservation_activity_data']
+        ]);
     }
 }

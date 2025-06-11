@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\OrderCreated;
 use App\Mail\NewOrderNotification;
 use App\Mail\OrderStatusUpdated;
 use App\Models\MenuItem;

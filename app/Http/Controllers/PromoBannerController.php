@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\PromoBannerUpdated;
 use App\Models\PromoBanner;
 use App\Models\Restaurant;
 use Illuminate\Http\Request;
@@ -45,7 +46,8 @@ class PromoBannerController extends Controller
             $image->move($folder, $filename);
             $data['image_path'] = config('app.url') . '/promo_banners/' . $filename;
         }
-        PromoBanner::create($data);
+        $banner = PromoBanner::create($data);
+        broadcast(new PromoBannerUpdated($banner, 'created'))->toOthers();
         return redirect()->route('promo-banners.index')->with('success', 'Promo banner created!');
     }
 
@@ -87,6 +89,7 @@ class PromoBannerController extends Controller
             $data['image_path'] = config('app.url') . '/promo_banners/' . $filename;
         }
         $banner->update($data);
+        broadcast(new PromoBannerUpdated($banner, 'updated'))->toOthers();
         return redirect()->route('promo-banners.index')->with('success', 'Promo banner updated!');
     }
 
@@ -99,6 +102,7 @@ class PromoBannerController extends Controller
                 @unlink($oldPath);
             }
         }
+        broadcast(new PromoBannerUpdated($banner, 'deleted'))->toOthers();
         $banner->delete();
         return redirect()->route('promo-banners.index')->with('success', 'Promo banner deleted!');
     }

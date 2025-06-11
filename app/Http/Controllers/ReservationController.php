@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ReservationCreated;
 use App\Mail\ReservationStatusUpdated;
 use App\Models\Reservation;
 use App\Models\Restaurant;
@@ -49,6 +50,9 @@ class ReservationController extends Controller
         $reservation->status = $request->status;
         $reservation->save();
 
+        // Broadcast the reservation update
+        event(new ReservationCreated($reservation));
+
         $user = $reservation->user;
         $fcmToken = $user->fcm_token;
         if ($fcmToken) {
@@ -84,6 +88,8 @@ class ReservationController extends Controller
     public function destroy(string $id)
     {
         $reservation = Reservation::findOrFail($id);
+        // Broadcast the reservation deletion
+        event(new ReservationCreated($reservation));
         $reservation->delete();
 
         return response()->json([

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\MenuItemUpdated;
 use App\Models\Menu;
 use App\Models\MenuItem;
 use App\Models\Restaurant;
@@ -72,7 +73,7 @@ class MenuController extends Controller
         // Save each menu item with its own image
         foreach ($request->menu_items as $item) {
             $imagePath = $this->handleMenuItemImage($item['image']);
-            MenuItem::create([
+            $menuItem = MenuItem::create([
                 'menu_id' => $menu->id,
                 'name' => $item['name'] ?? '',
                 'description' => $item['description'] ?? '',
@@ -84,6 +85,9 @@ class MenuController extends Controller
                 ],
                 'is_available' => 1,
             ]);
+
+            // Broadcast the new menu item event
+            event(new MenuItemUpdated($menuItem, 'created'));
         }
 
         return response()->json([
@@ -189,6 +193,13 @@ class MenuController extends Controller
         if ($request->has('menu_items')) {
             // Delete existing menu items that are not in the update
             $existingItemIds = collect($request->menu_items)->pluck('id')->filter();
+            $deletedItems = $menu->menuItems()->whereNotIn('id', $existingItemIds)->get();
+
+            // Broadcast deletion events
+            foreach ($deletedItems as $deletedItem) {
+                event(new MenuItemUpdated($deletedItem, 'deleted'));
+            }
+
             $menu->menuItems()->whereNotIn('id', $existingItemIds)->delete();
 
             // Update or create menu items
@@ -224,6 +235,8 @@ class MenuController extends Controller
                 if ($item) {
                     // Update existing item
                     $item->update($itemAttributes);
+                    // Broadcast update event
+                    event(new MenuItemUpdated($item, 'updated'));
                 } else {
                     // Create new item
                     /*  if (!$menu->id) {
@@ -232,7 +245,9 @@ class MenuController extends Controller
                      } */
 
                     $itemAttributes['menu_id'] = $request->id;
-                    MenuItem::create($itemAttributes);
+                    $newItem = MenuItem::create($itemAttributes);
+                    // Broadcast creation event
+                    event(new MenuItemUpdated($newItem, 'created'));
                 }
             }
         }
@@ -257,8 +272,21 @@ class MenuController extends Controller
      */
     public function destroy(Menu $menu)
     {
+        // Get all menu items before deletion
+        $menuItems = $menu->menuItems;
+
+        // Delete the menu (this will cascade delete menu items)
         $menu->delete();
-        return response()->json(['success' => true]);
+
+        // Broadcast deletion events for each menu item
+        foreach ($menuItems as $menuItem) {
+            event(new MenuItemUpdated($menuItem, 'deleted'));
+        }
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Menu deleted successfully'
+        ]);
     }
 
     /**

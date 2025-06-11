@@ -124,3 +124,7 @@ Route::middleware('auth')->get('/notifications/{id}', [NotificationController::c
 Route::middleware('auth')->post('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAllAsRead');
 
 Route::post('/set-timezone', [App\Http\Controllers\UserController::class, 'setTimezone'])->name('set-timezone');
+
+Route::get('/dashboard/chart-data', [App\Http\Controllers\DashboardController::class, 'getChartData'])
+    ->name('dashboard.chart-data')
+    ->middleware(['auth']);
