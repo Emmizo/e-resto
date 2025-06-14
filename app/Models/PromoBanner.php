@@ -19,6 +19,11 @@ class PromoBanner extends Model
         'is_active',
     ];
 
+    protected $casts = [
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
+    ];
+
     public function restaurant()
     {
         return $this->belongsTo(Restaurant::class);

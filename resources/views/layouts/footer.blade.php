@@ -158,3 +158,64 @@ $(document).ready(function() {
 </script>
 @endif
 
+<!-- Laravel Echo & Pusher -->
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/laravel-echo/dist/echo.iife.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var EchoConstructor = window.Echo && window.Echo.default ? window.Echo.default : window.Echo;
+    window.Echo = new EchoConstructor({
+        broadcaster: 'pusher',
+        key: '533a42e55e800d1277d5',
+        cluster: 'mt1',
+        forceTLS: true
+    });
+
+    // Replace with the actual restaurant ID from your backend/session
+    const restaurantId = window.currentRestaurantId || '{{ session('userData.users.restaurant_id') ?? '' }}';
+
+    // 1. Orders channel
+    window.Echo.channel('orders')
+        .listen('OrderCreated', (e) => {
+            // TODO: Replace with your UI update logic
+            console.log('OrderCreated:', e);
+        });
+
+    // 2. Restaurant-specific channel
+    if (restaurantId) {
+        window.Echo.channel('restaurant.' + restaurantId)
+            .listen('ReservationCreated', (e) => {
+                // TODO: Replace with your UI update logic
+                console.log('ReservationCreated:', e);
+            })
+            .listen('ServiceStatusUpdated', (e) => {
+                // TODO: Replace with your UI update logic
+                console.log('ServiceStatusUpdated:', e);
+            })
+            .listen('PromoBannerUpdated', (e) => {
+                // TODO: Replace with your UI update logic
+                console.log('PromoBannerUpdated:', e);
+            })
+            .listen('MenuItemUpdated', (e) => {
+                // TODO: Replace with your UI update logic
+                console.log('MenuItemUpdated:', e);
+            });
+    }
+
+    // 3. Database changes (global)
+    window.Echo.channel('database-changes')
+        .listen('.database.changed', (e) => {
+            // TODO: Replace with your UI update logic
+            console.log('DatabaseChanged:', e);
+        });
+});
+</script>
+
+<script>
+// Sample Echo event listener
+window.Echo.channel('my-channel')
+    .listen('MyEvent', (e) => {
+        console.log('Received MyEvent:', e);
+    });
+</script>
+
