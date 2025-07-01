@@ -114,6 +114,3 @@
         </div>
     </div>
 </header>
-
-<!-- Firebase Configuration -->
-{{-- Removed notification and messaging script; moved to footer for correct jQuery loading order. --}}

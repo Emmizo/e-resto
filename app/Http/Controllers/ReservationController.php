@@ -7,7 +7,6 @@ use App\Mail\ReservationStatusUpdated;
 use App\Models\Reservation;
 use App\Models\Restaurant;
 use App\Models\User;
-use App\Services\FcmService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
@@ -54,23 +53,9 @@ class ReservationController extends Controller
         event(new ReservationCreated($reservation));
 
         $user = $reservation->user;
-        $fcmToken = $user->fcm_token;
-        if ($fcmToken) {
-            FcmService::send(
-                $fcmToken,
-                'Reservation Update',
-                "Your reservation at {$reservation->restaurant->name} is now {$reservation->status}!",
-                [
-                    'type' => 'reservation_status',
-                    'reservation_id' => (string) $reservation->id,
-                    'status' => $reservation->status,
-                ]
-            );
-        }
-
-        if ($oldStatus !== $reservation->status && $reservation->user) {
+        if ($user) {
             try {
-                Mail::to($reservation->user->email)->send(new ReservationStatusUpdated($reservation));
+                Mail::to($user->email)->send(new ReservationStatusUpdated($reservation));
             } catch (\Exception $e) {
                 \Log::error('Failed to send reservation status update email: ' . $e->getMessage());
             }

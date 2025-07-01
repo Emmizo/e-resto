@@ -34,6 +34,11 @@
         </aside>
     </div>
     @yield('script')
+
+    <!-- Pusher for real-time functionality -->
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <script src="{{ asset('js/realtime.js') }}"></script>
+
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -47,6 +52,28 @@
                 body: JSON.stringify({ timezone: tz })
             });
         }
+    });
+    </script>
+
+    <script src="https://js.pusher.com/beams/1.0/push-notifications-cdn.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Only run if user is logged in (optional)
+        @if(auth()->check())
+            const beamsClient = new PusherPushNotifications.Client({
+                instanceId: 'daf09ca2-485c-4af3-abeb-14e865ef9a8e',
+            });
+
+            beamsClient.start()
+                .then(() => {
+                    // Subscribe to a unique interest for this user (e.g., user ID)
+                    return beamsClient.addDeviceInterest('user-{{ auth()->id() }}');
+                })
+                .then(() => {
+                    console.log('Successfully registered and subscribed for push notifications!');
+                })
+                .catch(console.error);
+        @endif
     });
     </script>
 </body>

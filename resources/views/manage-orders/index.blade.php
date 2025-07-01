@@ -18,7 +18,7 @@
         </div>
 
         <!-- Content -->
-        <div class="content-inner">
+        <div class="content-inner" data-restaurant-id="{{ session('userData')['users']->restaurant_id ?? '' }}">
             <div class="content-header">
                 <div class="heading text-start">
                     <h4 class="font-dmsans fw-medium text-primary-v1 mb-2">Manage Orders</h4>

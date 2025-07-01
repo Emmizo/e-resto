@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Events\ReservationCreated;
 use App\Http\Controllers\Controller;
 use App\Models\Reservation;
 use App\Models\RestaurantEmployee;
-use App\Services\FirebaseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -19,13 +19,6 @@ use OpenApi\Annotations as OA;
  */
 class ReservationController extends Controller
 {
-    protected $firebaseService;
-
-    public function __construct(FirebaseService $firebaseService)
-    {
-        $this->firebaseService = $firebaseService;
-    }
-
     /**
      * Display a listing of reservations.
      *
@@ -149,7 +142,9 @@ class ReservationController extends Controller
      *             @OA\Property(property="reservation_time", type="string", format="date-time", example="2024-04-15 19:00:00"),
      *             @OA\Property(property="number_of_guests", type="integer", example=4),
      *             @OA\Property(property="special_requests", type="string", example="Window seat preferred"),
-     *             @OA\Property(property="phone_number", type="string", example="123-456-7890")
+     *             @OA\Property(property="phone_number", type="string", example="123-456-7890"),
+     *             @OA\Property(property="table_ids", type="array", @OA\Items(type="integer", example=1)),
+     *             @OA\Property(property="table_ids.*", type="integer", example=1)
      *         )
      *     ),
      *     @OA\Response(
@@ -170,7 +165,31 @@ class ReservationController extends Controller
      *                 @OA\Property(property="special_requests", type="string", example="Window seat preferred"),
      *                 @OA\Property(property="status", type="string", enum={"pending", "confirmed", "cancelled", "completed"}, example="pending"),
      *                 @OA\Property(property="created_at", type="string", format="date-time"),
-     *                 @OA\Property(property="updated_at", type="string", format="date-time")
+     *                 @OA\Property(property="updated_at", type="string", format="date-time"),
+     *                 @OA\Property(
+     *                     property="user",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", format="int64", example=1),
+     *                     @OA\Property(property="name", type="string", example="John Doe"),
+     *                     @OA\Property(property="email", type="string", format="email", example="john@example.com")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="restaurant",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", format="int64", example=1),
+     *                     @OA\Property(property="name", type="string", example="Fine Dining Restaurant"),
+     *                     @OA\Property(property="address", type="string", example="123 Main St, City")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="tables",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", format="int64", example=1),
+     *                         @OA\Property(property="name", type="string", example="Table 1"),
+     *                         @OA\Property(property="status", type="string", enum={"available", "occupied", "reserved"}, example="available")
+     *                     )
+     *                 )
      *             )
      *         )
      *     ),
@@ -192,6 +211,8 @@ class ReservationController extends Controller
             'number_of_guests' => 'required|integer|min:1',
             'special_requests' => 'nullable|string',
             'phone_number' => 'nullable|string|max:20',
+            'table_ids' => 'nullable|array',
+            'table_ids.*' => 'exists:tables,id',
         ]);
 
         if ($validator->fails()) {
@@ -210,8 +231,15 @@ class ReservationController extends Controller
                 'number_of_people' => $request->number_of_guests,
                 'special_requests' => $request->special_requests,
                 'phone_number' => $request->phone_number,
-                'status' => 'pending'
+                'status' => 'pending',
             ]);
+
+            if ($request->has('table_ids')) {
+                $reservation->tables()->sync($request->table_ids);
+            }
+
+            // Broadcast the reservation created event
+            event(new ReservationCreated($reservation));
 
             $restaurant = $reservation->restaurant;
             if ($restaurant && $restaurant->email) {
@@ -223,77 +251,10 @@ class ReservationController extends Controller
                 }
             }
 
-            // Send FCM notification to managers, chefs, waiters, and the restaurant owner
-            $restaurantStaff = RestaurantEmployee::join('users', 'restaurant_employees.user_id', '=', 'users.id')
-                ->where('restaurant_employees.restaurant_id', $request->restaurant_id)
-                ->whereIn('restaurant_employees.position', ['manager', 'chef', 'waiter'])
-                ->whereNotNull('users.fcm_token')
-                ->get();
-
-            // Get the restaurant owner
-            $owner = null;
-            if ($restaurant && $restaurant->owner_id) {
-                $owner = \App\Models\User::where('id', $restaurant->owner_id)
-                    ->where('role', 'restaurant_owner')
-                    ->whereNotNull('fcm_token')
-                    ->first();
-            }
-
-            \Log::info('Reservation FCM: Staff to notify', [
-                'restaurant_id' => $request->restaurant_id,
-                'staff_ids' => $restaurantStaff->pluck('id')->toArray(),
-                'owner_id' => $owner ? $owner->id : null,
-                'count' => $restaurantStaff->count() + ($owner ? 1 : 0)
-            ]);
-
-            $notifiedUserIds = $restaurantStaff->pluck('user_id')->toArray();
-            foreach ($restaurantStaff as $staff) {
-                $title = 'New Reservation Received';
-                $body = "New reservation #{$reservation->id} for {$reservation->number_of_people} people at {$reservation->reservation_time}.";
-                $data = [
-                    'reservation_id' => $reservation->id,
-                    'type' => 'new_reservation'
-                ];
-
-                $this->firebaseService->sendNotification(
-                    $staff->fcm_token,
-                    $title,
-                    $body,
-                    $data
-                );
-
-                \Log::info('Reservation FCM: Sent notification', [
-                    'staff_user_id' => $staff->id,
-                    'fcm_token' => $staff->fcm_token,
-                    'reservation_id' => $reservation->id
-                ]);
-            }
-
-            // Notify owner if not already notified
-            if ($owner && !in_array($owner->id, $notifiedUserIds)) {
-                $title = 'New Reservation Received';
-                $body = "New reservation #{$reservation->id} for {$reservation->number_of_people} people at {$reservation->reservation_time}.";
-                $data = [
-                    'reservation_id' => $reservation->id,
-                    'type' => 'new_reservation'
-                ];
-                $this->firebaseService->sendNotification(
-                    $owner->fcm_token,
-                    $title,
-                    $body,
-                    $data
-                );
-                \Log::info('Reservation FCM: Sent notification to owner', [
-                    'owner_id' => $owner->id,
-                    'fcm_token' => $owner->fcm_token,
-                    'reservation_id' => $reservation->id
-                ]);
-            }
-
             return response()->json([
                 'status' => 'success',
                 'message' => 'Reservation created successfully',
-                'data' => $reservation->load(['user', 'restaurant'])
+                'data' => $reservation->load(['user', 'restaurant', 'tables'])
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
@@ -351,6 +312,16 @@ class ReservationController extends Controller
      *                     @OA\Property(property="id", type="integer", format="int64", example=1),
      *                     @OA\Property(property="name", type="string", example="Fine Dining Restaurant"),
      *                     @OA\Property(property="address", type="string", example="123 Main St, City")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="tables",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", format="int64", example=1),
+     *                         @OA\Property(property="name", type="string", example="Table 1"),
+     *                         @OA\Property(property="status", type="string", enum={"available", "occupied", "reserved"}, example="available")
+     *                     )
      *                 )
      *             )
      *         )
@@ -368,7 +339,7 @@ class ReservationController extends Controller
     public function show(int $id): JsonResponse
     {
         try {
-            $reservation = Reservation::with(['user', 'restaurant'])->find($id);
+            $reservation = Reservation::with(['user', 'restaurant', 'tables'])->find($id);
 
             if (!$reservation) {
                 return response()->json([
@@ -421,7 +392,9 @@ class ReservationController extends Controller
      *             @OA\Property(property="number_of_people", type="integer", example=4),
      *             @OA\Property(property="special_requests", type="string", example="Window seat preferred"),
      *             @OA\Property(property="status", type="string", enum={"pending", "confirmed", "cancelled", "completed"}, example="confirmed"),
-     *             @OA\Property(property="phone_number", type="string", example="123-456-7890")
+     *             @OA\Property(property="phone_number", type="string", example="123-456-7890"),
+     *             @OA\Property(property="table_ids", type="array", @OA\Items(type="integer", example=1)),
+     *             @OA\Property(property="table_ids.*", type="integer", example=1)
      *         )
      *     ),
      *     @OA\Response(
@@ -442,7 +415,31 @@ class ReservationController extends Controller
      *                 @OA\Property(property="special_requests", type="string", example="Window seat preferred"),
      *                 @OA\Property(property="status", type="string", enum={"pending", "confirmed", "cancelled", "completed"}, example="confirmed"),
      *                 @OA\Property(property="created_at", type="string", format="date-time"),
-     *                 @OA\Property(property="updated_at", type="string", format="date-time")
+     *                 @OA\Property(property="updated_at", type="string", format="date-time"),
+     *                 @OA\Property(
+     *                     property="user",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", format="int64", example=1),
+     *                     @OA\Property(property="name", type="string", example="John Doe"),
+     *                     @OA\Property(property="email", type="string", format="email", example="john@example.com")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="restaurant",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", format="int64", example=1),
+     *                     @OA\Property(property="name", type="string", example="Fine Dining Restaurant"),
+     *                     @OA\Property(property="address", type="string", example="123 Main St, City")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="tables",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", format="int64", example=1),
+     *                         @OA\Property(property="name", type="string", example="Table 1"),
+     *                         @OA\Property(property="status", type="string", enum={"available", "occupied", "reserved"}, example="available")
+     *                     )
+     *                 )
      *             )
      *         )
      *     ),
@@ -470,6 +467,8 @@ class ReservationController extends Controller
             'special_requests' => 'nullable|string|max:500',
             'status' => 'nullable|in:pending,confirmed,cancelled,completed',
             'phone_number' => 'nullable|string|max:20',
+            'table_ids' => 'nullable|array',
+            'table_ids.*' => 'exists:tables,id',
         ]);
 
         if ($validator->fails()) {
@@ -511,36 +510,22 @@ class ReservationController extends Controller
 
             $reservation->update($updateData);
 
+            if ($request->has('table_ids')) {
+                $reservation->tables()->sync($request->table_ids);
+            }
+
             if ($oldStatus !== $reservation->status && $reservation->user) {
                 try {
                     \Mail::to($reservation->user->email)->send(new \App\Mail\ReservationStatusUpdated($reservation));
                 } catch (\Exception $e) {
                     \Log::error('Failed to send reservation status update email: ' . $e->getMessage());
                 }
-                // Send FCM and persistent notification
-                if ($reservation->user->fcm_token) {
-                    $title = 'Reservation Status Updated';
-                    $body = "Your reservation #{$reservation->id} status has been updated to: " . ucfirst($reservation->status);
-                    $data = [
-                        'reservation_id' => $reservation->id,
-                        'restaurant_id' => $reservation->restaurant_id,
-                        'status' => $reservation->status,
-                        'type' => 'reservation_status',
-                    ];
-                    $this->firebaseService->sendNotification(
-                        $reservation->user->fcm_token,
-                        $title,
-                        $body,
-                        $data,
-                        $reservation->user_id
-                    );
-                }
             }
 
             return response()->json([
                 'status' => 'success',
                 'message' => 'Reservation updated successfully',
-                'data' => $reservation->load(['user', 'restaurant'])
+                'data' => $reservation->load(['user', 'restaurant', 'tables'])
             ]);
         } catch (\Exception $e) {
             return response()->json([

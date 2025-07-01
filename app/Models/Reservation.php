@@ -53,4 +53,9 @@ class Reservation extends Model
     {
         return $this->belongsTo(Restaurant::class, 'restaurant_id');
     }
+
+    public function tables()
+    {
+        return $this->belongsToMany(\App\Models\Table::class, 'reservation_table');
+    }
 }

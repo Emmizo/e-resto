@@ -63,6 +63,12 @@
                             <span class="menu-title">Manage Reservation</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link font-dmsans fw-medium text-white" href="{{ route('admin.tables.index') }}" title="Manage Table">
+                            <i class="fas fa-chair me-2"></i>
+                            <span class="menu-title">Manage Table</span>
+                        </a>
+                    </li>
                     @endhasrestaurantpermission
                 </ul>
                 @if(auth()->user()->role == 'admin')

@@ -109,6 +109,9 @@ class OrderController extends Controller
                 ]);
             }
 
+            // Broadcast the order created event
+            event(new OrderCreated($order));
+
             DB::commit();
 
             $restaurant = $order->restaurant;

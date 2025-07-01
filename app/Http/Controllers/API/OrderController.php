@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\OrderCreated;
 use App\Http\Controllers\Controller;
 use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\RestaurantEmployee;
 use App\Models\User;
-use App\Services\FirebaseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,13 +23,6 @@ use OpenApi\Annotations as OA;
  */
 class OrderController extends Controller
 {
-    protected $firebaseService;
-
-    public function __construct(FirebaseService $firebaseService)
-    {
-        $this->firebaseService = $firebaseService;
-    }
-
     /**
      * List all orders.
      *
@@ -202,51 +195,21 @@ class OrderController extends Controller
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(property="id", type="integer", format="int64", example=1),
-     *
+     *                 @OA\Property(property="user_id", type="integer", format="int64", example=1),
      *                 @OA\Property(property="restaurant_id", type="integer", format="int64", example=1),
      *                 @OA\Property(property="total_amount", type="number", format="float", example=99.99),
      *                 @OA\Property(property="status", type="string", example="pending"),
-     *                 @OA\Property(property="payment_status", type="string", example="unpaid"),
+     *                 @OA\Property(property="payment_status", type="string", example="pending"),
      *                 @OA\Property(property="delivery_address", type="string", example="123 Main St"),
      *                 @OA\Property(property="special_instructions", type="string", example="No onions please"),
-     *                 @OA\Property(property="order_type", type="string", example="dine_in"),
      *                 @OA\Property(property="created_at", type="string", format="date-time"),
-     *                 @OA\Property(property="updated_at", type="string", format="date-time"),
-     *                 @OA\Property(
-     *                     property="items",
-     *                     type="array",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", format="int64", example=1),
-     *                         @OA\Property(property="order_id", type="integer", format="int64", example=1),
-     *                         @OA\Property(property="menu_item_id", type="integer", format="int64", example=1),
-     *                         @OA\Property(property="quantity", type="integer", example=2),
-     *                         @OA\Property(property="price", type="number", format="float", example=9.99),
-     *                         @OA\Property(property="created_at", type="string", format="date-time"),
-     *                         @OA\Property(property="updated_at", type="string", format="date-time"),
-     *                         @OA\Property(
-     *                             property="menu_item",
-     *                             type="object",
-     *                             @OA\Property(property="id", type="integer", format="int64", example=1),
-     *                             @OA\Property(property="menu_id", type="integer", format="int64", example=1),
-     *                             @OA\Property(property="name", type="string", example="Cheeseburger"),
-     *                             @OA\Property(property="description", type="string", example="Juicy beef patty with cheese"),
-     *                             @OA\Property(property="price", type="number", format="float", example=9.99),
-     *                             @OA\Property(property="category", type="string", example="Main Course"),
-     *                             @OA\Property(property="dietary_info", type="string", example="Contains dairy"),
-     *                             @OA\Property(property="is_available", type="boolean", example=true),
-     *                             @OA\Property(property="image", type="string", example="burgers/cheeseburger.jpg"),
-     *                             @OA\Property(property="created_at", type="string", format="date-time"),
-     *                             @OA\Property(property="updated_at", type="string", format="date-time")
-     *                         )
-     *                     )
-     *                 )
+     *                 @OA\Property(property="updated_at", type="string", format="date-time")
      *             )
      *         )
      *     ),
      *     @OA\Response(
-     *         response=422,
-     *         description="Validation error"
+     *         response=400,
+     *         description="Invalid input data"
      *     ),
      *     @OA\Response(
      *         response=401,
@@ -311,75 +274,11 @@ class OrderController extends Controller
                 ]);
             }
 
-            // Get all staff members of the restaurant (manager, chef, waiter)
-            $restaurantStaff = RestaurantEmployee::join('users', 'restaurant_employees.user_id', '=', 'users.id')
-                ->where('restaurant_employees.restaurant_id', $request->restaurant_id)
-                ->whereIn('restaurant_employees.position', ['manager', 'chef', 'waiter'])
-                ->whereNotNull('users.fcm_token')
-                ->get();
-
-            // Get the restaurant owner
-            $restaurant = $order->restaurant;
-            $owner = null;
-            if ($restaurant && $restaurant->owner_id) {
-                $owner = \App\Models\User::where('id', $restaurant->owner_id)
-                    ->where('role', 'restaurant_owner')
-                    ->whereNotNull('fcm_token')
-                    ->first();
-            }
-
-            \Log::info('Order FCM: Staff to notify', [
-                'restaurant_id' => $request->restaurant_id,
-                'staff_ids' => $restaurantStaff->pluck('id')->toArray(),
-                'owner_id' => $owner ? $owner->id : null,
-                'count' => $restaurantStaff->count() + ($owner ? 1 : 0)
-            ]);
-
-            $notifiedUserIds = $restaurantStaff->pluck('user_id')->toArray();
-            foreach ($restaurantStaff as $staff) {
-                $title = 'New Order Received';
-                $body = "New order #{$order->id} has been placed. Total amount: \$" . number_format($totalAmount, 2);
-                $data = [
-                    'order_id' => $order->id,
-                    'type' => 'new_order'
-                ];
-
-                $this->firebaseService->sendNotification(
-                    $staff->fcm_token,
-                    $title,
-                    $body,
-                    $data
-                );
-
-                \Log::info('Order FCM: Sent notification', [
-                    'staff_user_id' => $staff->id,
-                    'fcm_token' => $staff->fcm_token,
-                    'order_id' => $order->id
-                ]);
-            }
-
-            // Notify owner if not already notified
-            if ($owner && !in_array($owner->id, $notifiedUserIds)) {
-                $title = 'New Order Received';
-                $body = "New order #{$order->id} has been placed. Total amount: \$" . number_format($totalAmount, 2);
-                $data = [
-                    'order_id' => $order->id,
-                    'type' => 'new_order'
-                ];
-                $this->firebaseService->sendNotification(
-                    $owner->fcm_token,
-                    $title,
-                    $body,
-                    $data
-                );
-                \Log::info('Order FCM: Sent notification to owner', [
-                    'owner_id' => $owner->id,
-                    'fcm_token' => $owner->fcm_token,
-                    'order_id' => $order->id
-                ]);
-            }
+            // Broadcast the order created event
+            event(new OrderCreated($order));
 
             // Send email to the restaurant
+            $restaurant = $order->restaurant;
             if ($restaurant && $restaurant->email) {
                 try {
                     \Mail::to($restaurant->email)->send(new \App\Mail\NewOrderNotification($order));
@@ -485,28 +384,20 @@ class OrderController extends Controller
     public function show(Request $request, int $id): JsonResponse
     {
         try {
-            // Validate that the ID exists and is numeric
-            $validator = Validator::make(['id' => $id], [
-                'id' => 'required|numeric|exists:orders,id'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            $order = Order::with(['user', 'restaurant', 'orderItems.menuItem'])
-                ->where('user_id', auth()->user()->id)
-                ->find($id);
+            $order = Order::with(['user', 'restaurant', 'orderItems.menuItem'])->find($id);
 
             if (!$order) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Order not found for this user'
+                    'message' => 'Order not found'
                 ], 404);
+            }
+
+            if ($order->user_id !== auth()->id()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Unauthorized access'
+                ], 403);
             }
 
             return response()->json([
@@ -542,62 +433,21 @@ class OrderController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             required={"status"},
-     *             @OA\Property(
-     *                 property="status",
-     *                 type="string",
-     *                 enum={"pending", "processing", "completed", "cancelled"},
-     *                 example="processing"
-     *             )
+     *             @OA\Property(property="status", type="string", enum={"pending", "processing", "completed", "cancelled"}, example="processing")
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Order status updated successfully",
+     *         description="Order updated successfully",
      *         @OA\JsonContent(
      *             @OA\Property(property="status", type="string", example="success"),
-     *             @OA\Property(property="message", type="string", example="Order status updated successfully"),
+     *             @OA\Property(property="message", type="string", example="Order updated successfully"),
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(property="id", type="integer", format="int64", example=1),
-     *                 @OA\Property(property="user_id", type="integer", format="int64", example=1),
-     *                 @OA\Property(property="restaurant_id", type="integer", format="int64", example=1),
-     *                 @OA\Property(property="total_amount", type="number", format="float", example=99.99),
-     *                 @OA\Property(property="status", type="string", example="pending"),
-     *                 @OA\Property(property="payment_status", type="string", example="unpaid"),
-     *                 @OA\Property(property="delivery_address", type="string", example="123 Main St"),
-     *                 @OA\Property(property="special_instructions", type="string", example="No onions please"),
-     *                 @OA\Property(property="created_at", type="string", format="date-time"),
-     *                 @OA\Property(property="updated_at", type="string", format="date-time"),
-     *                 @OA\Property(
-     *                     property="items",
-     *                     type="array",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", format="int64", example=1),
-     *                         @OA\Property(property="order_id", type="integer", format="int64", example=1),
-     *                         @OA\Property(property="menu_item_id", type="integer", format="int64", example=1),
-     *                         @OA\Property(property="quantity", type="integer", example=2),
-     *                         @OA\Property(property="price", type="number", format="float", example=9.99),
-     *                         @OA\Property(property="created_at", type="string", format="date-time"),
-     *                         @OA\Property(property="updated_at", type="string", format="date-time"),
-     *                         @OA\Property(
-     *                             property="menu_item",
-     *                             type="object",
-     *                             @OA\Property(property="id", type="integer", format="int64", example=1),
-     *                             @OA\Property(property="menu_id", type="integer", format="int64", example=1),
-     *                             @OA\Property(property="name", type="string", example="Cheeseburger"),
-     *                             @OA\Property(property="description", type="string", example="Juicy beef patty with cheese"),
-     *                             @OA\Property(property="price", type="number", format="float", example=9.99),
-     *                             @OA\Property(property="category", type="string", example="Main Course"),
-     *                             @OA\Property(property="dietary_info", type="string", example="Contains dairy"),
-     *                             @OA\Property(property="is_available", type="boolean", example=true),
-     *                             @OA\Property(property="image", type="string", example="burgers/cheeseburger.jpg"),
-     *                             @OA\Property(property="created_at", type="string", format="date-time"),
-     *                             @OA\Property(property="updated_at", type="string", format="date-time")
-     *                         )
-     *                     )
-     *                 )
+     *                 @OA\Property(property="status", type="string", example="processing"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time")
      *             )
      *         )
      *     ),
@@ -606,78 +456,69 @@ class OrderController extends Controller
      *         description="Order not found"
      *     ),
      *     @OA\Response(
-     *         response=422,
-     *         description="Validation error"
+     *         response=401,
+     *         description="Unauthenticated"
      *     )
      * )
      */
     public function update(Request $request, int $id): JsonResponse
     {
-        // First check if the order exists
-        $order = Order::where('user_id', auth()->user()->id)->find($id);
+        try {
+            $order = Order::with(['user'])->find($id);
 
-        if (!$order) {
+            if (!$order) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Order not found'
+                ], 404);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'status' => 'required|in:pending,processing,completed,cancelled'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $oldStatus = $order->status;
+            $order->status = $request->status;
+            $order->save();
+
+            // Send email notification to user if status changed
+            if ($oldStatus !== $request->status) {
+                try {
+                    \Mail::to($order->user->email)->send(new \App\Mail\OrderStatusUpdated($order));
+                    \Log::info('Order status update email sent to: ' . $order->user->email);
+                } catch (\Exception $e) {
+                    \Log::error('Order status update email failed: ' . $e->getMessage());
+                }
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Order updated successfully',
+                'data' => $order
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Order not found'
-            ], 404);
+                'message' => 'Failed to update order',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        // Then validate the status
-        $validator = Validator::make($request->all(), [
-            'status' => 'required|in:pending,processing,completed,cancelled'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $oldStatus = $order->status;
-        $order->update(['status' => $request->status]);
-
-        if ($oldStatus !== $order->status && $order->user && $order->user->email) {
-            try {
-                \Mail::to($order->user->email)->send(new \App\Mail\OrderStatusUpdated($order));
-            } catch (\Exception $e) {
-                \Log::error('Failed to send order status update email: ' . $e->getMessage());
-            }
-            // Send FCM and persistent notification
-            if ($order->user->fcm_token) {
-                $title = 'Order Status Updated';
-                $body = "Your order #{$order->id} status has been updated to: " . ucfirst($order->status);
-                $data = [
-                    'order_id' => $order->id,
-                    'restaurant_id' => $order->restaurant_id,
-                    'status' => $order->status,
-                    'type' => 'order_status',
-                ];
-                $this->firebaseService->sendNotification(
-                    $order->user->fcm_token,
-                    $title,
-                    $body,
-                    $data,
-                    $order->user_id
-                );
-            }
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Order status updated successfully',
-            'data' => $order->load('orderItems.menuItem')
-        ]);
     }
 
     /**
-     * Delete an order.
+     * Delete order.
      *
      * @OA\Delete(
      *     path="/orders/{id}",
-     *     summary="Delete an order",
+     *     summary="Delete order",
      *     tags={"Orders"},
      *     security={{"bearerAuth": {}}},
      *     @OA\Parameter(
@@ -708,14 +549,20 @@ class OrderController extends Controller
     public function destroy(int $id): JsonResponse
     {
         try {
-            $order = Order::where('user_id', auth()->user()->id)
-                ->find($id);
+            $order = Order::find($id);
 
             if (!$order) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Order ID not found'
+                    'message' => 'Order not found'
                 ], 404);
+            }
+
+            if ($order->user_id !== auth()->id()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Unauthorized access'
+                ], 403);
             }
 
             $order->delete();

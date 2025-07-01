@@ -128,3 +128,21 @@ Route::post('/set-timezone', [App\Http\Controllers\UserController::class, 'setTi
 Route::get('/dashboard/chart-data', [App\Http\Controllers\DashboardController::class, 'getChartData'])
     ->name('dashboard.chart-data')
     ->middleware(['auth']);
+
+Route::get('/admin/tables', [App\Http\Controllers\AdminTableController::class, 'index'])->name('admin.tables.index');
+Route::post('/admin/tables', [App\Http\Controllers\AdminTableController::class, 'store'])->name('admin.tables.store');
+Route::patch('/admin/tables/{id}', [App\Http\Controllers\AdminTableController::class, 'update'])->name('admin.tables.update');
+Route::post('/admin/tables/{id}/toggle-status', [App\Http\Controllers\AdminTableController::class, 'toggleStatus'])->name('admin.tables.toggle-status');
+
+Route::get('/test-push', function () {
+    app(\App\Services\PusherBeamsService::class)->notifyInterests(
+        ['user-' . auth()->id()],
+        [
+            'title' => 'Test Notification',
+            'body' => 'This is a test push notification from Pusher Beams!',
+            'icon' => '/icon.png', // Optional: update path if you have a custom icon
+            'deep_link' => url('/dashboard')
+        ]
+    );
+    return 'Notification sent!';
+})->middleware('auth');
