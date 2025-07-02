@@ -383,3 +383,54 @@ document.addEventListener('DOMContentLoaded', function() {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = RealtimeManager;
 }
+
+// Helper: Queue action if offline
+async function queueAction(type, data) {
+    let queue = await localforage.getItem('actionQueue') || [];
+    queue.push({ type, data });
+    await localforage.setItem('actionQueue', queue);
+}
+
+// Intercept order submission
+window.submitOrder = async function(orderData) {
+    if (!navigator.onLine) {
+        await queueAction('order', orderData);
+        alert('Order saved offline. It will be sent when you are back online.');
+        return;
+    }
+    // ... existing order submission logic ...
+}
+
+// Intercept reservation submission
+window.submitReservation = async function(reservationData) {
+    if (!navigator.onLine) {
+        await queueAction('reservation', reservationData);
+        alert('Reservation saved offline. It will be sent when you are back online.');
+        return;
+    }
+    // ... existing reservation submission logic ...
+}
+
+// Sync queued actions when back online
+window.addEventListener('online', async () => {
+    let queue = await localforage.getItem('actionQueue') || [];
+    for (const action of queue) {
+        if (action.type === 'order') {
+            // Replace with your order API call
+            await fetch('/api/v1/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (window.getToken ? window.getToken() : '') },
+                body: JSON.stringify(action.data)
+            });
+        }
+        if (action.type === 'reservation') {
+            // Replace with your reservation API call
+            await fetch('/api/v1/reservations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (window.getToken ? window.getToken() : '') },
+                body: JSON.stringify(action.data)
+            });
+        }
+    }
+    await localforage.setItem('actionQueue', []);
+});

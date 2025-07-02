@@ -36,6 +36,7 @@
 
     <script src="https://js.pusher.com/7.2/pusher.min.js"></script>
     <script src="https://unpkg.com/laravel-echo/dist/echo.umd.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     <script>
     console.log('Pusher:', typeof Pusher, Pusher);
     console.log('Echo:', typeof Echo, Echo);
@@ -86,6 +87,19 @@
                 .catch(console.error);
         @endif
     });
+    </script>
+
+    <script>
+    // Register service worker for offline/PWA
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
+                console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            }, function(err) {
+                console.log('ServiceWorker registration failed: ', err);
+            });
+        });
+    }
     </script>
 </body>
 

@@ -1028,6 +1028,43 @@ $(document).ready(function() {
     });
 });
 
+// Intercept login form submission for offline support
+$('#loginForm').on('submit', async function(e) {
+    e.preventDefault();
+    var formData = $(this).serializeArray();
+    var loginData = {};
+    formData.forEach(function(item) { loginData[item.name] = item.value; });
+    if (!navigator.onLine) {
+        let queue = await localforage.getItem('loginQueue') || [];
+        queue.push(loginData);
+        await localforage.setItem('loginQueue', queue);
+        $('#message-container-login').html('<div class="alert alert-info">You are offline. Login will be processed when you are back online.</div>');
+        return false;
+    }
+    // ... existing AJAX login code ...
+});
+
+// Sync queued logins when back online
+window.addEventListener('online', async function() {
+    let queue = await localforage.getItem('loginQueue') || [];
+    for (const loginData of queue) {
+        $.ajax({
+            url: $('#loginForm').attr('action'),
+            type: 'POST',
+            data: loginData,
+            success: function(response) {
+                // Handle login success (redirect, etc.)
+                window.location.reload();
+            },
+            error: function(xhr) {
+                // Handle login error
+                $('#message-container-login').html('<div class="alert alert-danger">Login failed while syncing.</div>');
+            }
+        });
+    }
+    await localforage.setItem('loginQueue', []);
+});
+
 });
     </script>
 
