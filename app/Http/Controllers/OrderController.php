@@ -11,7 +11,6 @@ use App\Models\OrderItem;
 use App\Models\Restaurant;
 use App\Models\User;
 use App\Services\FcmService;
-use App\Services\FirebaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -19,13 +18,6 @@ use Illuminate\Support\Facades\Validator;
 
 class OrderController extends Controller
 {
-    protected $firebaseService;
-
-    public function __construct(FirebaseService $firebaseService)
-    {
-        $this->firebaseService = $firebaseService;
-    }
-
     /**
      * Display a listing of the resource.
      */
@@ -180,12 +172,12 @@ class OrderController extends Controller
                         'status' => $request->status
                     ];
 
-                    $this->firebaseService->sendNotification(
-                        $user->fcm_token,
-                        $title,
-                        $body,
-                        $data
-                    );
+                    // $this->firebaseService->sendNotification(
+                    //     $user->fcm_token,
+                    //     $title,
+                    //     $body,
+                    //     $data
+                    // );
                 }
             }
 
@@ -262,12 +254,12 @@ class OrderController extends Controller
                     'status' => $order->status
                 ];
 
-                $this->firebaseService->sendNotification(
-                    $user->fcm_token,
-                    $title,
-                    $body,
-                    $data
-                );
+                // $this->firebaseService->sendNotification(
+                //     $user->fcm_token,
+                //     $title,
+                //     $body,
+                //     $data
+                // );
             }
         }
 

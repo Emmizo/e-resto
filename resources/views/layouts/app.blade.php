@@ -33,11 +33,22 @@
         <aside >
         </aside>
     </div>
-    @yield('script')
 
-    <!-- Pusher for real-time functionality -->
-    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
-    <script src="{{ asset('js/realtime.js') }}"></script>
+    <script src="https://js.pusher.com/7.2/pusher.min.js"></script>
+    <script src="https://unpkg.com/laravel-echo/dist/echo.umd.js"></script>
+    <script>
+    console.log('Pusher:', typeof Pusher, Pusher);
+    console.log('Echo:', typeof Echo, Echo);
+    window.Pusher = Pusher;
+    window.Echo = new Echo({
+        broadcaster: 'pusher',
+        key: '{{ env('PUSHER_APP_KEY') }}',
+        cluster: '{{ env('PUSHER_APP_CLUSTER') }}',
+        forceTLS: true
+    });
+    </script>
+
+    @yield('script')
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {

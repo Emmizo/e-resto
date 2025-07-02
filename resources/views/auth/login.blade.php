@@ -95,8 +95,8 @@
                                             <p class="font-dmsans fw-normal text-dark-v2 lh-base pb-2">Are you a new user? Click on the Register tab to create your account.</p>
                                         </div>
                                         <div id="message-container-login"></div>
-                                        <form action="" method="POST" id="loginForm" name="loginForm">
-
+                                        <form action="{{ route('login') }}" method="POST" id="loginForm" name="loginForm">
+                                            @csrf
                                             <div class="row">
                                                 <div class="col-md-12">
                                                     <div class="form-group m-0 mb-3">
@@ -912,6 +912,8 @@ $('#loginForm').validate({
                 var name = $(this).attr('name');
                 form_data.append(name, $("#" + getID).val());
                 });
+                // Append CSRF token explicitly
+                form_data.append('_token', $('meta[name="csrf-token"]').attr('content'));
 
 
 

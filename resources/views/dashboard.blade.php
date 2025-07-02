@@ -397,252 +397,262 @@
 @endsection
 
 @section('script')
-<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize Pusher
-        const pusher = new Pusher('{{ config('broadcasting.connections.pusher.key') }}', {
-            cluster: '{{ config('broadcasting.connections.pusher.options.cluster') }}'
-        });
+console.log('DASHBOARD Echo:', typeof Echo, Echo);
+function waitForEcho(callback) {
+    if (typeof window.Echo === 'function' || typeof window.Echo === 'object') {
+        callback();
+    } else {
+        setTimeout(() => waitForEcho(callback), 50);
+    }
+}
 
-        // Subscribe to the orders channel
-        const ordersChannel = pusher.subscribe('orders');
+waitForEcho(function() {
+    // All previous DOMContentLoaded code goes here
+    // Initialize Pusher
+    const pusher = new Pusher('{{ config('broadcasting.connections.pusher.key') }}', {
+        cluster: '{{ config('broadcasting.connections.pusher.options.cluster') }}'
+    });
 
-        // Listen for new orders
-        ordersChannel.bind('OrderCreated', function(data) {
-            const order = data.order;
-            const orderHtml = `
-                <div class="alert alert-${order.status === 'completed' ? 'success' : (order.status === 'pending' ? 'warning' : 'info')} alert-dismissible fade show col-6 p-2" role="alert">
-                    <strong>Order #${order.id}</strong>
-                    ${order.restaurant ? `- ${order.restaurant.name}` : ''}
-                    <br>
-                    <small>
-                        Status: ${order.status.charAt(0).toUpperCase() + order.status.slice(1)} |
-                        Type: ${order.order_type.charAt(0).toUpperCase() + order.order_type.slice(1)} |
-                        Amount: $${parseFloat(order.total_amount).toFixed(2)}
-                    </small>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            `;
+    // Subscribe to the orders channel
+    const ordersChannel = pusher.subscribe('orders');
 
-            // Add the new order to the top of the recent orders section
-            const recentOrdersContainer = document.querySelector('.card-body .row');
-            if (recentOrdersContainer) {
-                recentOrdersContainer.insertAdjacentHTML('afterbegin', orderHtml);
+    // Listen for new orders
+    ordersChannel.bind('OrderCreated', function(data) {
+        const order = data.order;
+        const orderHtml = `
+            <div class="alert alert-${order.status === 'completed' ? 'success' : (order.status === 'pending' ? 'warning' : 'info')} alert-dismissible fade show col-6 p-2" role="alert">
+                <strong>Order #${order.id}</strong>
+                ${order.restaurant ? `- ${order.restaurant.name}` : ''}
+                <br>
+                <small>
+                    Status: ${order.status.charAt(0).toUpperCase() + order.status.slice(1)} |
+                    Type: ${order.order_type.charAt(0).toUpperCase() + order.order_type.slice(1)} |
+                    Amount: $${parseFloat(order.total_amount).toFixed(2)}
+                </small>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
 
-                // Remove the last order if there are more than 10 orders
-                const alerts = recentOrdersContainer.querySelectorAll('.alert');
-                if (alerts.length > 10) {
-                    alerts[alerts.length - 1].remove();
-                }
-            }
+        // Add the new order to the top of the recent orders section
+        const recentOrdersContainer = document.querySelector('.card-body .row');
+        if (recentOrdersContainer) {
+            recentOrdersContainer.insertAdjacentHTML('afterbegin', orderHtml);
 
-            // Update order activity chart
-            updateOrderActivityChart();
-        });
-
-        // Subscribe to restaurant channel for service updates
-        const restaurantChannel = pusher.subscribe('restaurant.{{ $restaurant->id ?? "" }}');
-
-        // Listen for service status updates
-        restaurantChannel.bind('ServiceStatusUpdated', function(data) {
-            const serviceType = data.service_type;
-            const status = data.status;
-            const button = document.getElementById(`toggle-${serviceType}`);
-
-            if (button) {
-                button.classList.toggle('btn-success', status);
-                button.classList.toggle('btn-danger', !status);
-                button.setAttribute('data-state', status ? '1' : '0');
-                button.textContent = `${serviceType.charAt(0).toUpperCase() + serviceType.slice(1)}: ${status ? 'Open' : 'Close'}`;
-            }
-        });
-
-        // Listen for menu item updates
-        restaurantChannel.bind('MenuItemUpdated', function(data) {
-            const menuItem = data.menu_item;
-            const action = data.action;
-
-            // Update top menu items table
-            const menuItemsTable = document.querySelector('.table-responsive table tbody');
-            if (menuItemsTable) {
-                if (action === 'created' || action === 'updated') {
-                    updateMenuItemInTable(menuItem);
-                } else if (action === 'deleted') {
-                    removeMenuItemFromTable(menuItem.id);
-                }
-            }
-        });
-
-        // Listen for reservation updates
-        restaurantChannel.bind('ReservationCreated', function(data) {
-            const reservation = data.reservation;
-
-            // Update reservations count in the stats card
-            const reservationsCard = document.querySelector('.stat-card .h5.mb-0.font-weight-bold.text-gray-800');
-            if (reservationsCard) {
-                const currentCount = parseInt(reservationsCard.textContent);
-                if (!isNaN(currentCount)) {
-                    reservationsCard.textContent = currentCount + 1;
-                }
-            }
-
-            // Update reservation activity chart
-            updateOrderActivityChart();
-        });
-
-        // Function to update menu item in table
-        function updateMenuItemInTable(menuItem) {
-            const existingRow = document.querySelector(`tr[data-menu-item-id="${menuItem.id}"]`);
-            const rowHtml = `
-                <tr data-menu-item-id="${menuItem.id}">
-                    <td>${menuItem.name}</td>
-                    <td>${menuItem.category}</td>
-                    <td>${menuItem.total_orders || 0}</td>
-                    <td>$${parseFloat(menuItem.total_revenue || 0).toFixed(2)}</td>
-                </tr>
-            `;
-
-            if (existingRow) {
-                existingRow.outerHTML = rowHtml;
-            } else {
-                menuItemsTable.insertAdjacentHTML('beforeend', rowHtml);
+            // Remove the last order if there are more than 10 orders
+            const alerts = recentOrdersContainer.querySelectorAll('.alert');
+            if (alerts.length > 10) {
+                alerts[alerts.length - 1].remove();
             }
         }
 
-        // Function to remove menu item from table
-        function removeMenuItemFromTable(menuItemId) {
-            const row = document.querySelector(`tr[data-menu-item-id="${menuItemId}"]`);
-            if (row) {
-                row.remove();
+        // Update order activity chart
+        updateOrderActivityChart();
+    });
+
+    // Subscribe to restaurant channel for service updates
+    const restaurantChannel = pusher.subscribe('restaurant.{{ $restaurant->id ?? "" }}');
+
+    // Listen for service status updates
+    restaurantChannel.bind('ServiceStatusUpdated', function(data) {
+        const serviceType = data.service_type;
+        const status = data.status;
+        const button = document.getElementById(`toggle-${serviceType}`);
+
+        if (button) {
+            button.classList.toggle('btn-success', status);
+            button.classList.toggle('btn-danger', !status);
+            button.setAttribute('data-state', status ? '1' : '0');
+            button.textContent = `${serviceType.charAt(0).toUpperCase() + serviceType.slice(1)}: ${status ? 'Open' : 'Close'}`;
+        }
+    });
+
+    // Listen for menu item updates
+    restaurantChannel.bind('MenuItemUpdated', function(data) {
+        const menuItem = data.menu_item;
+        const action = data.action;
+
+        // Update top menu items table
+        const menuItemsTable = document.querySelector('.table-responsive table tbody');
+        if (menuItemsTable) {
+            if (action === 'created' || action === 'updated') {
+                updateMenuItemInTable(menuItem);
+            } else if (action === 'deleted') {
+                removeMenuItemFromTable(menuItem.id);
+            }
+        }
+    });
+
+    // Listen for reservation updates
+    restaurantChannel.bind('ReservationCreated', function(data) {
+        const reservation = data.reservation;
+
+        // Update reservations count in the stats card
+        const reservationsCard = document.querySelector('.stat-card .h5.mb-0.font-weight-bold.text-gray-800');
+        if (reservationsCard) {
+            const currentCount = parseInt(reservationsCard.textContent);
+            if (!isNaN(currentCount)) {
+                reservationsCard.textContent = currentCount + 1;
             }
         }
 
-        // Function to update order activity chart
-        function updateOrderActivityChart() {
-            // Fetch updated chart data
-            fetch('/dashboard/chart-data')
-                .then(response => response.json())
-                .then(data => {
-                    activityChart.data.labels = data.activity_labels;
-                    activityChart.data.datasets[0].data = data.order_activity_data;
-                    activityChart.data.datasets[1].data = data.reservation_activity_data;
-                    activityChart.update();
-                });
-        }
+        // Update reservation activity chart
+        updateOrderActivityChart();
+    });
 
-        // Order Activity Chart
-        const userActivityCtx = document.getElementById('userActivityChart');
-        if (userActivityCtx) {
-            const activityChart = new Chart(userActivityCtx, {
-                type: 'line',
-                data: {
-                    labels: @json($dashboardData['activity_labels']),
-                    datasets: [
-                        {
-                            label: 'Orders',
-                            data: @json($dashboardData['order_activity_data']),
-                            borderColor: 'rgb(75, 192, 192)',
-                            backgroundColor: 'rgba(75, 192, 192, 0.1)',
-                            tension: 0.1,
-                            fill: true
-                        },
-                        {
-                            label: 'Reservations',
-                            data: @json($dashboardData['reservation_activity_data']),
-                            borderColor: 'rgb(255, 99, 132)',
-                            backgroundColor: 'rgba(255, 99, 132, 0.1)',
-                            tension: 0.1,
-                            fill: true
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top'
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                stepSize: 1
-                            }
-                        }
-                    }
-                }
-            });
-        }
+    // Function to update menu item in table
+    function updateMenuItemInTable(menuItem) {
+        const existingRow = document.querySelector(`tr[data-menu-item-id="${menuItem.id}"]`);
+        const rowHtml = `
+            <tr data-menu-item-id="${menuItem.id}">
+                <td>${menuItem.name}</td>
+                <td>${menuItem.category}</td>
+                <td>${menuItem.total_orders || 0}</td>
+                <td>$${parseFloat(menuItem.total_revenue || 0).toFixed(2)}</td>
+            </tr>
+        `;
 
-        // Order Types Chart
-        const recommendationCtx = document.getElementById('recommendationPieChart');
-        if (recommendationCtx) {
-            const pieChart = new Chart(recommendationCtx, {
-                type: 'pie',
-                data: {
-                    labels: ['Dine-in', 'Takeaway', 'Delivery'],
-                    datasets: [{
-                        data: @json($dashboardData['recommendation_data']),
-                        backgroundColor: [
-                            'rgb(54, 162, 235)',
-                            'rgb(75, 192, 192)',
-                            'rgb(255, 205, 86)'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'bottom'
-                        }
-                    }
-                }
-            });
+        if (existingRow) {
+            existingRow.outerHTML = rowHtml;
+        } else {
+            menuItemsTable.insertAdjacentHTML('beforeend', rowHtml);
         }
+    }
 
-        function toggleService(type, btn) {
-            var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            fetch('/dashboard/toggle-service', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': token
-                },
-                body: JSON.stringify({ type: type })
-            })
+    // Function to remove menu item from table
+    function removeMenuItemFromTable(menuItemId) {
+        const row = document.querySelector(`tr[data-menu-item-id="${menuItemId}"]`);
+        if (row) {
+            row.remove();
+        }
+    }
+
+    // Function to update order activity chart
+    function updateOrderActivityChart() {
+        // Fetch updated chart data
+        fetch('/dashboard/chart-data')
             .then(response => response.json())
             .then(data => {
-                if(data.status === 'success') {
-                    // Update button state
-                    btn.classList.toggle('btn-success');
-                    btn.classList.toggle('btn-danger');
-                    btn.setAttribute('data-state', data.value ? '1' : '0');
-                    btn.textContent = (type.charAt(0).toUpperCase() + type.slice(1)) + ': ' + (data.value ? 'Open' : 'Close');
-                }
+                activityChart.data.labels = data.activity_labels;
+                activityChart.data.datasets[0].data = data.order_activity_data;
+                activityChart.data.datasets[1].data = data.reservation_activity_data;
+                activityChart.update();
             });
-        }
-        var resBtn = document.getElementById('toggle-reservations');
-        var delBtn = document.getElementById('toggle-delivery');
-        if(resBtn) {
-            resBtn.addEventListener('click', function() {
-                toggleService('reservations', this);
-            });
-        }
-        if(delBtn) {
-            delBtn.addEventListener('click', function() {
-                toggleService('delivery', this);
-            });
-        }
+    }
 
-        // Listen for promo banner updates
-        Echo.channel('restaurant.{{ session('userData')['users']->restaurant_id }}')
+    // Order Activity Chart
+    const userActivityCtx = document.getElementById('userActivityChart');
+    if (userActivityCtx) {
+        const activityChart = new Chart(userActivityCtx, {
+            type: 'line',
+            data: {
+                labels: @json($dashboardData['activity_labels']),
+                datasets: [
+                    {
+                        label: 'Orders',
+                        data: @json($dashboardData['order_activity_data']),
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                        tension: 0.1,
+                        fill: true
+                    },
+                    {
+                        label: 'Reservations',
+                        data: @json($dashboardData['reservation_activity_data']),
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                        tension: 0.1,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Order Types Chart
+    const recommendationCtx = document.getElementById('recommendationPieChart');
+    if (recommendationCtx) {
+        const pieChart = new Chart(recommendationCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Dine-in', 'Takeaway', 'Delivery'],
+                datasets: [{
+                    data: @json($dashboardData['recommendation_data']),
+                    backgroundColor: [
+                        'rgb(54, 162, 235)',
+                        'rgb(75, 192, 192)',
+                        'rgb(255, 205, 86)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+
+    function toggleService(type, btn) {
+        var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        fetch('/dashboard/toggle-service', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': token
+            },
+            body: JSON.stringify({ type: type })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.status === 'success') {
+                // Update button state
+                btn.classList.toggle('btn-success');
+                btn.classList.toggle('btn-danger');
+                btn.setAttribute('data-state', data.value ? '1' : '0');
+                btn.textContent = (type.charAt(0).toUpperCase() + type.slice(1)) + ': ' + (data.value ? 'Open' : 'Close');
+            }
+        });
+    }
+    var resBtn = document.getElementById('toggle-reservations');
+    var delBtn = document.getElementById('toggle-delivery');
+    if(resBtn) {
+        resBtn.addEventListener('click', function() {
+            toggleService('reservations', this);
+        });
+    }
+    if(delBtn) {
+        delBtn.addEventListener('click', function() {
+            toggleService('delivery', this);
+        });
+    }
+
+    // Listen for promo banner updates
+    if (window.Echo && typeof window.Echo.channel === 'function') {
+        window.Echo.channel('restaurant.{{ session('userData')['users']->restaurant_id }}')
             .listen('PromoBannerUpdated', (e) => {
                 const banner = e.promo_banner;
                 const action = e.action;
@@ -662,40 +672,43 @@
                     }
                 }
             });
+    } else {
+        console.error('Echo is not initialized or channel is not a function');
+    }
 
-        function createBannerRow(banner) {
-            const row = document.createElement('tr');
-            row.id = `banner-${banner.id}`;
-            row.innerHTML = `
-                <td>${banner.title}</td>
-                <td>${banner.description || ''}</td>
-                <td>
-                    ${banner.image_url ?
-                        `<img src="${banner.image_url}" alt="${banner.title}" style="max-width: 100px;">` :
-                        'No Image'}
-                </td>
-                <td>${banner.start_date ? new Date(banner.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}</td>
-                <td>${banner.end_date ? new Date(banner.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}</td>
-                <td>
-                    <span class="badge ${banner.is_active ? 'bg-success' : 'bg-danger'}">
-                        ${banner.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                </td>
-                <td>
-                    <a href="/promo-banners/${banner.id}/edit" class="btn btn-sm btn-primary">
-                        <i class="fas fa-edit"></i>
-                    </a>
-                    <form action="/promo-banners/${banner.id}" method="POST" class="d-inline">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </form>
-                </td>
-            `;
-            return row;
-        }
-    });
+    function createBannerRow(banner) {
+        const row = document.createElement('tr');
+        row.id = `banner-${banner.id}`;
+        row.innerHTML = `
+            <td>${banner.title}</td>
+            <td>${banner.description || ''}</td>
+            <td>
+                ${banner.image_url ?
+                    `<img src="${banner.image_url}" alt="${banner.title}" style="max-width: 100px;">` :
+                    'No Image'}
+            </td>
+            <td>${banner.start_date ? new Date(banner.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}</td>
+            <td>${banner.end_date ? new Date(banner.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}</td>
+            <td>
+                <span class="badge ${banner.is_active ? 'bg-success' : 'bg-danger'}">
+                    ${banner.is_active ? 'Active' : 'Inactive'}
+                </span>
+            </td>
+            <td>
+                <a href="/promo-banners/${banner.id}/edit" class="btn btn-sm btn-primary">
+                    <i class="fas fa-edit"></i>
+                </a>
+                <form action="/promo-banners/${banner.id}" method="POST" class="d-inline">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </form>
+            </td>
+        `;
+        return row;
+    }
+});
 </script>
 @endsection

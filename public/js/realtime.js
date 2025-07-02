@@ -1,48 +1,23 @@
-// Real-time functionality using Pusher
+// Real-time functionality using Laravel Echo
 class RealtimeManager {
     constructor() {
-        this.pusher = null;
         this.channels = {};
         this.apiBase = '/api/v1';
-        this.init();
-    }
-
-    init() {
-        // Initialize Pusher
-        this.pusher = new Pusher('533a42e55e800d1277d5', {
-            cluster: 'mt1',
-            encrypted: true
-        });
-
-        // Set up global error handling
-        this.pusher.connection.bind('error', (err) => {
-            console.error('Pusher connection error:', err);
-        });
-
-        this.pusher.connection.bind('connected', () => {
-            console.log('Connected to Pusher');
-        });
-
-        this.pusher.connection.bind('disconnected', () => {
-            console.log('Disconnected from Pusher');
-        });
     }
 
     // Subscribe to orders channel
     subscribeToOrders(callback) {
-        const channel = this.pusher.subscribe('orders');
+        const channel = window.Echo.channel('orders');
 
-        channel.bind('OrderCreated', (data) => {
+        channel.listen('OrderCreated', (data) => {
             console.log('New order received:', data);
             if (callback) callback(data);
-            // Refresh orders list from existing API
             this.refreshOrdersList();
         });
 
-        channel.bind('OrderStatusUpdated', (data) => {
+        channel.listen('OrderStatusUpdated', (data) => {
             console.log('Order status updated:', data);
             if (callback) callback(data);
-            // Refresh orders list from existing API
             this.refreshOrdersList();
         });
 
@@ -53,16 +28,15 @@ class RealtimeManager {
     // Subscribe to restaurant-specific channel
     subscribeToRestaurant(restaurantId, callback) {
         const channelName = `restaurant.${restaurantId}`;
-        const channel = this.pusher.subscribe(channelName);
+        const channel = window.Echo.channel(channelName);
 
-        channel.bind('ReservationCreated', (data) => {
+        channel.listen('ReservationCreated', (data) => {
             console.log('New reservation received:', data);
             if (callback) callback(data);
-            // Refresh reservations list from existing API
             this.refreshReservationsList();
         });
 
-        channel.bind('ServiceStatusUpdated', (data) => {
+        channel.listen('ServiceStatusUpdated', (data) => {
             console.log('Service status updated:', data);
             if (callback) callback(data);
         });
@@ -74,9 +48,9 @@ class RealtimeManager {
     // Subscribe to user-specific channel
     subscribeToUser(userId, callback) {
         const channelName = `App.Models.User.${userId}`;
-        const channel = this.pusher.subscribe(channelName);
+        const channel = window.Echo.private(channelName);
 
-        channel.bind('OrderStatusUpdated', (data) => {
+        channel.listen('OrderStatusUpdated', (data) => {
             console.log('Your order status updated:', data);
             if (callback) callback(data);
         });
@@ -88,9 +62,9 @@ class RealtimeManager {
     // Subscribe to service status channel
     subscribeToServiceStatus(restaurantId, callback) {
         const channelName = `service-status.${restaurantId}`;
-        const channel = this.pusher.subscribe(channelName);
+        const channel = window.Echo.channel(channelName);
 
-        channel.bind('ServiceStatusUpdated', (data) => {
+        channel.listen('ServiceStatusUpdated', (data) => {
             console.log('Service status updated:', data);
             if (callback) callback(data);
         });
@@ -294,7 +268,7 @@ class RealtimeManager {
     // Unsubscribe from a channel
     unsubscribe(channelName) {
         if (this.channels[channelName]) {
-            this.pusher.unsubscribe(channelName);
+            window.Echo.leave(channelName);
             delete this.channels[channelName];
         }
     }
@@ -302,7 +276,7 @@ class RealtimeManager {
     // Unsubscribe from all channels
     unsubscribeAll() {
         Object.keys(this.channels).forEach(channelName => {
-            this.pusher.unsubscribe(channelName);
+            window.Echo.leave(channelName);
         });
         this.channels = {};
     }
