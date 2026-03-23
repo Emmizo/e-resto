@@ -572,17 +572,19 @@ textarea:-webkit-autofill:focus, select:-webkit-autofill, select:-webkit-autofil
     background: var(--primary);
     z-index: 1000;
     transition: var(--primary-transition);
+    height: 100vh !important; /* override Bootstrap `h-100` */
 }
 .sidebar-menu-items {
-    max-height: calc(100% - 120px);
+    /* override Bootstrap `h-100` so the menu area becomes scrollable */
+    height: calc(100vh - 120px) !important;
+    max-height: none !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
 }
 .sidebar .nav .nav-item {
     position: relative;
     width: 100%;
     display: block;
-}
-.sidebar-menu-items {
-    overflow: hidden auto;
 }
 .sidebar-nav-menu-items .nav-link {
     display: flex;
