@@ -33,8 +33,8 @@ class DashboardController extends Controller
             $restaurantId = session('userData')['users']->restaurant_id ?? null;
         }
 
-        // Get date range from request or default to today
-        $dateRange = $request->get('range', 'today');
+        // Get date range from request or default to two years
+        $dateRange = $request->get('range', '2_years');
         $startDate = null;
         $endDate = Carbon::now();
 
@@ -47,6 +47,9 @@ class DashboardController extends Controller
                 break;
             case 'month':
                 $startDate = Carbon::now()->subMonth();
+                break;
+            case '2_years':
+                $startDate = Carbon::now()->subYears(2)->startOfMonth();
                 break;
         }
 
@@ -61,19 +64,41 @@ class DashboardController extends Controller
                 $hour = Carbon::now()->startOfDay()->addHours($i);
                 $activityLabels->push($hour->format('H:00'));
 
-                // Get orders for this hour
                 $orderQuery = Order::whereBetween('created_at', [$hour, $hour->copy()->addHour()]);
                 if ($restaurantId) {
                     $orderQuery->where('restaurant_id', $restaurantId);
                 }
                 $orderActivityData->push($orderQuery->count());
 
-                // Get reservations for this hour
                 $reservationQuery = \App\Models\Reservation::whereBetween('created_at', [$hour, $hour->copy()->addHour()]);
                 if ($restaurantId) {
                     $reservationQuery->where('restaurant_id', $restaurantId);
                 }
                 $reservationActivityData->push($reservationQuery->count());
+            }
+        } elseif ($dateRange === '2_years') {
+            // For two years, show monthly data
+            $currentMonth = $startDate->copy()->startOfMonth();
+            $lastMonth = $endDate->copy()->startOfMonth();
+
+            while ($currentMonth <= $lastMonth) {
+                $monthStart = $currentMonth->copy()->startOfMonth();
+                $monthEnd = $currentMonth->copy()->endOfMonth();
+                $activityLabels->push($currentMonth->format('M Y'));
+
+                $orderQuery = Order::whereBetween('created_at', [$monthStart, $monthEnd]);
+                if ($restaurantId) {
+                    $orderQuery->where('restaurant_id', $restaurantId);
+                }
+                $orderActivityData->push($orderQuery->count());
+
+                $reservationQuery = \App\Models\Reservation::whereBetween('created_at', [$monthStart, $monthEnd]);
+                if ($restaurantId) {
+                    $reservationQuery->where('restaurant_id', $restaurantId);
+                }
+                $reservationActivityData->push($reservationQuery->count());
+
+                $currentMonth->addMonth();
             }
         } else {
             // For week/month, show daily data
@@ -81,14 +106,12 @@ class DashboardController extends Controller
             while ($currentDate <= $endDate) {
                 $activityLabels->push($currentDate->format('M d'));
 
-                // Get orders for this day
                 $orderQuery = Order::whereDate('created_at', $currentDate);
                 if ($restaurantId) {
                     $orderQuery->where('restaurant_id', $restaurantId);
                 }
                 $orderActivityData->push($orderQuery->count());
 
-                // Get reservations for this day
                 $reservationQuery = \App\Models\Reservation::whereDate('created_at', $currentDate);
                 if ($restaurantId) {
                     $reservationQuery->where('restaurant_id', $restaurantId);
@@ -299,7 +322,7 @@ class DashboardController extends Controller
 
     public function getChartData()
     {
-        $range = request('range', 'today');
+        $range = request('range', '2_years');
         $data = $this->getDashboardData($range);
 
         return response()->json([

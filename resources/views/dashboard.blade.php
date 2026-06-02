@@ -29,6 +29,10 @@
                                class="btn btn-sm {{ $dashboardData['current_range'] === 'month' ? 'btn-primary' : 'btn-outline-secondary' }}">
                                 Month
                             </a>
+                            <a href="{{ route('dashboard', ['range' => '2_years']) }}"
+                               class="btn btn-sm {{ $dashboardData['current_range'] === '2_years' ? 'btn-primary' : 'btn-outline-secondary' }}">
+                                2 Years
+                            </a>
                         </div>
 
                     </div>
@@ -96,6 +100,25 @@
                                     <div class="col-auto">
                                         <i class="fas fa-calendar-check fa-2x text-gray-300"></i>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity Overview Chart -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card shadow mb-4">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-primary">
+                                    Activity Overview - {{ $dashboardData['current_range'] === '2_years' ? '2 Years' : ucfirst($dashboardData['current_range']) }}
+                                </h6>
+                                <span class="small text-muted">Orders and reservations trend</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-area" style="position: relative; height: 320px;">
+                                    <canvas id="activityOverviewChart"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -401,6 +424,7 @@
 @section('script')
 <script>
 console.log('DASHBOARD Echo:', typeof Echo, Echo);
+const dashboardRange = @json($dashboardData['current_range']);
 function waitForEcho(callback) {
     if (typeof window.Echo === 'function' || typeof window.Echo === 'object') {
         callback();
@@ -532,13 +556,20 @@ waitForEcho(function() {
     // Function to update order activity chart
     function updateOrderActivityChart() {
         // Fetch updated chart data
-        fetch('/dashboard/chart-data')
+        fetch(`/dashboard/chart-data?range=${encodeURIComponent(dashboardRange)}`)
             .then(response => response.json())
             .then(data => {
                 activityChart.data.labels = data.activity_labels;
                 activityChart.data.datasets[0].data = data.order_activity_data;
                 activityChart.data.datasets[1].data = data.reservation_activity_data;
                 activityChart.update();
+
+                if (window.activityOverviewChart) {
+                    window.activityOverviewChart.data.labels = data.activity_labels;
+                    window.activityOverviewChart.data.datasets[0].data = data.order_activity_data;
+                    window.activityOverviewChart.data.datasets[1].data = data.reservation_activity_data;
+                    window.activityOverviewChart.update();
+                }
             });
     }
 
@@ -582,6 +613,67 @@ waitForEcho(function() {
                         beginAtZero: true,
                         ticks: {
                             stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Activity Overview Chart
+    const activityOverviewCtx = document.getElementById('activityOverviewChart');
+    if (activityOverviewCtx) {
+        window.activityOverviewChart = new Chart(activityOverviewCtx, {
+            type: 'bar',
+            data: {
+                labels: @json($dashboardData['activity_labels']),
+                datasets: [
+                    {
+                        label: 'Orders',
+                        data: @json($dashboardData['order_activity_data']),
+                        backgroundColor: 'rgba(37, 99, 235, 0.85)',
+                        borderRadius: 8,
+                        barThickness: 14
+                    },
+                    {
+                        label: 'Reservations',
+                        data: @json($dashboardData['reservation_activity_data']),
+                        backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                        borderRadius: 8,
+                        barThickness: 14
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#6b7280'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            color: '#6b7280'
+                        },
+                        grid: {
+                            color: 'rgba(148, 163, 184, 0.18)'
                         }
                     }
                 }
