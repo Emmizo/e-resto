@@ -1,5 +1,23 @@
 @extends('layouts.app')
 
+@section('style')
+<style>
+#printArea { display: none; }
+@media print {
+    body * { visibility: hidden; }
+    #printArea, #printArea * { visibility: visible; }
+    #printArea { display: block; position: fixed; top: 0; left: 0; width: 100%; padding: 24px; font-family: Arial, sans-serif; color: #1e293b; background: #fff; }
+    #printArea h2 { margin: 0 0 4px; font-size: 18px; }
+    #printArea .print-meta { font-size: 12px; color: #64748b; margin-bottom: 16px; }
+    #printArea table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    #printArea th { background: #0f3039 !important; color: #fff !important; padding: 8px 10px; text-align: left; font-weight: 600; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    #printArea td { padding: 7px 10px; border-bottom: 1px solid #e2e8f0; }
+    #printArea tr:nth-child(even) td { background: #f8fafc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    #printArea .status-badge { padding: 2px 10px; border-radius: 12px; font-size: 11px; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+@endsection
+
 @section('content')
 <!-- Main Content -->
 <main class="content-wrapper">
@@ -29,7 +47,10 @@
                             <input type="search" class="custom-search" placeholder="Search Reservations" aria-controls="manageReservationsTable">
                         </div>
                     </div>
-                    <div class="btn-options mt-3 mt-xl-0">
+                    <div class="btn-options mt-3 mt-xl-0 d-flex gap-2">
+                        <button id="printReservationsBtn" class="btn btn-white btn-xsmall font-dmsans fw-medium position-relative rounded-3 border border-grey-v1" title="Print Reservations">
+                            <i class="fas fa-print me-1"></i>Print
+                        </button>
                         <a href="javascript:;" class="btn btn-white btn-xsmall font-dmsans fw-medium position-relative rounded-3 border border-grey-v1 filter-btn" title="Filter">Filter</a>
                     </div>
                 </div>
@@ -37,9 +58,7 @@
                     <table id="manageReservationsTable" class="display custom-datatable" style="width:100%">
                         <thead>
                             <tr>
-                                <th>
-                                    <span>Reservation ID</span>
-                                </th>
+                                <th><span>Reservation ID</span></th>
                                 <th>
                                     <span>Customer</span>
                                 </th>
@@ -58,6 +77,9 @@
                                 <th>
                                     <span>Created At</span>
                                 </th>
+                                @if($isAdmin)
+                                <th><span>Restaurant</span></th>
+                                @endif
                                 <th class="action-cell text-center">
                                     <span>Action</span>
                                 </th>
@@ -66,14 +88,12 @@
                         <tbody>
                             @forelse ($reservations as $key => $reservation)
                             <tr>
-                                <td>
-                                    <span>{{ $key+1 }}</span>
-                                </td>
+                                <td><span>{{ $key+1 }}</span></td>
                                 <td>
                                     <span>{{ $reservation->first_name }} {{ $reservation->last_name }}</span>
                                 </td>
                                 <td>
-                                    <span>{{ $reservation->reservation_time ? $reservation->reservation_time->timezone(auth()->user()->timezone ?? session('user_timezone') ?? config('app.timezone'))->format('M d, Y H:i') : 'N/A' }}</span>
+                                    <span>{{ $reservation->reservation_time ? $reservation->reservation_time->timezone(auth()->user()->timezone ?? session('user_timezone') ?? config('app.timezone'))->format('d/m/Y H:i:s') : 'N/A' }}</span>
                                 </td>
                                 <td>
                                     <span>{{ $reservation->number_of_people }}</span>
@@ -87,34 +107,60 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <span>{{ $reservation->created_at->timezone(auth()->user()->timezone ?? session('user_timezone') ?? config('app.timezone'))->format('M d, Y H:i') }}</span>
+                                    <span>{{ $reservation->created_at->timezone(auth()->user()->timezone ?? session('user_timezone') ?? config('app.timezone'))->format('d/m/Y H:i:s') }}</span>
                                 </td>
+                                @if($isAdmin)
+                                <td><span class="badge rounded-pill" style="background:#e0f2fe;color:#0369a1;font-weight:500;">{{ $reservation->restaurant_name ?? '—' }}</span></td>
+                                @endif
                                 <td class="action-cell text-center">
-                                    <div class="action-col position-relative d-inline-block">
-                                        <a href="javascript:;" class="p-1" data-bs-toggle="popover" data-bs-placement="top">
-                                            <svg class="action-icon cursor-pointer" width="20" height="4" viewBox="0 0 20 4" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    @if($isAdmin)
+                                    <a href="{{ route('reservations.show', $reservation->id) }}" class="btn btn-sm btn-info" style="width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center;" title="View">
+                                        <i class="fas fa-eye" style="font-size:0.75rem;"></i>
+                                    </a>
+                                    @else
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-link p-1" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <svg width="20" height="4" viewBox="0 0 20 4" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                 <path d="M10 0C11.1046 0 12 0.89543 12 2C12 3.10457 11.1046 4 10 4C8.89543 4 8 3.10457 8 2C8 0.89543 8.89543 0 10 0Z" fill="#2D264B"/>
                                                 <path d="M2 -4.76837e-07C3.10457 -4.76837e-07 4 0.89543 4 2C4 3.10457 3.10457 4 2 4C0.89543 4 0 3.10457 0 2C0 0.89543 0.89543 -4.76837e-07 2 -4.76837e-07Z" fill="#2D264B"/>
                                                 <path d="M18 2.38419e-07C19.1046 2.38419e-07 20 0.895431 20 2C20 3.10457 19.1046 4 18 4C16.8954 4 16 3.10457 16 2C16 0.895431 16.8954 2.38419e-07 18 2.38419e-07Z" fill="#2D264B"/>
                                             </svg>
-                                        </a>
-                                        <!-- Table Action Cell -->
-                                        <div class="popover-content" data-name="table-action-btn">
-                                            <div class="action-menu">
-                                                <ul class="action-menu-list position-relative bg-white rounded-1 p-2">
-                                                    <li class="action-menu-item text-start">
-                                                        <a href="javascript:;" class="action-menu-link font-dmsans fw-normal text-primary-v1 xsmall d-block p-1 view-action" data-bs-toggle="modal" data-bs-target="#viewReservation" data-reservation-id="{{ $reservation->id }}" title="View">View</a>
-                                                    </li>
-                                                    <li class="action-menu-item text-start">
-                                                        <a href="javascript:;" class="action-menu-link font-dmsans fw-normal text-primary-v1 xsmall d-block p-1 update-status-action" data-bs-toggle="modal" data-bs-target="#updateStatus" data-reservation-id="{{ $reservation->id }}" title="Update Status">Update Status</a>
-                                                    </li>
-                                                    <li class="action-menu-item text-start">
-                                                        <a href="javascript:;" class="action-menu-link font-dmsans fw-normal text-primary-v1 xsmall d-block p-1 delete-action" data-bs-toggle="modal" data-bs-target="#deleteReservation" data-reservation-id="{{ $reservation->id }}" title="Delete">Delete</a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </div>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                            <li>
+                                                <a href="{{ route('reservations.show', $reservation->id) }}" class="dropdown-item xsmall font-dmsans">
+                                                    <i class="fas fa-eye me-2 text-primary"></i>View
+                                                </a>
+                                            </li>
+                                            @if($reservation->status === 'pending')
+                                            <li>
+                                                <button type="button" class="dropdown-item xsmall font-dmsans text-success approve-action"
+                                                    data-reservation-id="{{ $reservation->id }}">
+                                                    <i class="fas fa-check-circle me-2 text-success"></i>Approve
+                                                </button>
+                                            </li>
+                                            @endif
+                                            <li>
+                                                <button type="button" class="dropdown-item xsmall font-dmsans update-status-action"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#updateStatus"
+                                                    data-reservation-id="{{ $reservation->id }}"
+                                                    data-reservation-status="{{ $reservation->status }}">
+                                                    <i class="fas fa-edit me-2 text-warning"></i>Update Status
+                                                </button>
+                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <button type="button" class="dropdown-item xsmall font-dmsans text-danger delete-action"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#deleteReservation"
+                                                    data-reservation-id="{{ $reservation->id }}">
+                                                    <i class="fas fa-trash me-2"></i>Delete
+                                                </button>
+                                            </li>
+                                        </ul>
                                     </div>
+                                    @endif
                                 </td>
                             </tr>
                             @empty
@@ -127,6 +173,8 @@
         </div>
     </div>
 </main>
+
+<div id="printArea"></div>
 
 <!-- Update Status Modal -->
 <div class="modal fade" id="updateStatus" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="updateStatusLabel" aria-hidden="true">
@@ -192,81 +240,149 @@ $(document).ready(function() {
     }
     $('#manageReservationsTable').DataTable({
         responsive: true,
-        order: [[5, 'desc']], // Sort by created_at descending
-        language: {
-            emptyTable: "No reservations found"
-        },
-        dom: 'lrtip', // disables the default search box
+        order: [[2, 'desc']],
+        language: { emptyTable: "No reservations found" },
+        dom: 'lrtip',
         pageLength: 10,
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]]
     });
 
-    // Handle update status button click
-    $('.update-status-action').click(function() {
+    // Pre-fill modal with the current status of the clicked row
+    $(document).on('click', '.update-status-action', function() {
         const reservationId = $(this).data('reservation-id');
-        const reservation = {!! json_encode($reservations) !!}.find(r => r.id === reservationId);
-
-        if (reservation) {
-            $('#reservation_id').val(reservation.id);
-            $('#status').val(reservation.status);
-        }
+        const currentStatus  = $(this).data('reservation-status');
+        $('#reservation_id').val(reservationId);
+        $('#status').val(currentStatus);
     });
 
     // Handle status update
     $(document).on('click', '#updateStatusBtn', function() {
         const reservationId = $('#reservation_id').val();
         const status = $('#status').val();
-        console.log('Update Status button clicked', reservationId, status); // Debug log
+        const btn = $(this);
+        btn.prop('disabled', true).text('Updating...');
 
         $.ajax({
             url: `/reservations/${reservationId}`,
-            type: 'PUT',
+            type: 'POST',
             data: {
                 _token: '{{ csrf_token() }}',
+                _method: 'PUT',
                 status: status
             },
-            success: function(response) {
+            success: function() {
                 toastr.success('Reservation status updated successfully');
                 $('#updateStatus').modal('hide');
                 location.reload();
             },
             error: function(xhr) {
-                toastr.error('Error updating reservation status');
+                toastr.error(xhr.responseJSON?.message || 'Error updating reservation status');
+                btn.prop('disabled', false).text('Update Status');
             }
         });
     });
 
-    // Handle delete button click
-    $('.delete-action').click(function() {
+    // One-click Approve (sets status to confirmed immediately)
+    $(document).on('click', '.approve-action', function() {
+        const reservationId = $(this).data('reservation-id');
+        const btn = $(this);
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Approving...');
+
+        $.ajax({
+            url: `/reservations/${reservationId}`,
+            type: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                _method: 'PUT',
+                status: 'confirmed'
+            },
+            success: function() {
+                toastr.success('Reservation approved successfully');
+                location.reload();
+            },
+            error: function(xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Error approving reservation');
+                btn.prop('disabled', false).html('<i class="fas fa-check-circle me-2 text-success"></i>Approve');
+            }
+        });
+    });
+
+    // Print reservations
+    $('#printReservationsBtn').on('click', function() {
+        var dt = $('#manageReservationsTable').DataTable();
+        var statusColors = { pending: '#f59e0b', confirmed: '#22c55e', cancelled: '#ef4444', completed: '#0ea5e9' };
+        var rowsHtml = '';
+        var count = 0;
+        dt.rows({ search: 'applied' }).every(function() {
+            var cells = $(this.node()).find('td');
+            if (cells.length < 7) return;
+            var statusText = cells.eq(5).find('.badge').text().trim() || cells.eq(5).text().trim();
+            var color = statusColors[statusText.toLowerCase()] || '#6b7280';
+            rowsHtml += '<tr><td>' + cells.eq(0).text().trim() + '</td><td>' + cells.eq(1).text().trim() + '</td><td>' + cells.eq(2).text().trim() + '</td><td>' + cells.eq(3).text().trim() + '</td><td>' + cells.eq(4).text().trim() + '</td><td><span class="status-badge" style="background:' + color + ';">' + statusText + '</span></td><td>' + cells.eq(6).text().trim() + '</td></tr>';
+            count++;
+        });
+        var now = new Date().toLocaleString();
+        @php
+            $u = session('userData')['users'] ?? null;
+            $rName    = $u->restaurant_name    ?? '—';
+            $rAddress = $u->restaurant_address ?? '';
+            $rPhone   = $u->restaurant_phone   ?? '';
+            $rEmail   = $u->restaurant_email   ?? '';
+            $rLogo    = $u->restaurant_logo    ? asset($u->restaurant_logo) : '';
+        @endphp
+        var logoHtml = '{{ $rLogo }}' ? '<img src="{{ $rLogo }}" style="height:60px;object-fit:contain;display:block;margin-bottom:4px;">' : '';
+        var headerHtml =
+            '<div style="display:flex;align-items:center;gap:18px;border-bottom:2px solid #0f3039;padding-bottom:12px;margin-bottom:16px;">' +
+                '<div style="flex-shrink:0;">' + logoHtml + '</div>' +
+                '<div>' +
+                    '<div style="font-size:20px;font-weight:700;color:#0f3039;">{{ $rName }}</div>' +
+                    '{{ $rAddress ? "<div style=\"font-size:12px;color:#64748b;\">$rAddress</div>" : "" }}' +
+                    '{{ $rPhone   ? "<div style=\"font-size:12px;color:#64748b;\">Phone: $rPhone</div>" : "" }}' +
+                    '{{ $rEmail   ? "<div style=\"font-size:12px;color:#64748b;\">Email: $rEmail</div>" : "" }}' +
+                '</div>' +
+                '<div style="margin-left:auto;text-align:right;">' +
+                    '<div style="font-size:16px;font-weight:600;color:#0f3039;">Reservations List</div>' +
+                    '<div style="font-size:11px;color:#64748b;">Printed: ' + now + '</div>' +
+                    '<div style="font-size:11px;color:#64748b;">Total: ' + count + ' reservation(s)</div>' +
+                '</div>' +
+            '</div>';
+        $('#printArea').html(
+            headerHtml +
+            '<table><thead><tr><th>#</th><th>Customer</th><th>Date &amp; Time</th><th>Party Size</th><th>Phone</th><th>Status</th><th>Created At</th></tr></thead><tbody>' + rowsHtml + '</tbody></table>'
+        );
+        window.print();
+    });
+
+    // Store reservation ID when delete modal triggered
+    $(document).on('click', '.delete-action', function() {
         const reservationId = $(this).data('reservation-id');
         $('#deleteReservation').data('reservation-id', reservationId);
     });
 
     // Handle confirm delete
-    $('#confirmDelete').click(function() {
+    $(document).on('click', '#confirmDelete', function() {
         const reservationId = $('#deleteReservation').data('reservation-id');
+        if (!reservationId) return;
+        const btn = $(this);
+        btn.prop('disabled', true).text('Deleting...');
 
         $.ajax({
             url: `/reservations/${reservationId}`,
-            type: 'DELETE',
+            type: 'POST',
             data: {
-                _token: '{{ csrf_token() }}'
+                _token: '{{ csrf_token() }}',
+                _method: 'DELETE'
             },
-            success: function(response) {
+            success: function() {
                 toastr.success('Reservation deleted successfully');
                 $('#deleteReservation').modal('hide');
                 location.reload();
             },
             error: function(xhr) {
-                toastr.error('Error deleting reservation');
+                toastr.error(xhr.responseJSON?.message || 'Error deleting reservation');
+                btn.prop('disabled', false).text('Yes');
             }
         });
-    });
-
-    // Handle view button click
-    $('.view-action').click(function() {
-        const reservationId = $(this).data('reservation-id');
-        window.location.href = `/reservations/${reservationId}`;
     });
 });
 </script>

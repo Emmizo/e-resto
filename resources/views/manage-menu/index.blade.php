@@ -1,4 +1,71 @@
 @extends('layouts.app')
+
+@section('style')
+<style>
+#manageUsersTable_wrapper,
+#manageUsersTable_wrapper .dataTables_scroll,
+#manageUsersTable_wrapper .dataTables_scrollBody {
+    overflow: visible !important;
+}
+/* Dietary pill checkboxes */
+.dietary-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1.5px solid #cbd5e1;
+    background: #f8fafc;
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #475569;
+    transition: all 0.15s ease;
+    user-select: none;
+    margin: 0;
+}
+.dietary-pill:hover {
+    border-color: #7c3aed;
+    background: #f5f3ff;
+    color: #7c3aed;
+}
+.dietary-pill input.dietary-cb {
+    display: none;
+}
+.dietary-pill:has(input:checked),
+.dietary-pill.dietary-pill-checked {
+    border-color: #7c3aed;
+    background: #ede9fe;
+    color: #7c3aed;
+    font-weight: 600;
+}
+.dietary-pill:has(input:checked)::before,
+.dietary-pill.dietary-pill-checked::before {
+    content: '✓ ';
+    font-weight: 700;
+}
+
+/* Expanded child row */
+#manageUsersTable tbody tr.menu-expandable-row:hover td {
+    background-color: #f0fdf4 !important;
+}
+#manageUsersTable tbody tr.row-expanded > td {
+    border-bottom: none !important;
+}
+#manageUsersTable tbody tr.row-expanded > td:first-child {
+    border-left: 3px solid #16a34a !important;
+}
+tr.child td {
+    background: #f8fafc !important;
+    border-top: none !important;
+    padding: 0 !important;
+}
+.row-toggle-icon {
+    transition: transform 0.2s ease;
+}
+</style>
+@endsection
+
 @section('content')
 <!-- Main Content -->
 <main class="content-wrapper">
@@ -8,10 +75,10 @@
         <div class="breadcrumb-section mb-2 mb-xl-4">
             <ul class="breadcrumb-lists d-flex align-items-center flex-wrap">
                 <li class="breadcrumb-item position-relative">
-                    <a href="javascript:;" class="breadcrumb-link font-dmsans fw-medium xsmall text-primary-v1" title="Home">Home</a>
+                    <a href="{{ route('dashboard') }}" class="breadcrumb-link font-dmsans fw-medium xsmall text-primary-v1" title="Home">Home</a>
                 </li>
                 <li class="breadcrumb-item position-relative">
-                    <a href="javascript:;" class="breadcrumb-link font-dmsans fw-medium xsmall text-primary-v1" title="Manage Users">Manage Users</a>
+                    <a href="{{ route('manage-menu') }}" class="breadcrumb-link font-dmsans fw-medium xsmall text-primary-v1" title="Manage Menu">Manage Menu</a>
                 </li>
             </ul>
         </div>
@@ -30,7 +97,9 @@
                     </div>
                     <div class="btn-options mt-3 mt-xl-0">
                         <a href="javascript:;" class="btn btn-primary btn-xsmall font-dmsans fw-medium position-relative rounded-3 me-2" data-bs-toggle="modal" data-bs-target="#viewAllMenusModal" title="View All Menus">View All Menus</a>
+                        @if(auth()->user()->role !== 'admin')
                         <a href="javascript:;" class="btn btn-primary btn-xsmall font-dmsans fw-medium position-relative rounded-3" data-bs-toggle="modal" data-bs-target="#addUser" title="Add Menu">Add Menu</a>
+                        @endif
                     </div>
                 </div>
                 <div class="filter-col-options">
@@ -42,6 +111,9 @@
                     <table id="manageUsersTable" class="display custom-datatable" style="width:100%">
                         <thead>
                             <tr>
+                                @if(auth()->user()->role === 'admin')
+                                <th><span>Restaurant</span></th>
+                                @endif
                                 <th>
                                     <span>Name</span>
                                 </th>
@@ -51,23 +123,33 @@
                                 <th>
                                    <span>Status</span>
                                 </th>
-                                <th class="action-cell text-center">
-                                    <span>Action</span>
+                                @if(auth()->user()->role !== 'admin')
+                                <th class="action-cell text-center" style="width:120px;">
+                                    <span>Actions</span>
                                 </th>
+                                @endif
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($menus as $menu)
-
-                            <tr>
+                            <tr class="menu-expandable-row" data-menu-id="{{ $menu->id }}" style="cursor:pointer;">
+                                @if(auth()->user()->role === 'admin')
+                                <td><span class="badge bg-light text-dark border">{{ $menu->restaurant_name }}</span></td>
+                                @endif
                                 <td>
-                                    <span>{{$menu->menu_name}}</span>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="d-flex align-items-center justify-content-center rounded-2 flex-shrink-0"
+                                             style="width:30px;height:30px;background:#f0fdf4;">
+                                            <i class="fas fa-utensils" style="color:#16a34a;font-size:0.7rem;"></i>
+                                        </div>
+                                        <span class="fw-medium">{{$menu->menu_name}}</span>
+                                        <i class="fas fa-chevron-right row-toggle-icon ms-1" style="font-size:0.65rem;color:#94a3b8;transition:transform 0.2s;"></i>
+                                    </div>
                                 </td>
                                 <td>
-                                    <span>{{ $menu->menu_description }}</span>
+                                    <span class="text-muted small">{{ Str::limit($menu->menu_description, 60) }}</span>
                                 </td>
                                 <td>
-
                                     <div class="toggle-switch d-flex align-items-center">
                                         <div class="toggle-button toggle-front d-flex align-items-center position-relative">
                                             <label for="status{{ $menu->id }}" class="form-check-label font-dmsans text-primary-v1 visually-hidden">Status</label>
@@ -80,17 +162,33 @@
                                         </div>
                                     </div>
                                 </td>
+                                @if(auth()->user()->role !== 'admin')
                                 <td class="action-cell text-center">
-                                    <div class="action-col position-relative d-inline-block">
-                                        <a href="javascript:;" class="p-1 action-btn" data-bs-toggle="popover" data-bs-placement="top" data-id="{{ $menu->id }}">
-                                           <svg class="action-icon cursor-pointer" width="20" height="4" viewBox="0 0 20 4" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M10 0C11.1046 0 12 0.89543 12 2C12 3.10457 11.1046 4 10 4C8.89543 4 8 3.10457 8 2C8 0.89543 8.89543 0 10 0Z" fill="#2D264B"/>
-                                                <path d="M2 -4.76837e-07C3.10457 -4.76837e-07 4 0.89543 4 2C4 3.10457 3.10457 4 2 4C0.89543 4 0 3.10457 0 2C0 0.89543 0.89543 -4.76837e-07 2 -4.76837e-07Z" fill="#2D264B"/>
-                                                <path d="M18 2.38419e-07C19.1046 2.38419e-07 20 0.895431 20 2C20 3.10457 19.1046 4 18 4C16.8954 4 16 3.10457 16 2C16 0.895431 16.8954 2.38419e-07 18 2.38419e-07Z" fill="#2D264B"/>
-                                            </svg>
-                                        </a>
+                                    <div class="d-flex align-items-center justify-content-center gap-1">
+                                        <button type="button"
+                                            class="btn btn-sm view-menu d-flex align-items-center justify-content-center"
+                                            data-menu-id="{{ $menu->id }}"
+                                            title="View Items"
+                                            style="width:30px;height:30px;border-radius:8px;background:#e0f2fe;border:none;padding:0;">
+                                            <i class="fas fa-eye" style="color:#0284c7;font-size:0.75rem;"></i>
+                                        </button>
+                                        <button type="button"
+                                            class="btn btn-sm edit-menu d-flex align-items-center justify-content-center"
+                                            data-menu-id="{{ $menu->id }}"
+                                            title="Edit"
+                                            style="width:30px;height:30px;border-radius:8px;background:#fef9c3;border:none;padding:0;">
+                                            <i class="fas fa-pencil-alt" style="color:#ca8a04;font-size:0.75rem;"></i>
+                                        </button>
+                                        <button type="button"
+                                            class="btn btn-sm delete-menu d-flex align-items-center justify-content-center"
+                                            data-menu-id="{{ $menu->id }}"
+                                            title="Delete"
+                                            style="width:30px;height:30px;border-radius:8px;background:#fee2e2;border:none;padding:0;">
+                                            <i class="fas fa-trash-alt" style="color:#dc2626;font-size:0.75rem;"></i>
+                                        </button>
                                     </div>
                                 </td>
+                                @endif
                             </tr>
                             @endforeach
                         </tbody>
@@ -102,22 +200,6 @@
     </div>
 </main>
 
-<!-- Table Action Cell -->
-<div class="popover-content d-none" id="table-action-popover">
-    <div class="action-menu">
-        <ul class="action-menu-list position-relative bg-white rounded-1 p-2">
-            <li class="action-menu-item text-start">
-                <a href="javascript:;" class="action-menu-link font-dmsans fw-normal text-primary-v1 xsmall d-block p-1 edit-menu" data-bs-toggle="modal" data-bs-target="#editMenuModal" data-menu-id="">Edit</a>
-            </li>
-            <li class="action-menu-item text-start">
-                <a href="javascript:;" class="action-menu-link font-dmsans fw-normal text-primary-v1 xsmall d-block p-1 delete-menu" data-bs-toggle="modal" data-bs-target="#deleteMenuModal" data-menu-id="">Delete</a>
-            </li>
-            <li class="action-menu-item text-start">
-                <a href="javascript:;" class="action-menu-link font-dmsans fw-normal text-primary-v1 xsmall d-block p-1 view-menu" data-bs-toggle="modal" data-bs-target="#viewMenuModal" data-menu-id="">View</a>
-            </li>
-        </ul>
-    </div>
-</div>
 
 <!-- Add menu Modal -->
 <div class="modal fade" id="addUser" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="addUserLabel" aria-hidden="true">
@@ -168,7 +250,7 @@
                                 </div>
                                 <div class="col-md-5">
                                     <div class="input-group">
-                                        <input type="file" class="form-control" name="menu_items[0][image]" accept="image/*">
+                                        <input type="file" class="form-control" name="menu_items[0][image]" accept="image/jpeg,image/png,image/jpg,image/gif,image/webp">
                                     </div>
                                 </div>
                                 <div class="col-md-4 mt-2">
@@ -178,21 +260,27 @@
                                         <option value="Food">Food</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3 mt-2 food-dietary-options" style="display:none;">
-                                    @foreach(config('dietary.food') as $option)
-                                        <label class="me-2">
-                                            <input type="checkbox" name="menu_items[0][suitable_for][]" value="{{ $option }}">
-                                            {{ ucfirst($option) }}
+                                <div class="col-12 mt-2 food-dietary-options" style="display:none;">
+                                    <label class="form-label small fw-semibold mb-2">Dietary Options</label>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @foreach(config('dietary.food') as $option)
+                                        <label class="dietary-pill">
+                                            <input type="checkbox" name="menu_items[0][suitable_for][]" value="{{ $option }}" class="dietary-cb">
+                                            <span>{{ ucfirst($option) }}</span>
                                         </label>
-                                    @endforeach
+                                        @endforeach
+                                    </div>
                                 </div>
-                                <div class="col-md-3 mt-2 beverage-dietary-options" style="display:none;">
-                                    @foreach(config('dietary.beverage') as $option)
-                                        <label class="me-2">
-                                            <input type="checkbox" name="menu_items[0][suitable_for][]" value="{{ $option }}">
-                                            {{ ucfirst($option) }}
+                                <div class="col-12 mt-2 beverage-dietary-options" style="display:none;">
+                                    <label class="form-label small fw-semibold mb-2">Dietary Options</label>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @foreach(config('dietary.beverage') as $option)
+                                        <label class="dietary-pill">
+                                            <input type="checkbox" name="menu_items[0][suitable_for][]" value="{{ $option }}" class="dietary-cb">
+                                            <span>{{ ucfirst($option) }}</span>
                                         </label>
-                                    @endforeach
+                                        @endforeach
+                                    </div>
                                 </div>
                                 <div class="col-md-3 mt-2">
                                     <select class="form-control" name="menu_items[0][is_available]">
@@ -309,18 +397,36 @@
 
 <!-- View Menu Modal -->
 <div class="modal fade" id="viewMenuModal" tabindex="-1" aria-labelledby="viewMenuModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header border-0">
-                <h1 class="modal-title fs-5 font-dmsans fw-bold text-primary-v1" id="viewMenuModalLabel">Menu Items</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+
+            {{-- Header --}}
+            <div class="modal-header border-0 px-4 pt-4 pb-3" style="background:linear-gradient(135deg,#0f3039 0%,#184C55 100%);">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="d-flex align-items-center justify-content-center rounded-3"
+                         style="width:42px;height:42px;background:rgba(255,255,255,0.15);">
+                        <i class="fas fa-book-open text-white" style="font-size:1rem;"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold text-white mb-0" id="viewMenuModalLabel">Menu Items</h5>
+                        <p class="text-white-50 mb-0" style="font-size:0.75rem;" id="viewMenuModalSubtitle">Loading…</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+
+            {{-- Body --}}
+            <div class="modal-body p-4" style="background:#f8fafc;max-height:70vh;overflow-y:auto;">
                 <div id="viewMenuItemsContainer" class="row g-3"></div>
             </div>
-            <div class="modal-footer border-0 justify-content-end">
-                <button type="button" class="btn btn-outline btn-small fw-semibold text-uppercase rounded-3 border border-grey-v1" data-bs-dismiss="modal">Close</button>
+
+            {{-- Footer --}}
+            <div class="modal-footer border-0 bg-white px-4 py-3">
+                <button type="button" class="btn btn-light rounded-3 border px-4 fw-semibold" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> Close
+                </button>
             </div>
+
         </div>
     </div>
 </div>
@@ -338,18 +444,13 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" style="max-height:75vh;overflow-y:auto;">
                 <div id="printableMenus">
-                    @foreach($menus as $menu)
-                    <div class="menu-section mb-4">
-                        <h3 class="mb-3">{{ $menu->menu_name }}</h3>
-                        <p class="text-muted mb-3">{{ $menu->menu_description }}</p>
-                        <div class="menu-items-grid row g-3" id="menuItems{{ $menu->id }}">
-                            <!-- Menu items will be loaded here -->
-                        </div>
-                        <hr class="my-4">
+                    <div id="viewAllMenusLoader" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="text-muted mt-2 small">Loading menus…</p>
                     </div>
-                    @endforeach
+                    <div id="viewAllMenusContent"></div>
                 </div>
             </div>
         </div>
@@ -357,11 +458,86 @@
 </div>
 
 </div>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+@endsection
 
+@section('script')
 <script>
-   $(document).ready(function() {
+$(document).ready(function() {
 
+
+    // ── Row expand / collapse ──────────────────────────────────────
+    // Retrieve the already-initialised DataTables instance from main.js
+    var menuTable = $('#manageUsersTable').DataTable();
+
+$(document).on('click', '.menu-expandable-row', function(e) {
+        // Don't expand when clicking action buttons or toggles
+        if ($(e.target).closest('.action-cell, .toggle-switch, .status-toggle').length) return;
+
+        var $row = $(this);
+        var menuId = $row.data('menu-id');
+        var $icon = $row.find('.row-toggle-icon');
+        var dtRow = menuTable.row($row[0]);
+
+        // If already open, close it
+        if (dtRow.child.isShown()) {
+            dtRow.child.hide();
+            $row.removeClass('row-expanded');
+            $icon.css('transform', 'rotate(0deg)');
+            return;
+        }
+
+        // Show spinner immediately
+        dtRow.child(`<div class="px-4 py-3 text-center"><span class="spinner-border spinner-border-sm text-primary me-2"></span><span class="text-muted small">Loading items…</span></div>`).show();
+        $row.addClass('row-expanded');
+        $icon.css('transform', 'rotate(90deg)');
+
+        $.ajax({
+            url: `/menu/${menuId}/edit`,
+            method: 'GET',
+            success: function(response) {
+                var items = (response.status === 200 && response.menu) ? response.menu.menu_items : [];
+                var innerHtml = `<div style="background:#f8fafc;padding:12px 16px 16px;">
+                    <div class="row g-2">${buildItemCards(items)}</div>
+                </div>`;
+                dtRow.child(innerHtml).show();
+            },
+            error: function() {
+                dtRow.child('<div class="px-4 py-3 text-danger small">Failed to load items.</div>').show();
+            }
+        });
+    });
+
+    function buildItemCards(items) {
+        if (!items || items.length === 0) {
+            return `<div class="col-12"><p class="text-muted small fst-italic mb-0">No items in this menu yet.</p></div>`;
+        }
+        return items.map(function(item) {
+            const img = item.image
+                ? `<img src="${item.image}" alt="${item.name}" class="rounded-2 flex-shrink-0 object-fit-cover" style="width:48px;height:48px;">`
+                : `<div class="rounded-2 flex-shrink-0 d-flex align-items-center justify-content-center" style="width:48px;height:48px;background:#e2e8f0;"><i class="fas fa-utensils" style="color:#94a3b8;font-size:0.75rem;"></i></div>`;
+            const avail = item.is_available == 1
+                ? `<span class="badge rounded-pill" style="background:#dcfce7;color:#16a34a;font-size:0.6rem;">Available</span>`
+                : `<span class="badge rounded-pill bg-secondary" style="font-size:0.6rem;">Unavailable</span>`;
+            const dietary = formatDietaryInfo(item.dietary_info);
+            return `<div class="col-sm-6 col-lg-4 col-xl-3">
+                <div class="d-flex align-items-start gap-2 p-2 rounded-3 border bg-white">
+                    ${img}
+                    <div class="flex-grow-1 min-w-0">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 mb-1">
+                            <span class="fw-semibold text-dark" style="font-size:0.82rem;">${item.name}</span>
+                            ${avail}
+                        </div>
+                        <div>
+                            <span class="fw-bold text-primary" style="font-size:0.78rem;">RWF ${Math.round(parseFloat(item.price||0)).toLocaleString()}</span>
+                            ${item.category ? `<span class="badge rounded-pill ms-1" style="background:#ede9fe;color:#7c3aed;font-size:0.6rem;">${item.category}</span>` : ''}
+                        </div>
+                        ${dietary ? `<div class="text-muted mt-1" style="font-size:0.68rem;">${dietary}</div>` : ''}
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+    // ── End row expand ────────────────────────────────────────────
 
             //Bootstrap Duallistbox
             $('#Permissions').bootstrapDualListbox({
@@ -396,7 +572,7 @@ $('#addMenuForm').validate({
             required: true,
             number: true,
             min: 0,
-            max: 1000
+            max: 99999999
         },
         'menu_items[0][category]': {
             maxlength: 30
@@ -405,8 +581,8 @@ $('#addMenuForm').validate({
             maxlength: 50
         },
         'menu_items[0][image]': {
-            accept: "image/*",
-            filesize: 5 * 1024 * 1024 // 5MB max file size
+            accept: "image/jpeg,image/png,image/jpg,image/gif,image/webp",
+            filesize: 5 * 1024 * 1024
         }
     },
     messages: {
@@ -436,8 +612,9 @@ $('#addMenuForm').validate({
             maxlength: "Dietary info cannot exceed 50 characters"
         },
         'menu_items[0][image]': {
-            accept: "Please upload a valid image file",
-            filesize: "Image file must be less than 5MB"
+            required: "Please choose an image for this item",
+            accept: "Only JPG, PNG, GIF, or WebP images are allowed",
+            filesize: "Image must be less than 5MB"
         }
     },
     errorElement: 'span',
@@ -454,12 +631,33 @@ $('#addMenuForm').validate({
     submitHandler: function(form, e) {
         e.preventDefault();
 
-        var form_data = new FormData(form);
+        var form_data = new FormData();
 
-        // Collect menu items dynamically
-        $('#menuItemsContainer .menu-item').each(function(index) {
-            $(this).find('input, select').each(function() {
-                var name = $(this).attr('name').replace('[0]', `[${index}]`);
+        // Top-level fields (name, description, _token)
+        form_data.append('name', $('#addMenuForm [name="name"]').val());
+        form_data.append('description', $('#addMenuForm [name="description"]').val());
+        form_data.append('_token', $('meta[name="csrf-token"]').attr('content'));
+
+        // Collect each menu item
+        $('#menuItemsContainer .menu-item').each(function(itemIndex) {
+            var $item = $(this);
+
+            // Text/number/select fields
+            $item.find('input:not([type="checkbox"]):not([type="file"]), select').each(function() {
+                var name = $(this).attr('name').replace(/\[\d+\]/, `[${itemIndex}]`);
+                form_data.append(name, $(this).val());
+            });
+
+            // File input
+            var fileInput = $item.find('input[type="file"]')[0];
+            if (fileInput && fileInput.files[0]) {
+                var fileName = fileInput.getAttribute('name').replace(/\[\d+\]/, `[${itemIndex}]`);
+                form_data.append(fileName, fileInput.files[0]);
+            }
+
+            // Only checked checkboxes
+            $item.find('input[type="checkbox"]:checked').each(function() {
+                var name = $(this).attr('name').replace(/\[\d+\]/, `[${itemIndex}]`);
                 form_data.append(name, $(this).val());
             });
         });
@@ -555,19 +753,31 @@ document.addEventListener('DOMContentLoaded', function() {
             addMenuItemBtn.addEventListener('click', function() {
                 const newMenuItem = menuItemsContainer.children[0].cloneNode(true);
 
-                // Reset input values
+                // Reset all inputs/selects
                 newMenuItem.querySelectorAll('input, select').forEach(input => {
-                    input.value = '';
+                    if (input.type === 'checkbox') {
+                        input.checked = false;
+                    } else if (input.type !== 'file') {
+                        input.value = '';
+                    }
+                    // Re-index the name from [0] to [menuItemIndex]
+                    if (input.name) {
+                        input.name = input.name.replace(/\[0\]/, `[${menuItemIndex}]`);
+                    }
+                });
 
-                    // Update name attributes with new index
-                    input.name = input.name.replace(/\[\d+\]/, `[${menuItemIndex}]`);
+                // Always hide dietary option divs — they'll show when category is chosen
+                newMenuItem.querySelectorAll('.food-dietary-options, .beverage-dietary-options').forEach(function(div) {
+                    div.style.display = 'none';
                 });
 
                 // Add remove button functionality
                 const removeBtn = newMenuItem.querySelector('.remove-item-btn');
-                removeBtn.addEventListener('click', function() {
-                    this.closest('.menu-item').remove();
-                });
+                if (removeBtn) {
+                    removeBtn.addEventListener('click', function() {
+                        this.closest('.menu-item').remove();
+                    });
+                }
 
                 menuItemsContainer.appendChild(newMenuItem);
                 menuItemIndex++;
@@ -585,41 +795,12 @@ document.addEventListener('DOMContentLoaded', function() {
         $(document).ready(function() {
     let menuItemCounter = 0;
 
-    // Initialize popovers with click trigger
-    $('[data-bs-toggle="popover"]').popover({
-        html: true,
-        trigger: 'click',
-        content: function() {
-            const menuId = $(this).data('id');
-            const popoverContent = $('#table-action-popover').html();
-            return popoverContent.replace(/data-menu-id=""/g, `data-menu-id="${menuId}"`);
-        },
-        sanitize: false
-    }).on('shown.bs.popover', function () {
-        // Store the current menu ID in a data attribute on the document
-        $(document).data('currentMenuId', $(this).data('id'));
-    });
-
-    // Close popover when clicking outside
-    $(document).on('click', function (e) {
-        if ($(e.target).closest('[data-bs-toggle="popover"]').length === 0 &&
-            $(e.target).closest('.popover').length === 0) {
-            $('[data-bs-toggle="popover"]').popover('hide');
-        }
-    });
-
     // Handle edit button click
     $(document).on('click', '.edit-menu', function(e) {
         e.preventDefault();
-        const menuId = $(document).data('currentMenuId');
+        const menuId = $(this).data('menu-id');
 
-        if (!menuId) {
-            console.error('No menu ID available');
-            return;
-        }
-
-        // Hide the popover
-        $('[data-bs-toggle="popover"]').popover('hide');
+        if (!menuId) return;
 
         // Clear previous menu items
         $('#editMenuItemsContainer').empty();
@@ -666,22 +847,97 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Dietary options from PHP config
+    var dietaryFood      = @json(config('dietary.food'));
+    var dietaryBeverage  = @json(config('dietary.beverage'));
+
+    function buildDietaryCheckboxes(options, index, suitableFor) {
+        return options.map(function(option) {
+            var checked = suitableFor.includes(option) ? 'checked' : '';
+            var label = option.charAt(0).toUpperCase() + option.slice(1);
+            return `<label class="dietary-pill ${checked ? 'dietary-pill-checked' : ''}">
+                <input type="checkbox" name="menu_items[${index}][suitable_for][]" value="${option}" class="dietary-cb" ${checked}>
+                <span>${label}</span>
+            </label>`;
+        }).join('');
+    }
+
     // Function to add menu item in edit form
     function addEditMenuItem(item, index) {
-        const dietaryOptions = ['vegan', 'vegetarian', 'gluten-free', 'halal', 'kosher'];
-        let suitableFor = [];
+        var suitableFor = [];
         if (item && item.dietary_info && item.dietary_info.suitable_for) {
             suitableFor = item.dietary_info.suitable_for;
         }
-        let dietaryCheckboxes = dietaryOptions.map(option => `
-            <label class=\"me-2\">
-                <input type=\"checkbox\" name=\"menu_items[${index}][suitable_for][]\" value=\"${option}\" ${suitableFor.includes(option) ? 'checked' : ''}>
-                ${option.charAt(0).toUpperCase() + option.slice(1)}
-            </label>
-        `).join('');
-        const menuItem = `
-            <div class=\"menu-item row mb-3\" data-index=\"${index}\">\n                <input type=\"hidden\" name=\"menu_items[${index}][id]\" value=\"${item ? item.id : ''}\">\n                <div class=\"col-md-4\">\n                    <input type=\"text\" class=\"form-control\" name=\"menu_items[${index}][name]\"\n                           placeholder=\"Item Name\" value=\"${item ? item.name : ''}\" required>\n                </div>\n                <div class=\"col-md-3\">\n                    <input type=\"number\" class=\"form-control\" name=\"menu_items[${index}][price]\"\n                           placeholder=\"Price\" value=\"${item ? item.price : ''}\" required>\n                </div>\n\n                <div class=\"col-md-5\">\n                    <div class=\"input-group\">\n                        <input type=\"file\" class=\"form-control\" name=\"menu_items[${index}][image]\" accept=\"image/*\">\n                        ${item && item.image ? `\n                            <div class=\"mt-2 w-100\">\n                                <img src=\"${item.image}\" alt=\"${item.name}\" class=\"img-thumbnail\" style=\"height: 100px; width: 100px;\">\n                                <input type=\"hidden\" name=\"menu_items[${index}][existing_image]\" value=\"${item.image}\">\n                            </div>\n                        ` : ''}\n                    </div>\n                </div>\n                <div class=\"col-md-4 mt-2\">\n                    <select class=\"form-control\" name=\"menu_items[${index}][category]\">\n                        <option value=\"\">Select Category</option>\n                        <option value=\"Beverage\" ${item && item.category === 'Beverage' ? 'selected' : ''}>Beverage</option>\n                        <option value=\"Food\" ${item && item.category === 'Food' ? 'selected' : ''}>Food</option>\n                    </select>\n                </div>\n                <div class=\"col-md-3 mt-2\">\n                    ${dietaryCheckboxes}\n                </div>\n                <div class=\"col-md-3 mt-2\">\n                    <select class=\"form-control\" name=\"menu_items[${index}][is_available]\">\n                        <option value=\"1\" ${item && item.is_available == 1 ? 'selected' : ''}>Available</option>\n                        <option value=\"0\" ${item && item.is_available == 0 ? 'selected' : ''}>Not Available</option>\n                    </select>\n                </div>\n                <div class=\"col-md-2 mt-2\">\n                    <button type=\"button\" class=\"btn btn-danger remove-edit-item-btn\" onclick=\"removeEditItem(this)\">\n                        <i class=\"fa fa-trash\"></i>\n                    </button>\n                </div>\n            </div>\n            <hr>\n        `;
-        $('#editMenuItemsContainer').append(menuItem);
+
+        var category   = item ? item.category : '';
+        var foodDisplay = category === 'Food'     ? 'block' : 'none';
+        var bevDisplay  = category === 'Beverage' ? 'block' : 'none';
+
+        var foodCheckboxes = buildDietaryCheckboxes(dietaryFood,     index, suitableFor);
+        var bevCheckboxes  = buildDietaryCheckboxes(dietaryBeverage, index, suitableFor);
+
+        var imageHtml = '';
+        if (item && item.image) {
+            imageHtml = `<div class="mt-2 w-100">
+                <img src="${item.image}" alt="${item.name}" class="img-thumbnail" style="height:80px;width:80px;object-fit:cover;">
+                <input type="hidden" name="menu_items[${index}][existing_image]" value="${item.image}">
+            </div>`;
+        }
+
+        var html = `
+        <div class="menu-item row mb-3 align-items-start" data-index="${index}">
+            <input type="hidden" name="menu_items[${index}][id]" value="${item ? item.id : ''}">
+
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Item Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control rounded-3" name="menu_items[${index}][name]"
+                       placeholder="Item Name" value="${item ? item.name : ''}" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Price (RWF) <span class="text-danger">*</span></label>
+                <input type="number" class="form-control rounded-3" name="menu_items[${index}][price]"
+                       placeholder="0" value="${item ? item.price : ''}" required>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label small fw-semibold">Image</label>
+                <input type="file" class="form-control rounded-3" name="menu_items[${index}][image]"
+                       accept="image/jpeg,image/png,image/jpg,image/gif,image/webp">
+                ${imageHtml}
+            </div>
+
+            <div class="col-md-4 mt-2">
+                <label class="form-label small fw-semibold">Category <span class="text-danger">*</span></label>
+                <select class="form-control rounded-3" name="menu_items[${index}][category]">
+                    <option value="">Select Category</option>
+                    <option value="Food"     ${category === 'Food'     ? 'selected' : ''}>Food</option>
+                    <option value="Beverage" ${category === 'Beverage' ? 'selected' : ''}>Beverage</option>
+                </select>
+            </div>
+
+            <div class="col-12 mt-2 food-dietary-options" style="display:${foodDisplay};">
+                <label class="form-label small fw-semibold mb-2">Dietary Options</label>
+                <div class="d-flex flex-wrap gap-2">${foodCheckboxes}</div>
+            </div>
+            <div class="col-12 mt-2 beverage-dietary-options" style="display:${bevDisplay};">
+                <label class="form-label small fw-semibold mb-2">Dietary Options</label>
+                <div class="d-flex flex-wrap gap-2">${bevCheckboxes}</div>
+            </div>
+            <div class="col-md-3 mt-2">
+                <label class="form-label small fw-semibold">Availability</label>
+                <select class="form-control rounded-3" name="menu_items[${index}][is_available]">
+                    <option value="1" ${!item || item.is_available == 1 ? 'selected' : ''}>Available</option>
+                    <option value="0" ${item && item.is_available == 0 ? 'selected' : ''}>Not Available</option>
+                </select>
+            </div>
+            <div class="col-md-2 mt-2 d-flex align-items-end">
+                <button type="button" class="btn btn-danger remove-edit-item-btn w-100" onclick="removeEditItem(this)">
+                    <i class="fas fa-trash-alt me-1"></i> Remove
+                </button>
+            </div>
+        </div>
+        <hr>`;
+
+        $('#editMenuItemsContainer').append(html);
     }
 
     // Add menu item button for edit form
@@ -706,9 +962,36 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         const menuId = $('#edit_menu_id').val();
 
-        // Create a FormData object to handle file uploads
-        const formData = new FormData(this);
+        // Build FormData manually to avoid submitting unchecked checkboxes as empty strings
+        var formData = new FormData();
         formData.append('_method', 'PUT');
+        formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
+        formData.append('name', $('#edit_mealTime').val());
+        formData.append('description', $('#edit_menu_description').val());
+        formData.append('is_active', $('#edit_menu_status').is(':checked') ? 1 : 0);
+
+        $('#editMenuItemsContainer .menu-item').each(function(itemIndex) {
+            var $item = $(this);
+
+            // Hidden + text/number/select fields
+            $item.find('input:not([type="checkbox"]):not([type="file"]), select').each(function() {
+                var name = $(this).attr('name').replace(/\[\d+\]/, `[${itemIndex}]`);
+                formData.append(name, $(this).val());
+            });
+
+            // File input
+            var fileInput = $item.find('input[type="file"]')[0];
+            if (fileInput && fileInput.files[0]) {
+                var fileName = fileInput.getAttribute('name').replace(/\[\d+\]/, `[${itemIndex}]`);
+                formData.append(fileName, fileInput.files[0]);
+            }
+
+            // Only checked checkboxes
+            $item.find('input[type="checkbox"]:checked').each(function() {
+                var name = $(this).attr('name').replace(/\[\d+\]/, `[${itemIndex}]`);
+                formData.append(name, $(this).val());
+            });
+        });
 
         $.ajax({
             url: `/menu/${menuId}`,
@@ -726,9 +1009,16 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             success: function(response) {
                 if (response.status === 200) {
-                    $('#editMenuModal').modal('hide');
-                    alert('Menu updated successfully!');
-                    location.reload();
+                    $('#edit-message-container').html(
+                        `<div class="alert alert-success d-flex align-items-center gap-2 mx-3 mt-2 mb-0 rounded-3">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Menu updated successfully!</span>
+                        </div>`
+                    );
+                    setTimeout(function() {
+                        $('#editMenuModal').modal('hide');
+                        location.reload();
+                    }, 1500);
                 }
             },
             error: function(xhr) {
@@ -816,59 +1106,111 @@ document.addEventListener('DOMContentLoaded', function() {
     // View Menu functionality
     $(document).on('click', '.view-menu', function(e) {
         e.preventDefault();
-        const menuId = $(document).data('currentMenuId');
-        if (!menuId) {
-            console.error('No menu ID available');
-            return;
-        }
-        // Hide the popover
-        $('[data-bs-toggle="popover"]').popover('hide');
-        // Clear previous menu items
-        $('#viewMenuItemsContainer').empty();
-        // Fetch menu items via AJAX
+        const menuId = $(this).data('menu-id');
+        if (!menuId) return;
+
+        // Reset and open modal with spinner
+        $('#viewMenuModalLabel').text('Menu Items');
+        $('#viewMenuModalSubtitle').text('Loading…');
+        $('#viewMenuItemsContainer').html(`
+            <div class="col-12 text-center py-5">
+                <div class="spinner-border text-primary mb-2" role="status"></div>
+                <p class="text-muted small">Loading items…</p>
+            </div>`);
+        $('#viewMenuModal').modal('show');
+
         $.ajax({
-            url: `/menu/${menuId}/edit`, // Reuse the edit endpoint to get menu items
+            url: `/menu/${menuId}/edit`,
             method: 'GET',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            },
             success: function(response) {
-                if (response.status === 200) {
-                    const menu = response.menu;
-                    if (menu.menu_items && menu.menu_items.length > 0) {
-                        // Set the modal headline to meal time
-                        $('#viewMenuModalLabel').text(menu.name);
-                        menu.menu_items.forEach(function(item) {
-                            const itemCard = `
-                                <div class="col-md-6 col-lg-4 mb-3">
-                                    <div class="card h-100 shadow-sm border-0">
-                                        <div class="card-body">
-                                            <h5 class="card-title mb-2">${item.name}</h5>
-                                            <p class="card-text mb-1"><strong>Price:</strong> $${item.price}</p>
-                                            <p class="card-text mb-1"><strong>Category:</strong> ${item.category || '-'}</p>
-                                            <p class="card-text mb-1"><strong>Dietary Info:</strong> ${formatDietaryInfo(item.dietary_info)}</p>
-                                            <p class="card-text mb-1"><strong>Status:</strong> <button type="button" class="badge toggle-availability-badge ${item.is_available == 1 ? 'bg-success' : 'bg-secondary'}" data-item-id="${item.id}" data-available="${item.is_available}">${item.is_available == 1 ? 'Available' : 'Not Available'}</button></p>
-                                            ${item.image ? `<img src="${item.image}" alt="${item.name}" class="img-fluid rounded mt-2" style="max-height:100px;">` : ''}
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                            $('#viewMenuItemsContainer').append(itemCard);
-                        });
-                    } else {
-                        $('#viewMenuItemsContainer').html('<div class="col-12 text-center text-muted">No menu items found.</div>');
-                    }
-                    $('#viewMenuModal').modal('show');
-                } else {
-                    alert('Failed to load menu items. Please try again.');
+                if (response.status !== 200) {
+                    $('#viewMenuItemsContainer').html('<div class="col-12 text-center text-danger py-4">Failed to load items.</div>');
+                    return;
                 }
+                const menu = response.menu;
+                $('#viewMenuModalLabel').text(menu.name);
+                $('#viewMenuModalSubtitle').text(`${menu.menu_items.length} item${menu.menu_items.length !== 1 ? 's' : ''}`);
+
+                if (!menu.menu_items || menu.menu_items.length === 0) {
+                    $('#viewMenuItemsContainer').html(`
+                        <div class="col-12 text-center py-5">
+                            <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
+                                 style="width:64px;height:64px;background:#f1f5f9;">
+                                <i class="fas fa-utensils text-muted fa-lg"></i>
+                            </div>
+                            <p class="text-muted fw-semibold mb-1">No items yet</p>
+                            <p class="text-muted small">Add items to this menu using the Edit button.</p>
+                        </div>`);
+                    return;
+                }
+
+                let html = '';
+                menu.menu_items.forEach(function(item) {
+                    const img = item.image
+                        ? `<img src="${item.image}" alt="${item.name}"
+                               class="w-100 rounded-3 object-fit-cover"
+                               style="height:160px;">`
+                        : `<div class="w-100 rounded-3 d-flex align-items-center justify-content-center"
+                               style="height:160px;background:#f1f5f9;">
+                               <i class="fas fa-utensils fa-2x" style="color:#cbd5e1;"></i>
+                           </div>`;
+
+                    const avail = item.is_available == 1
+                        ? `<span class="badge rounded-pill toggle-availability-badge"
+                               data-item-id="${item.id}" data-available="1"
+                               style="background:#dcfce7;color:#16a34a;cursor:pointer;font-size:0.7rem;">
+                               <i class="fas fa-circle me-1" style="font-size:0.45rem;"></i>Available
+                           </span>`
+                        : `<span class="badge rounded-pill toggle-availability-badge"
+                               data-item-id="${item.id}" data-available="0"
+                               style="background:#f1f5f9;color:#64748b;cursor:pointer;font-size:0.7rem;">
+                               <i class="fas fa-circle me-1" style="font-size:0.45rem;"></i>Unavailable
+                           </span>`;
+
+                    const catColor = item.category === 'Food'
+                        ? 'background:#fef9c3;color:#854d0e;'
+                        : item.category === 'Beverage'
+                            ? 'background:#dbeafe;color:#1e40af;'
+                            : 'background:#f1f5f9;color:#64748b;';
+
+                    const catBadge = item.category
+                        ? `<span class="badge rounded-pill" style="${catColor}font-size:0.7rem;">${item.category}</span>`
+                        : '';
+
+                    const dietaryOpts = parseDietaryOptions(item.dietary_info);
+                    const dietaryHtml = dietaryOpts.length
+                        ? `<div class="mt-2 d-flex flex-wrap gap-1">
+                               ${dietaryOpts.map(d => `<span class="badge rounded-pill" style="background:#ede9fe;color:#7c3aed;font-size:0.65rem;">${d.charAt(0).toUpperCase()+d.slice(1)}</span>`).join('')}
+                           </div>`
+                        : '';
+
+                    html += `
+                    <div class="col-sm-6 col-lg-4">
+                        <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
+                            ${img}
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+                                    <h6 class="fw-bold text-dark mb-0" style="font-size:0.9rem;line-height:1.3;">${item.name}</h6>
+                                    ${avail}
+                                </div>
+                                ${item.description ? `<p class="text-muted mb-2" style="font-size:0.76rem;line-height:1.4;">${item.description}</p>` : ''}
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <span class="fw-bold" style="color:#0f3039;font-size:0.9rem;">RWF ${Math.round(parseFloat(item.price||0)).toLocaleString()}</span>
+                                    ${catBadge}
+                                </div>
+                                ${dietaryHtml}
+                            </div>
+                        </div>
+                    </div>`;
+                });
+
+                $('#viewMenuItemsContainer').html(html);
             },
-            error: function(xhr) {
-                console.error('Error fetching menu items:', xhr.responseText);
-                alert('Failed to load menu items. Please try again.');
+            error: function() {
+                $('#viewMenuItemsContainer').html('<div class="col-12 text-center text-danger py-4"><i class="fas fa-exclamation-circle me-1"></i>Failed to load items. Please try again.</div>');
             }
+        });
     });
-});
 
     // Add click handler for toggling availability
     $(document).on('click', '.toggle-availability-badge', function() {
@@ -902,40 +1244,87 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Load menu items when View All Menus modal is opened
+// Load all menus with items when View All Menus modal is opened
 $('#viewAllMenusModal').on('show.bs.modal', function () {
-    @foreach($menus as $menu)
-        $.ajax({
-            url: `/menu/${{{ $menu->id }}}/edit`,
-            method: 'GET',
-            success: function(response) {
-                if (response.status === 200) {
-                    const menuItems = response.menu.menu_items;
-                    let itemsHtml = '';
+    $('#viewAllMenusLoader').show();
+    $('#viewAllMenusContent').empty();
 
-                    menuItems.forEach(function(item) {
+    $.ajax({
+        url: '{{ route("menus.allWithItems") }}',
+        method: 'GET',
+        success: function(response) {
+            $('#viewAllMenusLoader').hide();
+            if (response.status !== 200 || !response.menus.length) {
+                $('#viewAllMenusContent').html('<p class="text-muted text-center py-4">No menus found.</p>');
+                return;
+            }
+
+            let html = '';
+            response.menus.forEach(function(menu) {
+                const statusBadge = menu.is_active
+                    ? '<span class="badge bg-success ms-2" style="font-size:0.65rem;">Active</span>'
+                    : '<span class="badge bg-secondary ms-2" style="font-size:0.65rem;">Inactive</span>';
+
+                let itemsHtml = '';
+                if (menu.menu_items.length === 0) {
+                    itemsHtml = '<p class="text-muted small fst-italic">No items in this menu yet.</p>';
+                } else {
+                    menu.menu_items.forEach(function(item) {
+                        const img = item.image
+                            ? `<img src="${item.image}" alt="${item.name}" class="rounded-3 flex-shrink-0 object-fit-cover" style="width:56px;height:56px;">`
+                            : `<div class="rounded-3 flex-shrink-0 d-flex align-items-center justify-content-center" style="width:56px;height:56px;background:#f1f5f9;"><i class="fas fa-utensils text-muted"></i></div>`;
+
+                        const avail = item.is_available == 1
+                            ? '<span class="badge rounded-pill" style="background:#dcfce7;color:#16a34a;font-size:0.6rem;">Available</span>'
+                            : '<span class="badge rounded-pill bg-secondary" style="font-size:0.6rem;">Unavailable</span>';
+
+                        const dietary = formatDietaryInfo(item.dietary_info);
+
                         itemsHtml += `
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 shadow-sm border-0">
-                                    ${item.image ? `<img src="${item.image}" class="card-img-top" alt="${item.name}" style="height: 200px; object-fit: cover;">` : ''}
-                                    <div class="card-body">
-                                        <h5 class="card-title">${item.name}</h5>
-                                        <p class="card-text mb-1">${item.description || ''}</p>
-                                        <p class="card-text mb-1"><strong>Price:</strong> $${item.price}</p>
-                                        <p class="card-text mb-1"><strong>Category:</strong> ${item.category || '-'}</p>
-                                        <p class="card-text mb-1"><strong>Dietary Info:</strong> ${formatDietaryInfo(item.dietary_info)}</p>
-                                        <span class="badge ${item.is_available == 1 ? 'bg-success' : 'bg-secondary'}">${item.is_available == 1 ? 'Available' : 'Not Available'}</span>
+                            <div class="col-md-6 col-xl-4">
+                                <div class="d-flex align-items-start gap-3 p-3 rounded-3 border bg-white h-100">
+                                    ${img}
+                                    <div class="flex-grow-1 min-w-0">
+                                        <div class="d-flex align-items-center justify-content-between mb-1">
+                                            <span class="fw-semibold text-dark" style="font-size:0.85rem;">${item.name}</span>
+                                            ${avail}
+                                        </div>
+                                        ${item.description ? `<p class="text-muted mb-1" style="font-size:0.75rem;line-height:1.3;">${item.description}</p>` : ''}
+                                        <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
+                                            <span class="fw-bold text-primary" style="font-size:0.8rem;">RWF ${Math.round(parseFloat(item.price||0)).toLocaleString()}</span>
+                                            ${item.category ? `<span class="badge rounded-pill" style="background:#ede9fe;color:#7c3aed;font-size:0.6rem;">${item.category}</span>` : ''}
+                                            ${dietary ? `<span class="text-muted" style="font-size:0.7rem;">${dietary}</span>` : ''}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        `;
+                            </div>`;
                     });
-
-                    $(`#menuItems${response.menu.id}`).html(itemsHtml);
                 }
-            }
-        });
-    @endforeach
+
+                html += `
+                    <div class="menu-section mb-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="d-flex align-items-center justify-content-center rounded-3 me-2 flex-shrink-0"
+                                 style="width:36px;height:36px;background:#f0fdf4;">
+                                <i class="fas fa-book-open" style="color:#16a34a;font-size:0.85rem;"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-0 fw-bold">${menu.name} ${statusBadge}</h5>
+                                ${menu.description ? `<p class="text-muted mb-0" style="font-size:0.78rem;">${menu.description}</p>` : ''}
+                            </div>
+                        </div>
+                        <div class="row g-3">${itemsHtml}</div>
+                        <hr class="my-4">
+                    </div>`;
+            });
+
+            $('#viewAllMenusContent').html(html);
+        },
+        error: function() {
+            $('#viewAllMenusLoader').hide();
+            $('#viewAllMenusContent').html('<p class="text-danger text-center py-4">Failed to load menus. Please try again.</p>');
+        }
+    });
 });
 
 function printAllMenus() {
@@ -956,28 +1345,24 @@ function printAllMenus() {
     location.reload();
 }
 
-function formatDietaryInfo(dietaryInfo) {
-    if (!dietaryInfo) return '-';
-    let obj;
+// Returns a flat array of dietary option strings from the dietary_info object
+function parseDietaryOptions(dietaryInfo) {
+    if (!dietaryInfo) return [];
     try {
-        obj = typeof dietaryInfo === 'string' ? JSON.parse(dietaryInfo) : dietaryInfo;
+        const obj = typeof dietaryInfo === 'string' ? JSON.parse(dietaryInfo) : dietaryInfo;
+        if (Array.isArray(obj)) return obj;
+        if (obj.suitable_for && Array.isArray(obj.suitable_for)) return obj.suitable_for;
+        // flatten any arrays in the object
+        return Object.values(obj).reduce((acc, v) => acc.concat(Array.isArray(v) ? v : [v]), []);
     } catch (e) {
-        return `<code>${dietaryInfo}</code>`;
+        return [];
     }
-    let html = '<ul class="mb-0">';
-    for (const key in obj) {
-        if (Array.isArray(obj[key])) {
-            html += `<li><strong>${key}:</strong><ul>`;
-            obj[key].forEach(val => {
-                html += `<li>${val}</li>`;
-            });
-            html += '</ul></li>';
-        } else {
-            html += `<li><strong>${key}:</strong> ${obj[key]}</li>`;
-        }
-    }
-    html += '</ul>';
-    return html;
+}
+
+// Legacy helper kept for backward compat (row expand cards etc.)
+function formatDietaryInfo(dietaryInfo) {
+    const opts = parseDietaryOptions(dietaryInfo);
+    return opts.length ? opts.map(o => o.charAt(0).toUpperCase() + o.slice(1)).join(', ') : '-';
 }
 
 $(document).on('change', 'select[name^="menu_items"][name$="[category]"]', function() {
@@ -985,6 +1370,12 @@ $(document).on('change', 'select[name^="menu_items"][name$="[category]"]', funct
     var category = $(this).val();
     $row.find('.food-dietary-options').toggle(category === 'Food');
     $row.find('.beverage-dietary-options').toggle(category === 'Beverage');
+    // Uncheck all dietary options when category changes
+    $row.find('.dietary-cb').prop('checked', false).closest('.dietary-pill').removeClass('dietary-pill-checked');
+});
+
+$(document).on('change', '.dietary-cb', function() {
+    $(this).closest('.dietary-pill').toggleClass('dietary-pill-checked', this.checked);
 });
 
   </script>

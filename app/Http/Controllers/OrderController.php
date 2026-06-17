@@ -24,14 +24,18 @@ class OrderController extends Controller
     public function index()
     {
         try {
-            $orders = Order::with(['user'])
-                ->select('orders.*', 'users.first_name', 'users.last_name')
+            $isAdmin = \Illuminate\Support\Facades\Auth::user()->role === 'admin';
+            $restaurantId = $isAdmin ? null : session('userData')['users']->restaurant_id;
+
+            $orders = Order::select('orders.*', 'users.first_name', 'users.last_name', 'restaurants.name as restaurant_name')
                 ->join('users', 'orders.user_id', '=', 'users.id')
-                ->where('orders.restaurant_id', session('userData')['users']->restaurant_id)
+                ->join('restaurants', 'orders.restaurant_id', '=', 'restaurants.id')
+                ->when(!$isAdmin, fn($q) => $q->where('orders.restaurant_id', $restaurantId))
+                ->orderByRaw("FIELD(orders.status, 'pending', 'processing', 'cancelled', 'completed')")
                 ->orderBy('orders.created_at', 'desc')
                 ->get();
 
-            return view('manage-orders.index', compact('orders'));
+            return view('manage-orders.index', compact('orders', 'isAdmin'));
         } catch (\Exception $e) {
             \Log::error('Error fetching orders: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Error fetching orders. Please try again.');

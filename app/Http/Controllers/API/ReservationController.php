@@ -224,6 +224,15 @@ class ReservationController extends Controller
         }
 
         try {
+            // Enforce reservation flag
+            $restaurant = \App\Models\Restaurant::findOrFail($request->restaurant_id);
+            if (!$restaurant->accepts_reservations) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'This restaurant is not currently accepting reservations.'
+                ], 422);
+            }
+
             $reservation = Reservation::create([
                 'user_id' => auth()->id(),
                 'restaurant_id' => $request->restaurant_id,

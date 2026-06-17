@@ -1,5 +1,24 @@
 @extends('layouts.app')
 
+@section('style')
+<style>
+.btn-action { width: 30px; height: 30px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; }
+#printArea { display: none; }
+@media print {
+    body * { visibility: hidden; }
+    #printArea, #printArea * { visibility: visible; }
+    #printArea { display: block; position: fixed; top: 0; left: 0; width: 100%; padding: 24px; font-family: Arial, sans-serif; color: #1e293b; background: #fff; }
+    #printArea h2 { margin: 0 0 4px; font-size: 18px; }
+    #printArea .print-meta { font-size: 12px; color: #64748b; margin-bottom: 16px; }
+    #printArea table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    #printArea th { background: #0f3039 !important; color: #fff !important; padding: 8px 10px; text-align: left; font-weight: 600; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    #printArea td { padding: 7px 10px; border-bottom: 1px solid #e2e8f0; }
+    #printArea tr:nth-child(even) td { background: #f8fafc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    #printArea .status-badge { padding: 2px 10px; border-radius: 12px; font-size: 11px; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+@endsection
+
 @section('content')
 <!-- Main Content -->
 <main class="content-wrapper">
@@ -29,8 +48,10 @@
                             <input type="search" class="custom-search" placeholder="Search Orders" aria-controls="manageOrdersTable">
                         </div>
                     </div>
-                    <div class="btn-options mt-3 mt-xl-0">
-
+                    <div class="btn-options mt-3 mt-xl-0 d-flex gap-2">
+                        <button id="printOrdersBtn" class="btn btn-white btn-xsmall font-dmsans fw-medium position-relative rounded-3 border border-grey-v1" title="Print Orders">
+                            <i class="fas fa-print me-1"></i>Print
+                        </button>
                         <a href="javascript:;" class="btn btn-white btn-xsmall font-dmsans fw-medium position-relative rounded-3 border border-grey-v1 filter-btn" title="Filter">Filter</a>
                     </div>
                 </div>
@@ -43,68 +64,19 @@
                                 <th>Total Amount</th>
                                 <th>Status</th>
                                 <th>Order Date</th>
+                                @if($isAdmin)<th>Restaurant</th>@endif
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            @foreach($orders as $key => $order)
-                            <tr data-order-id="{{ $order->id }}">
-                                <td>{{ $key+1 }}</td>
-                                <td>{{ $order->first_name }} {{ $order->last_name }}</td>
-                                <td>${{ number_format($order->total_amount, 2) }}</td>
-                                <td>
-                                    <span class="badge rounded-pill
-                                        {{
-                                            $order->status === 'completed' ? 'bg-success' :
-                                            ($order->status === 'cancelled' ? 'bg-danger' :
-                                            ($order->status === 'processing' ? 'bg-info' :
-                                            ($order->status === 'pending' ? 'bg-warning text-dark' : 'bg-secondary')))
-                                        }}">
-                                        {{ ucfirst($order->status) }}
-                                    </span>
-                                </td>
-                                <td>{{ $order->created_at->timezone(auth()->user()->timezone ?? session('user_timezone') ?? config('app.timezone'))->format('M d, Y H:i') }}</td>
-                                <td>
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-link" type="button" data-bs-toggle="dropdown">
-                                            <i class="fas fa-ellipsis-v"></i>
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            <li>
-                                                <button type="button" class="dropdown-item view-action" data-order-id="{{ $order->id }}">
-                                                    <i class="fas fa-eye"></i> View
-                                                </button>
-                                            </li>
-                                            <li>
-                                                <button type="button" class="dropdown-item update-status-action"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#updateStatus"
-                                                    data-order-id="{{ $order->id }}"
-                                                    {{ $order->status === 'completed' ? 'disabled style="pointer-events: none; opacity: 0.5;"' : '' }}>
-                                                    <i class="fas fa-edit"></i> <span class="update-status-text">Update Status</span>
-                                                    <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
-                                                </button>
-                                            </li>
-                                            <li>
-                                                <button type="button" class="dropdown-item delete-action"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#deleteOrder"
-                                                    data-order-id="{{ $order->id }}">
-                                                    <i class="fas fa-trash"></i> Delete
-                                                </button>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
+                        <tbody></tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
 </main>
+
+<div id="printArea"></div>
 
 <!-- Update Status Modal -->
 <div class="modal fade" id="updateStatus" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="updateStatusLabel" aria-hidden="true">
@@ -162,10 +134,11 @@
     </div>
 </div>
 
+@endsection
+
 @section('script')
 
 <script>
-console.log('Script loaded');
 $(document).ready(function() {
     console.log('Document ready');
     if ($.fn.DataTable.isDataTable('#manageOrdersTable')) {
@@ -174,7 +147,7 @@ $(document).ready(function() {
     // Initialize DataTable with the existing table data
     var table = $('#manageOrdersTable').DataTable({
         responsive: true,
-        order: [[4, 'desc']], // Sort by order date descending
+        order: [[3, 'asc'], [4, 'desc']],
         language: {
             emptyTable: "No orders found"
         },
@@ -185,19 +158,38 @@ $(document).ready(function() {
         serverSide: false,
         data: {!! json_encode($orders) !!},
         columns: [
-            { data: 'id', name: 'id' },
+            {
+                data: null,
+                name: 'id',
+                orderable: false,
+                searchable: false,
+                render: function(data, type, row, meta) {
+                    return meta.row + 1;
+                }
+            },
             {
                 data: null,
                 name: 'customer',
                 render: function(data, type, row) {
-                    return row.first_name + ' ' + row.last_name;
+                    return (row.first_name || '') + ' ' + (row.last_name || '');
                 }
             },
-            { data: 'total_amount', name: 'total_amount' },
+            {
+                data: 'total_amount',
+                name: 'total_amount',
+                render: function(data) {
+                    return 'RWF ' + Math.round(parseFloat(data || 0)).toLocaleString();
+                }
+            },
             {
                 data: 'status',
                 name: 'status',
                 render: function(data, type, row) {
+                    // Return numeric sort key for ordering
+                    if (type === 'sort' || type === 'type') {
+                        const order = { pending: 0, processing: 1, cancelled: 2, completed: 3 };
+                        return order[data] !== undefined ? order[data] : 9;
+                    }
                     let badgeClass = '';
                     let textClass = '';
                     switch (data) {
@@ -220,157 +212,156 @@ $(document).ready(function() {
                     return `<span class="badge rounded-pill ${badgeClass} ${textClass}">${data.charAt(0).toUpperCase() + data.slice(1)}</span>`;
                 }
             },
-            { data: 'created_at', name: 'created_at' },
+            {
+                data: 'created_at',
+                name: 'created_at',
+                render: function(data) {
+                    if (!data) return '—';
+                    const d = new Date(data);
+                    const pad = n => String(n).padStart(2, '0');
+                    return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+                }
+            },
+            @if($isAdmin)
+            {
+                data: 'restaurant_name',
+                name: 'restaurant_name',
+                render: function(data) {
+                    return data ? `<span class="badge rounded-pill" style="background:#e0f2fe;color:#0369a1;font-weight:500;">${data}</span>` : '—';
+                }
+            },
+            @endif
             {
                 data: null,
                 name: 'actions',
                 orderable: false,
                 searchable: false,
                 render: function(data, type, row) {
+                    @if($isAdmin)
+                    return `<a href="/orders/${row.id}" class="btn btn-sm btn-info btn-action" title="View"><i class="fas fa-eye"></i></a>`;
+                    @else
                     const isCompleted = row.status === 'completed';
-                    return `
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-link" type="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li>
-                                    <button type="button" class="dropdown-item view-action" data-order-id="${row.id}">
-                                        <i class="fas fa-eye"></i> View
-                                    </button>
-                                </li>
-                                <li>
-                                    <button type="button" class="dropdown-item update-status-action"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#updateStatus"
-                                        data-order-id="${row.id}"
-                                        ${isCompleted ? 'disabled style="pointer-events: none; opacity: 0.5;"' : ''}>
-                                        <i class="fas fa-edit"></i> <span class="update-status-text">Update Status</span>
-                                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
-                                    </button>
-                                </li>
-                                <li>
-                                    <button type="button" class="dropdown-item delete-action"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#deleteOrder"
-                                        data-order-id="${row.id}">
-                                        <i class="fas fa-trash"></i> Delete
-                                    </button>
-                                </li>
-                            </ul>
-                        </div>
-                    `;
+                    const viewBtn = `<a href="/orders/${row.id}" class="btn btn-sm btn-info btn-action" title="View"><i class="fas fa-eye"></i></a>`;
+                    if (isCompleted) {
+                        return `<div class="d-flex gap-1 justify-content-center">${viewBtn}</div>`;
+                    }
+                    return `<div class="d-flex gap-1 justify-content-center">
+                        ${viewBtn}
+                        <button class="btn btn-sm btn-warning btn-action update-status-action"
+                            data-order-id="${row.id}" data-order-status="${row.status}" title="Update Status">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger btn-action delete-action"
+                            data-order-id="${row.id}" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>`;
+                    @endif
                 }
             }
         ],
-        columnDefs: [
-            {
-                targets: 0, // Order ID column
-                render: function(data) {
-                    return '#' + data;
-                }
-            },
-            {
-                targets: 1, // Customer column
-                render: function(data, type, row) {
-                    return row.first_name + ' ' + row.last_name;
-                }
-            },
-            {
-                targets: 2, // Total Amount column
-                render: function(data) {
-                    return '$' + parseFloat(data).toFixed(2);
-                }
-            },
-            {
-                targets: 3, // Status column
-                render: function(data, type, row) {
-                    const isCompleted = row.status === 'completed';
-                    const badgeClass = data === 'completed' ? 'success' : (data === 'cancelled' ? 'danger' : 'warning');
-                    return `
-                        <span class="badge badge-pill badge-${badgeClass} status-badge"
-                              style="cursor: ${isCompleted ? 'default' : 'pointer'};"
-                              data-order-id="${row.id}"
-                              data-status="${data}"
-                              ${isCompleted ? 'disabled' : ''}>
-                            ${data.charAt(0).toUpperCase() + data.slice(1)}
-                        </span>
-                    `;
-                }
-            },
-            {
-                targets: 4, // Order Date column
-                render: function(data) {
-                    return moment(data).format('MMM D, YYYY HH:mm');
-                }
-            }
-        ]
     });
 
-    // Handle status badge click
-    $(document).on('click', '.status-badge:not([disabled])', function() {
-        const orderId = $(this).data('order-id');
-        const currentStatus = $(this).data('status');
-        const order = {!! json_encode($orders) !!}.find(o => o.id === parseInt(orderId));
-
-        if (order && order.status !== 'completed') {
-            $('#order_id').val(order.id);
-            $('#status').val(currentStatus);
-            $('#updateStatus').modal('show');
-        }
+    // Update Status — open modal pre-filled
+    $(document).on('click', '.update-status-action', function() {
+        $('#order_id').val($(this).data('order-id'));
+        $('#status').val($(this).data('order-status'));
+        $('#updateStatus').modal('show');
     });
 
-    // Handle update status form submission (delegated for robustness)
+    // Delete — open confirm modal
+    $(document).on('click', '.delete-action', function() {
+        $('#deleteOrder').data('order-id', $(this).data('order-id'));
+        $('#deleteOrder').modal('show');
+    });
+
+    // Submit status update
     $(document).on('submit', '#updateStatusForm', function(e) {
         e.preventDefault();
-        const orderId = $('#order_id').val();
-        const status = $('#status').val();
-        const updateBtn = $('#updateStatusForm button[type="submit"]');
-        const spinner = updateBtn.find('.spinner-border');
-        const btnText = updateBtn.find('.update-status-text');
-        updateBtn.prop('disabled', true);
-        spinner.removeClass('d-none');
-        btnText.text('Updating...');
+        var orderId = $('#order_id').val();
+        var status  = $('#status').val();
+        var btn     = $(this).find('button[type="submit"]');
+        btn.prop('disabled', true).text('Updating...');
         $.ajax({
-            url: `/orders/${orderId}/status-update`,
+            url: '/orders/' + orderId + '/status-update',
             type: 'POST',
-            data: {
-                _token: $('meta[name="csrf-token"]').attr('content'),
-                _method: 'PUT',
-                status: status
-            },
-            success: function(response) {
-                if (response.status === 200) {
-                    toastr.success('Order status updated successfully');
-                    $('#updateStatus').modal('hide');
-                    location.reload();
-                } else {
-                    toastr.error(response.message || 'Error updating order status');
-                }
+            data: { _token: $('meta[name="csrf-token"]').attr('content'), _method: 'PUT', status: status },
+            success: function() {
+                toastr.success('Order status updated successfully');
+                $('#updateStatus').modal('hide');
+                location.reload();
             },
             error: function(xhr) {
-                console.error('Update Status Error:', xhr);
-                const errorMessage = xhr.responseJSON?.message || 'Error updating order status';
-                toastr.error(errorMessage);
-            },
-            complete: function() {
-                updateBtn.prop('disabled', false);
-                spinner.addClass('d-none');
-                btnText.text('Update Status');
+                toastr.error(xhr.responseJSON?.message || 'Error updating order status');
+                btn.prop('disabled', false).text('Update Status');
             }
         });
     });
 
-    // Handle view button click (delegated)
-    $(document).on('click', '.view-action', function() {
-        const orderId = $(this).data('order-id');
-        window.location.href = `/orders/${orderId}`;
+    // Print orders
+    $('#printOrdersBtn').on('click', function() {
+        var rows = table.rows({ search: 'applied' }).data().toArray();
+        var statusColors = { pending: '#f59e0b', processing: '#0ea5e9', completed: '#22c55e', cancelled: '#ef4444' };
+        var pad = function(n) { return String(n).padStart(2, '0'); };
+        var rowsHtml = rows.map(function(r) {
+            var color = statusColors[r.status] || '#6b7280';
+            var d = new Date(r.created_at);
+            var dateStr = pad(d.getDate()) + '/' + pad(d.getMonth()+1) + '/' + d.getFullYear() + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+            var label = r.status.charAt(0).toUpperCase() + r.status.slice(1);
+            return '<tr><td>' + r.id + '</td><td>' + (r.first_name || '') + ' ' + (r.last_name || '') + '</td><td>RWF ' + Math.round(parseFloat(r.total_amount || 0)).toLocaleString() + '</td><td><span class="status-badge" style="background:' + color + ';">' + label + '</span></td><td>' + (r.order_type || '') + '</td><td>' + dateStr + '</td></tr>';
+        }).join('');
+        var now = new Date().toLocaleString();
+        @php
+            $u = session('userData')['users'] ?? null;
+            $rName    = $u->restaurant_name    ?? '—';
+            $rAddress = $u->restaurant_address ?? '';
+            $rPhone   = $u->restaurant_phone   ?? '';
+            $rEmail   = $u->restaurant_email   ?? '';
+            $rLogo    = $u->restaurant_logo    ? asset($u->restaurant_logo) : '';
+        @endphp
+        var logoHtml = '{{ $rLogo }}' ? '<img src="{{ $rLogo }}" style="height:60px;object-fit:contain;display:block;margin-bottom:4px;">' : '';
+        var headerHtml =
+            '<div style="display:flex;align-items:center;gap:18px;border-bottom:2px solid #0f3039;padding-bottom:12px;margin-bottom:16px;">' +
+                '<div style="flex-shrink:0;">' + logoHtml + '</div>' +
+                '<div>' +
+                    '<div style="font-size:20px;font-weight:700;color:#0f3039;">{{ $rName }}</div>' +
+                    '{{ $rAddress ? "<div style=\"font-size:12px;color:#64748b;\">$rAddress</div>" : "" }}' +
+                    '{{ $rPhone   ? "<div style=\"font-size:12px;color:#64748b;\">Phone: $rPhone</div>" : "" }}' +
+                    '{{ $rEmail   ? "<div style=\"font-size:12px;color:#64748b;\">Email: $rEmail</div>" : "" }}' +
+                '</div>' +
+                '<div style="margin-left:auto;text-align:right;">' +
+                    '<div style="font-size:16px;font-weight:600;color:#0f3039;">Orders List</div>' +
+                    '<div style="font-size:11px;color:#64748b;">Printed: ' + now + '</div>' +
+                    '<div style="font-size:11px;color:#64748b;">Total: ' + rows.length + ' order(s)</div>' +
+                '</div>' +
+            '</div>';
+        $('#printArea').html(
+            headerHtml +
+            '<table><thead><tr><th>Order ID</th><th>Customer</th><th>Amount</th><th>Status</th><th>Type</th><th>Date</th></tr></thead><tbody>' + rowsHtml + '</tbody></table>'
+        );
+        window.print();
     });
 
-    // Ensure order ID is set when clicking Update Status button
-    $(document).on('click', '.update-status-action', function() {
-        const orderId = $(this).data('order-id');
-        $('#order_id').val(orderId);
+    // Confirm delete
+    $(document).on('click', '#confirmDelete', function() {
+        var orderId = $('#deleteOrder').data('order-id');
+        if (!orderId) return;
+        var btn = $(this);
+        btn.prop('disabled', true).text('Deleting...');
+        $.ajax({
+            url: '/orders/' + orderId,
+            type: 'POST',
+            data: { _token: $('meta[name="csrf-token"]').attr('content'), _method: 'DELETE' },
+            success: function() {
+                toastr.success('Order deleted successfully');
+                $('#deleteOrder').modal('hide');
+                location.reload();
+            },
+            error: function(xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Error deleting order');
+                btn.prop('disabled', false).text('Yes');
+            }
+        });
     });
 });
 </script>

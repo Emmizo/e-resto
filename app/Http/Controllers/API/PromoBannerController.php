@@ -10,30 +10,55 @@ use Illuminate\Support\Facades\Validator;
 
 class PromoBannerController extends Controller
 {
-    // List all promo banners for a restaurant
+    private function activeQuery(Request $request)
+    {
+        $today = now()->toDateString(); // e.g. "2026-06-17" — compare date only, not time
+        $query = PromoBanner::where('is_active', 1)
+            ->where(fn($q) => $q->whereNull('start_date')->orWhereDate('start_date', '<=', $today))
+            ->where(fn($q) => $q->whereNull('end_date')->orWhereDate('end_date', '>=', $today));
+
+        if ($request->query('restaurant_id')) {
+            $query->where('restaurant_id', $request->query('restaurant_id'));
+        }
+        return $query;
+    }
+
+    // List all active, in-date-range promo banners for a restaurant
     public function index(Request $request)
     {
-        $restaurantId = $request->query('restaurant_id');
-        $query = PromoBanner::query();
-        $query->where('is_active', 1);
-        if ($restaurantId) {
-            $query->where('restaurant_id', $restaurantId);
-        }
-        $banners = $query->orderByDesc('created_at')->get();
+        $banners = $this->activeQuery($request)->orderByDesc('created_at')->get()
+            ->map(fn($b) => $this->formatBanner($b));
         return response()->json(['data' => $banners]);
     }
 
     // List all promo banners for a restaurant, with some restaurant details
     public function listWithRestaurant(Request $request)
     {
-        $restaurantId = $request->query('restaurant_id');
-        $query = PromoBanner::with(['restaurant:id,name,description,address,longitude,latitude,phone_number,email,website,opening_hours,cuisine_id,price_range,image,owner_id,is_approved,status']);
-        $query->where('is_active', 1);
-        if ($restaurantId) {
-            $query->where('restaurant_id', $restaurantId);
-        }
-        $banners = $query->orderByDesc('created_at')->get();
+        $banners = $this->activeQuery($request)
+            ->with(['restaurant:id,name,description,address,longitude,latitude,phone_number,email,website,opening_hours,cuisine_id,price_range,image,owner_id,is_approved,status'])
+            ->orderByDesc('created_at')->get()
+            ->map(fn($b) => $this->formatBanner($b));
         return response()->json(['data' => $banners]);
+    }
+
+    private function formatBanner(PromoBanner $banner): array
+    {
+        $data = $banner->toArray();
+        // Resolve image_path to a full URL regardless of how it was stored
+        $path = $banner->image_path;
+        if ($path) {
+            if (str_starts_with($path, 'http')) {
+                $data['image_url'] = $path;
+            } elseif (str_starts_with($path, 'promo_banners/')) {
+                // Stored via Storage::disk('public')
+                $data['image_url'] = asset('storage/' . $path);
+            } else {
+                $data['image_url'] = asset($path);
+            }
+        } else {
+            $data['image_url'] = null;
+        }
+        return $data;
     }
 
     // Store a new promo banner
@@ -68,7 +93,7 @@ class PromoBannerController extends Controller
     public function show($id)
     {
         $banner = PromoBanner::findOrFail($id);
-        return response()->json(['data' => $banner]);
+        return response()->json(['data' => $this->formatBanner($banner)]);
     }
 
     // Update a promo banner

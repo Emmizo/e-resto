@@ -8,6 +8,7 @@ use App\Http\Controllers\EventsController;
 use App\Http\Controllers\FirebaseController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TermsAndConditionsController;
@@ -23,6 +24,16 @@ Route::get('/logout', function () {
 
 Route::group(['middleware' => ['auth', 'nocache'], 'namespace' => 'App\Http\Controllers'], function () {
     Route::get('/dashboard', 'DashboardController@index')->name('dashboard');
+});
+
+Route::middleware(['auth', 'nocache'])->group(function () {
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/orders', [ReportController::class, 'ordersReport'])->name('reports.orders');
+    Route::get('/reports/reservations', [ReportController::class, 'reservationsReport'])->name('reports.reservations');
+    Route::get('/reports/menu', [ReportController::class, 'menuReport'])->name('reports.menu');
+    Route::get('/reports/customers', [ReportController::class, 'customersReport'])->name('reports.customers');
+    Route::get('/reports/restaurants', [ReportController::class, 'restaurantsReport'])->name('reports.restaurants');
+    Route::get('/reports/export', [ReportController::class, 'export'])->name('reports.export');
 });
 Route::get('/', [AuthController::class, 'index'])->name('login');
 Route::any('/login', [AuthController::class, 'login'])->name('admin-login-post');
@@ -68,6 +79,7 @@ Route::group(['middleware' => ['auth', 'nocache', 'restaurant.permission:Menu_Ma
     Route::get('/manage-menu', [MenuController::class, 'index'])->name('manage-menu');
 
     Route::post('/menu-store', [MenuController::class, 'store'])->name('menu-store');
+    Route::get('/menus/all-with-items', [MenuController::class, 'allWithItems'])->name('menus.allWithItems');
     Route::get('/menu/{id}/edit', [MenuController::class, 'edit'])->name('menu.edit');
     Route::put('/menu/{id}', [MenuController::class, 'update'])->name('menu.update');
     Route::patch('/menu/{id}/status', [MenuController::class, 'updateStatus'])->name('menu.status');
@@ -117,6 +129,7 @@ Route::middleware(['auth', 'nocache'])->group(function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::resource('promo-banners', \App\Http\Controllers\PromoBannerController::class);
+    Route::patch('promo-banners/{id}/toggle-active', [\App\Http\Controllers\PromoBannerController::class, 'toggleActive'])->name('promo-banners.toggle-active');
 });
 
 Route::middleware('auth')->get('/notifications', [NotificationController::class, 'all'])->name('notifications.all');

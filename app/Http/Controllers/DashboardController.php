@@ -8,6 +8,7 @@ use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\PromoBanner;
 use App\Models\Restaurant;
+use App\Models\Review;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -21,20 +22,13 @@ class DashboardController extends Controller
      */
     public function index(Request $request)
     {
-        // Get the restaurant ID based on user role
-        $restaurantId = null;
         $user = Auth::user();
+        $isAdmin = $user->role === 'admin';
+        // For non-admin users, use restaurant_id. Use -1 (matches nothing) if not set,
+        // so queries never fall through to showing all-restaurant data.
+        $restaurantId = $isAdmin ? null : (session('userData')['users']->restaurant_id ?? -1);
 
-        if ($user->role == 'admin') {
-            // Admin can see all data
-            $restaurantId = null;
-        } else {
-            // Other roles can only see their restaurant data
-            $restaurantId = session('userData')['users']->restaurant_id ?? null;
-        }
-
-        // Get date range from request or default to two years
-        $dateRange = $request->get('range', '2_years');
+        $dateRange = $request->get('range', 'year');
         $startDate = null;
         $endDate = Carbon::now();
 
@@ -47,6 +41,9 @@ class DashboardController extends Controller
                 break;
             case 'month':
                 $startDate = Carbon::now()->subMonth();
+                break;
+            case 'year':
+                $startDate = Carbon::now()->subYear()->startOfMonth();
                 break;
             case '2_years':
                 $startDate = Carbon::now()->subYears(2)->startOfMonth();
@@ -76,8 +73,8 @@ class DashboardController extends Controller
                 }
                 $reservationActivityData->push($reservationQuery->count());
             }
-        } elseif ($dateRange === '2_years') {
-            // For two years, show monthly data
+        } elseif ($dateRange === 'year' || $dateRange === '2_years') {
+            // Show monthly data for year/2_years ranges
             $currentMonth = $startDate->copy()->startOfMonth();
             $lastMonth = $endDate->copy()->startOfMonth();
 
@@ -130,9 +127,15 @@ class DashboardController extends Controller
         });
 
         $orderTypes = [
-            'dine_in' => $orderTypesQuery->clone()->where('order_type', 'dine_in')->count(),
+            'dine_in'  => $orderTypesQuery->clone()->where('order_type', 'dine_in')->count(),
             'takeaway' => $orderTypesQuery->clone()->where('order_type', 'takeaway')->count(),
-            'delivery' => $orderTypesQuery->clone()->where('order_type', 'delivery')->count()
+            'delivery' => $orderTypesQuery->clone()->where('order_type', 'delivery')->count(),
+        ];
+
+        $orderTypeRevenue = [
+            'dine_in'  => (float) $orderTypesQuery->clone()->where('order_type', 'dine_in')->sum('total_amount'),
+            'takeaway' => (float) $orderTypesQuery->clone()->where('order_type', 'takeaway')->sum('total_amount'),
+            'delivery' => (float) $orderTypesQuery->clone()->where('order_type', 'delivery')->sum('total_amount'),
         ];
 
         // Get daily orders count for the selected date range
@@ -147,17 +150,18 @@ class DashboardController extends Controller
             ->when($restaurantId, function ($query) use ($restaurantId) {
                 return $query->where('menus.restaurant_id', $restaurantId);
             })
-            ->select('menu_items.*')
-            ->selectRaw('COUNT(order_items.id) as total_orders')
-            ->selectRaw('SUM(order_items.price) as total_revenue')
+            ->select('menu_items.*', 'menus.restaurant_id as menu_restaurant_id')
+            ->selectRaw('COALESCE(COUNT(order_items.id), 0) as total_orders')
+            ->selectRaw('COALESCE(SUM(order_items.price * order_items.quantity), 0) as total_revenue')
             ->leftJoin('order_items', 'menu_items.id', '=', 'order_items.menu_item_id')
-            ->leftJoin('orders', 'order_items.order_id', '=', 'orders.id')
-            ->when($startDate, function ($query) use ($startDate, $endDate) {
-                return $query->whereBetween('orders.created_at', [$startDate, $endDate]);
+            ->leftJoin('orders', function ($join) use ($startDate, $endDate) {
+                $join->on('order_items.order_id', '=', 'orders.id');
+                if ($startDate) {
+                    $join->whereBetween('orders.created_at', [$startDate, $endDate]);
+                }
             })
-            ->where('orders.status', 'completed')
             ->groupBy('menu_items.id', 'menu_items.name', 'menu_items.category', 'menu_items.price', 'menu_items.description', 'menu_items.image', 'menus.restaurant_id', 'menu_items.created_at', 'menu_items.updated_at')
-            ->orderBy('total_orders', 'desc')
+            ->orderByDesc('total_orders')
             ->limit(4)
             ->get();
 
@@ -176,7 +180,6 @@ class DashboardController extends Controller
         // Get restaurant ratings (admin sees all, owners see their own)
         $topRestaurants = collect();
         if ($user->role == 'admin') {
-            // Admin sees all restaurants with ratings
             $topRestaurants = Restaurant::select('restaurants.id', 'restaurants.name', 'restaurants.cuisine_id')
                 ->leftJoin('reviews', 'restaurants.id', '=', 'reviews.restaurant_id')
                 ->selectRaw('AVG(reviews.rating) as rating')
@@ -185,17 +188,16 @@ class DashboardController extends Controller
                 ->having('review_count', '>', 0)
                 ->orderBy('rating', 'desc')
                 ->limit(4)
-                ->with('cuisine')
+                ->with(['cuisine', 'reviews.user'])
                 ->get();
         } else {
-            // Restaurant owners see their own restaurant's rating
             $topRestaurants = Restaurant::select('restaurants.id', 'restaurants.name', 'restaurants.cuisine_id')
                 ->leftJoin('reviews', 'restaurants.id', '=', 'reviews.restaurant_id')
                 ->selectRaw('AVG(reviews.rating) as rating')
                 ->selectRaw('COUNT(reviews.id) as review_count')
                 ->where('restaurants.id', $restaurantId)
                 ->groupBy('restaurants.id', 'restaurants.name', 'restaurants.cuisine_id')
-                ->with('cuisine')
+                ->with(['cuisine', 'reviews.user'])
                 ->get();
         }
 
@@ -241,6 +243,9 @@ class DashboardController extends Controller
             'order_activity_data' => $orderActivityData->toArray(),
             'reservation_activity_data' => $reservationActivityData->toArray(),
             'recommendation_data' => array_values($orderTypes),
+            'order_type_revenue' => array_values($orderTypeRevenue),
+            'order_types_raw' => $orderTypes,
+            'order_type_revenue_raw' => $orderTypeRevenue,
             'top_restaurants' => $topRestaurants,
             'daily_recommendations' => $dailyOrders,
             'recent_orders' => $recentOrders,
@@ -251,9 +256,57 @@ class DashboardController extends Controller
             })->count(),
             'top_menu_items' => $topMenuItems,
             'current_range' => $dateRange,
-            'promo_banners' => PromoBanner::when($restaurantId, function ($query) use ($restaurantId) {
-                return $query->where('restaurant_id', $restaurantId);
-            })->latest()->get()
+            'promo_banners' => $user->role === 'admin' ? collect() : PromoBanner::where('restaurant_id', $restaurantId)->latest()->get(),
+            'reservation_status_counts' => [
+                'pending' => \App\Models\Reservation::when($restaurantId, fn($q) => $q->where('restaurant_id', $restaurantId))->where('status', 'pending')->count(),
+                'confirmed' => \App\Models\Reservation::when($restaurantId, fn($q) => $q->where('restaurant_id', $restaurantId))->where('status', 'confirmed')->count(),
+                'cancelled' => \App\Models\Reservation::when($restaurantId, fn($q) => $q->where('restaurant_id', $restaurantId))->where('status', 'cancelled')->count(),
+                'completed' => \App\Models\Reservation::when($restaurantId, fn($q) => $q->where('restaurant_id', $restaurantId))->where('status', 'completed')->count(),
+            ],
+            'revenue_by_day' => (function() use ($restaurantId) {
+                $rows = Order::when($restaurantId, fn($q) => $q->where('restaurant_id', $restaurantId))
+                    ->whereBetween('created_at', [Carbon::now()->subDays(6)->startOfDay(), Carbon::now()->endOfDay()])
+                    ->selectRaw('DATE(created_at) as date, SUM(total_amount) as revenue')
+                    ->groupByRaw('DATE(created_at)')
+                    ->pluck('revenue', 'date');
+                return collect(range(6, 0))->map(fn($d) => (float)($rows[Carbon::now()->subDays($d)->toDateString()] ?? 0))->values()->toArray();
+            })(),
+            'orders_by_day' => (function() use ($restaurantId) {
+                $rows = Order::when($restaurantId, fn($q) => $q->where('restaurant_id', $restaurantId))
+                    ->whereBetween('created_at', [Carbon::now()->subDays(6)->startOfDay(), Carbon::now()->endOfDay()])
+                    ->selectRaw('DATE(created_at) as date, COUNT(*) as cnt')
+                    ->groupByRaw('DATE(created_at)')
+                    ->pluck('cnt', 'date');
+                return collect(range(6, 0))->map(fn($d) => (int)($rows[Carbon::now()->subDays($d)->toDateString()] ?? 0))->values()->toArray();
+            })(),
+            'active_menu_items' => MenuItem::join('menus', 'menu_items.menu_id', '=', 'menus.id')
+                ->when($restaurantId, fn($q) => $q->where('menus.restaurant_id', $restaurantId))
+                ->where('menu_items.is_available', true)
+                ->count(),
+            'avg_rating' => $restaurantId
+                ? (float) Review::where('restaurant_id', $restaurantId)->avg('rating')
+                : (float) Review::avg('rating'),
+            'restaurant_stats' => $user->role === 'admin' ? (function() use ($startDate, $endDate) {
+                return Restaurant::select('restaurants.id', 'restaurants.name')
+                    ->selectRaw('COALESCE(SUM(orders.total_amount), 0) as total_revenue')
+                    ->selectRaw('COUNT(orders.id) as total_orders')
+                    ->leftJoin('orders', function($join) use ($startDate, $endDate) {
+                        $join->on('restaurants.id', '=', 'orders.restaurant_id');
+                        if ($startDate) {
+                            $join->whereBetween('orders.created_at', [$startDate, $endDate]);
+                        }
+                    })
+                    ->where('restaurants.is_approved', true)
+                    ->groupBy('restaurants.id', 'restaurants.name')
+                    ->orderByDesc('total_revenue')
+                    ->limit(10)
+                    ->get()
+                    ->map(fn($r) => [
+                        'name' => $r->name,
+                        'revenue' => (float) $r->total_revenue,
+                        'orders' => (int) $r->total_orders,
+                    ]);
+            })() : collect(),
         ];
 
         $restaurant = null;
@@ -295,7 +348,7 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         $restaurantId = session('userData')['users']->restaurant_id ?? null;
-        if (!$restaurantId) {
+        if (!$restaurantId || $restaurantId < 1) {
             return response()->json(['status' => 'error', 'message' => 'No restaurant found.'], 404);
         }
         $restaurant = Restaurant::find($restaurantId);
@@ -322,13 +375,61 @@ class DashboardController extends Controller
 
     public function getChartData()
     {
-        $range = request('range', '2_years');
-        $data = $this->getDashboardData($range);
+        $user = Auth::user();
+        $isAdmin = $user->role === 'admin';
+        $restaurantId = $isAdmin ? null : (session('userData')['users']->restaurant_id ?? -1);
+
+        $range = request('range', 'year');
+        $endDate = Carbon::now();
+
+        switch ($range) {
+            case 'today':   $startDate = Carbon::today(); break;
+            case 'week':    $startDate = Carbon::now()->subWeek(); break;
+            case 'month':   $startDate = Carbon::now()->subMonth(); break;
+            case 'year':    $startDate = Carbon::now()->subYear()->startOfMonth(); break;
+            case '2_years': $startDate = Carbon::now()->subYears(2)->startOfMonth(); break;
+            default:        $startDate = Carbon::now()->subYear()->startOfMonth();
+        }
+
+        $orderActivityData = collect([]);
+        $reservationActivityData = collect([]);
+        $activityLabels = collect([]);
+
+        if ($range === 'today') {
+            for ($i = 0; $i < 24; $i++) {
+                $hour = Carbon::now()->startOfDay()->addHours($i);
+                $activityLabels->push($hour->format('H:00'));
+                $orderActivityData->push(Order::when($restaurantId, fn($q) => $q->where('restaurant_id', $restaurantId))
+                    ->whereBetween('created_at', [$hour, $hour->copy()->addHour()])->count());
+                $reservationActivityData->push(\App\Models\Reservation::when($restaurantId, fn($q) => $q->where('restaurant_id', $restaurantId))
+                    ->whereBetween('created_at', [$hour, $hour->copy()->addHour()])->count());
+            }
+        } elseif ($range === 'year' || $range === '2_years') {
+            $current = $startDate->copy()->startOfMonth();
+            while ($current <= $endDate->copy()->startOfMonth()) {
+                $activityLabels->push($current->format('M Y'));
+                $orderActivityData->push(Order::when($restaurantId, fn($q) => $q->where('restaurant_id', $restaurantId))
+                    ->whereBetween('created_at', [$current->copy()->startOfMonth(), $current->copy()->endOfMonth()])->count());
+                $reservationActivityData->push(\App\Models\Reservation::when($restaurantId, fn($q) => $q->where('restaurant_id', $restaurantId))
+                    ->whereBetween('created_at', [$current->copy()->startOfMonth(), $current->copy()->endOfMonth()])->count());
+                $current->addMonth();
+            }
+        } else {
+            $current = $startDate->copy();
+            while ($current <= $endDate) {
+                $activityLabels->push($current->format('M d'));
+                $orderActivityData->push(Order::when($restaurantId, fn($q) => $q->where('restaurant_id', $restaurantId))
+                    ->whereDate('created_at', $current)->count());
+                $reservationActivityData->push(\App\Models\Reservation::when($restaurantId, fn($q) => $q->where('restaurant_id', $restaurantId))
+                    ->whereDate('created_at', $current)->count());
+                $current->addDay();
+            }
+        }
 
         return response()->json([
-            'activity_labels' => $data['activity_labels'],
-            'order_activity_data' => $data['order_activity_data'],
-            'reservation_activity_data' => $data['reservation_activity_data']
+            'activity_labels' => $activityLabels->toArray(),
+            'order_activity_data' => $orderActivityData->toArray(),
+            'reservation_activity_data' => $reservationActivityData->toArray(),
         ]);
     }
 }

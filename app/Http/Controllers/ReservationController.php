@@ -18,12 +18,16 @@ class ReservationController extends Controller
      */
     public function index()
     {
-        $reservations = Reservation::select('reservations.*', 'users.first_name', 'users.last_name')
+        $isAdmin = \Illuminate\Support\Facades\Auth::user()->role === 'admin';
+        $restaurantId = $isAdmin ? null : session('userData')['users']->restaurant_id;
+
+        $reservations = Reservation::select('reservations.*', 'users.first_name', 'users.last_name', 'restaurants.name as restaurant_name')
             ->join('users', 'reservations.user_id', '=', 'users.id')
-            ->where('reservations.restaurant_id', session('userData')['users']->restaurant_id)
+            ->join('restaurants', 'reservations.restaurant_id', '=', 'restaurants.id')
+            ->when(!$isAdmin, fn($q) => $q->where('reservations.restaurant_id', $restaurantId))
             ->orderBy('reservations.reservation_time', 'desc')
             ->get();
-        return view('manage-reservations.index', compact('reservations'));
+        return view('manage-reservations.index', compact('reservations', 'isAdmin'));
     }
 
     /**

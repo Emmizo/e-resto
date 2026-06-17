@@ -30,8 +30,8 @@
                                             }}">
                                             <i class="fas fa-circle me-1"></i>{{ ucfirst($order->status) }}
                                         </span></li>
-                                        <li class="mb-2"><strong>Order Date:</strong> {{ $order->created_at->timezone(auth()->user()->timezone ?? session('user_timezone') ?? config('app.timezone'))->format('M d, Y H:i') }}</li>
-                                        <li class="mb-2"><strong>Total Amount:</strong> <span class="fw-bold text-success">${{ number_format($order->total_amount, 2) }}</span></li>
+                                        <li class="mb-2"><strong>Order Date:</strong> {{ $order->created_at->timezone(auth()->user()->timezone ?? session('user_timezone') ?? config('app.timezone'))->format('d/m/Y H:i:s') }}</li>
+                                        <li class="mb-2"><strong>Total Amount:</strong> <span class="fw-bold text-success">RWF {{ number_format($order->total_amount, 0) }}</span></li>
                                         <li class="mb-2"><strong>Payment Status:</strong> <span class="badge bg-secondary text-uppercase">{{ ucfirst($order->payment_status ?? 'N/A') }}</span></li>
                                         <li class="mb-2"><strong>Order Type:</strong> <span class="badge bg-primary text-uppercase">{{ ucfirst($order->order_type ?? 'N/A') }}</span></li>
                                     </ul>
@@ -133,9 +133,9 @@
                                             @foreach($order->orderItems as $item)
                                                 <tr>
                                                     <td>{{ $item->menuItem->name }}</td>
-                                                    <td>${{ number_format($item->price, 2) }}</td>
+                                                    <td>RWF {{ number_format($item->price, 0) }}</td>
                                                     <td>{{ $item->quantity }}</td>
-                                                    <td>${{ number_format($item->price * $item->quantity, 2) }}</td>
+                                                    <td>RWF {{ number_format($item->price * $item->quantity, 0) }}</td>
                                                     <td>{{ $item->special_instructions ?? 'N/A' }}</td>
                                                     <td>
                                                         @if(!empty($item->dietary_info))
@@ -160,7 +160,7 @@
                                         <tfoot class="table-light">
                                             <tr>
                                                 <th colspan="5" class="text-end">Total:</th>
-                                                <th class="text-success fs-5">${{ number_format($order->total_amount, 2) }}</th>
+                                                <th class="text-success fs-5">RWF {{ number_format($order->total_amount, 0) }}</th>
                                                 {{-- <th colspan="1"></th> --}}
                                             </tr>
                                         </tfoot>

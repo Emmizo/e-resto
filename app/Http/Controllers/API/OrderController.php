@@ -241,6 +241,15 @@ class OrderController extends Controller
         try {
             DB::beginTransaction();
 
+            // Enforce restaurant service flags
+            $restaurant = \App\Models\Restaurant::findOrFail($request->restaurant_id);
+            if ($request->order_type === 'delivery' && !$restaurant->accepts_delivery) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'This restaurant is not currently accepting delivery orders.'
+                ], 422);
+            }
+
             // Calculate total amount
             $totalAmount = 0;
             foreach ($request->items as $item) {

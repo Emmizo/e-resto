@@ -4,15 +4,50 @@ namespace App\Http\Controllers;
 
 use App\Events\PromoBannerUpdated;
 use App\Models\PromoBanner;
-use App\Models\Restaurant;
 use Illuminate\Http\Request;
 
 class PromoBannerController extends Controller
 {
+    private function restaurantId(): int
+    {
+        $id = session('userData')['users']->restaurant_id ?? null;
+        if (!$id) {
+            abort(403, 'No restaurant associated with your account.');
+        }
+        return $id;
+    }
+
+    private function storeImage(Request $request, ?string $existing = null): ?string
+    {
+        if (!$request->hasFile('image')) {
+            return $existing;
+        }
+        if ($existing) {
+            $old = public_path(str_replace(config('app.url') . '/', '', $existing));
+            if (file_exists($old)) {
+                @unlink($old);
+            }
+        }
+        $folder = public_path('promo_banners');
+        if (!file_exists($folder)) {
+            mkdir($folder, 0777, true);
+        }
+        $file = $request->file('image');
+        $filename = uniqid('banner_') . '.' . $file->getClientOriginalExtension();
+        $file->move($folder, $filename);
+        return config('app.url') . '/promo_banners/' . $filename;
+    }
+
     public function index()
     {
+        $user = auth()->user();
+        if ($user->role === 'admin') {
+            $banners = PromoBanner::with('restaurant')->latest()->paginate(20);
+            return view('promo-banners.index', compact('banners'));
+        }
+        $restaurantId = $this->restaurantId();
         $banners = PromoBanner::with('restaurant')
-            ->where('restaurant_id', session('userData')['users']->restaurant_id)
+            ->where('restaurant_id', $restaurantId)
             ->latest()
             ->paginate(10);
         return view('promo-banners.index', compact('banners'));
@@ -20,90 +55,108 @@ class PromoBannerController extends Controller
 
     public function create()
     {
+        if (auth()->user()->role === 'admin') {
+            abort(403, 'Admins cannot create promo banners.');
+        }
+        $this->restaurantId();
         return view('promo-banners.create');
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'image' => 'nullable|image|max:2048',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'is_active' => 'boolean',
-        ]);
-        $data = $request->only(['title', 'description', 'start_date', 'end_date', 'is_active']);
-        $data['is_active'] = $request->has('is_active');
-        $data['restaurant_id'] = session('userData')['users']->restaurant_id;
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $folder = public_path('promo_banners');
-            if (!file_exists($folder)) {
-                mkdir($folder, 0777, true);
-            }
-            $filename = uniqid('banner_') . '.' . $image->getClientOriginalExtension();
-            $image->move($folder, $filename);
-            $data['image_path'] = config('app.url') . '/promo_banners/' . $filename;
+        if (auth()->user()->role === 'admin') {
+            abort(403, 'Admins cannot create promo banners.');
         }
-        $banner = PromoBanner::create($data);
-        broadcast(new PromoBannerUpdated($banner, 'created'))->toOthers();
+        $restaurantId = $this->restaurantId();
+
+        $validated = $request->validate([
+            'title'       => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
+            'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'start_date'  => 'nullable|date',
+            'end_date'    => 'nullable|date|after_or_equal:start_date',
+        ]);
+
+        // Always publish immediately — no manual activation needed
+        $validated['is_active']     = true;
+        $validated['restaurant_id'] = $restaurantId;
+        $validated['image_path']    = $this->storeImage($request);
+
+        $banner = PromoBanner::create($validated);
+        broadcast(new PromoBannerUpdated($banner, 'created'));
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'status'   => 200,
+                'message'  => 'Promo banner created!',
+                'redirect' => route('promo-banners.index'),
+            ]);
+        }
         return redirect()->route('promo-banners.index')->with('success', 'Promo banner created!');
     }
 
     public function edit($id)
     {
-        $banner = PromoBanner::findOrFail($id);
-        $restaurants = Restaurant::all();
-        return view('promo-banners.edit', compact('banner', 'restaurants'));
+        $restaurantId = $this->restaurantId();
+        $banner = PromoBanner::where('restaurant_id', $restaurantId)->findOrFail($id);
+        return view('promo-banners.edit', compact('banner'));
     }
 
     public function update(Request $request, $id)
     {
-        $banner = PromoBanner::findOrFail($id);
-        $request->validate([
-            'restaurant_id' => 'required|exists:restaurants,id',
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'image' => 'nullable|image|max:2048',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'is_active' => 'boolean',
+        $restaurantId = $this->restaurantId();
+        $banner = PromoBanner::where('restaurant_id', $restaurantId)->findOrFail($id);
+
+        $validated = $request->validate([
+            'title'       => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
+            'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'start_date'  => 'nullable|date',
+            'end_date'    => 'nullable|date|after_or_equal:start_date',
         ]);
-        $data = $request->only(['restaurant_id', 'title', 'description', 'start_date', 'end_date', 'is_active']);
-        $data['is_active'] = $request->has('is_active');
-        if ($request->hasFile('image')) {
-            if ($banner->image_path) {
-                $oldPath = public_path(str_replace(config('app.url') . '/', '', $banner->image_path));
-                if (file_exists($oldPath)) {
-                    @unlink($oldPath);
-                }
-            }
-            $image = $request->file('image');
-            $folder = public_path('promo_banners');
-            if (!file_exists($folder)) {
-                mkdir($folder, 0777, true);
-            }
-            $filename = uniqid('banner_') . '.' . $image->getClientOriginalExtension();
-            $image->move($folder, $filename);
-            $data['image_path'] = config('app.url') . '/promo_banners/' . $filename;
+
+        // Preserve current active state — only admin can change it via toggle
+        $validated['image_path'] = $this->storeImage($request, $banner->image_path);
+
+        $banner->update($validated);
+        broadcast(new PromoBannerUpdated($banner, 'updated'));
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'status'   => 200,
+                'message'  => 'Promo banner updated!',
+                'redirect' => route('promo-banners.index'),
+            ]);
         }
-        $banner->update($data);
-        broadcast(new PromoBannerUpdated($banner, 'updated'))->toOthers();
         return redirect()->route('promo-banners.index')->with('success', 'Promo banner updated!');
+    }
+
+    public function toggleActive($id)
+    {
+        if (auth()->user()->role !== 'admin') {
+            abort(403);
+        }
+        $banner = PromoBanner::findOrFail($id);
+        $banner->is_active = !$banner->is_active;
+        $banner->save();
+        broadcast(new PromoBannerUpdated($banner, 'updated'));
+        return response()->json(['status' => 200, 'is_active' => $banner->is_active]);
     }
 
     public function destroy($id)
     {
-        $banner = PromoBanner::findOrFail($id);
+        $restaurantId = $this->restaurantId();
+        $banner = PromoBanner::where('restaurant_id', $restaurantId)->findOrFail($id);
+
         if ($banner->image_path) {
-            $oldPath = public_path(str_replace(config('app.url') . '/', '', $banner->image_path));
-            if (file_exists($oldPath)) {
-                @unlink($oldPath);
+            $old = public_path(str_replace(config('app.url') . '/', '', $banner->image_path));
+            if (file_exists($old)) {
+                @unlink($old);
             }
         }
-        broadcast(new PromoBannerUpdated($banner, 'deleted'))->toOthers();
+        broadcast(new PromoBannerUpdated($banner, 'deleted'));
         $banner->delete();
+
         return redirect()->route('promo-banners.index')->with('success', 'Promo banner deleted!');
     }
 }

@@ -7,6 +7,7 @@ use App\Models\Menu;
 use App\Models\MenuItem;
 use App\Models\Restaurant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Str;
 
@@ -17,15 +18,21 @@ class MenuController extends Controller
      */
     public function index()
     {
-        $menus = Menu::join('restaurants', 'menus.restaurant_id', '=', 'restaurants.id')
+        $user = Auth::user();
+        $query = Menu::join('restaurants', 'menus.restaurant_id', '=', 'restaurants.id')
             ->select(
                 'menus.id',
                 'menus.name as menu_name',
                 'menus.description as menu_description',
                 'menus.is_active',
-            )
-            ->where('menus.restaurant_id', session('userData')['users']->restaurant_id)
-            ->get();
+                'restaurants.name as restaurant_name',
+            );
+
+        if ($user->role !== 'admin') {
+            $query->where('menus.restaurant_id', session('userData')['users']->restaurant_id);
+        }
+
+        $menus = $query->get();
         return view('manage-menu.index', compact('menus'));
     }
 
@@ -42,6 +49,18 @@ class MenuController extends Controller
      */
     public function store(Request $request)
     {
+        // Strip empty strings from suitable_for arrays before validation
+        if ($request->has('menu_items')) {
+            $items = $request->input('menu_items');
+            foreach ($items as &$item) {
+                if (isset($item['suitable_for']) && is_array($item['suitable_for'])) {
+                    $item['suitable_for'] = array_values(array_filter($item['suitable_for'], fn($v) => is_string($v) && $v !== ''));
+                }
+            }
+            unset($item);
+            $request->merge(['menu_items' => $items]);
+        }
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'description' => 'required|string|max:255',
@@ -51,7 +70,12 @@ class MenuController extends Controller
             'menu_items.*.category' => 'required|string|max:255',
             'menu_items.*.suitable_for' => 'array',
             'menu_items.*.suitable_for.*' => 'string',
-            'menu_items.*.image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'menu_items.*.image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+        ], [], [
+            'menu_items.*.image' => 'item image',
+            'menu_items.*.name'  => 'item name',
+            'menu_items.*.price' => 'item price',
+            'menu_items.*.category' => 'item category',
         ]);
 
         if ($validator->fails()) {
@@ -120,6 +144,43 @@ class MenuController extends Controller
     }
 
     /**
+     * Return all menus with their items for the current restaurant (or all for admin).
+     */
+    public function allWithItems()
+    {
+        $user = Auth::user();
+        $query = Menu::with('menuItems');
+
+        if ($user->role !== 'admin') {
+            $restaurantId = session('userData')['users']->restaurant_id;
+            $query->where('restaurant_id', $restaurantId);
+        }
+
+        $menus = $query->get()->map(function ($menu) {
+            return [
+                'id'          => $menu->id,
+                'name'        => $menu->name,
+                'description' => $menu->description,
+                'is_active'   => $menu->is_active,
+                'menu_items'  => $menu->menuItems->map(function ($item) {
+                    return [
+                        'id'          => $item->id,
+                        'name'        => $item->name,
+                        'description' => $item->description,
+                        'price'       => $item->price,
+                        'category'    => $item->category,
+                        'dietary_info'=> $item->dietary_info,
+                        'is_available'=> $item->is_available,
+                        'image'       => $item->image,
+                    ];
+                }),
+            ];
+        });
+
+        return response()->json(['status' => 200, 'menus' => $menus]);
+    }
+
+    /**
      * Show the form for editing the specified resource.
      */
     public function edit(Request $request, $id)
@@ -161,6 +222,17 @@ class MenuController extends Controller
      */
     public function update(Request $request, Menu $menu)
     {
+        if ($request->has('menu_items')) {
+            $items = $request->input('menu_items');
+            foreach ($items as &$item) {
+                if (isset($item['suitable_for']) && is_array($item['suitable_for'])) {
+                    $item['suitable_for'] = array_values(array_filter($item['suitable_for'], fn($v) => is_string($v) && $v !== ''));
+                }
+            }
+            unset($item);
+            $request->merge(['menu_items' => $items]);
+        }
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'description' => 'required|string|max:255',
@@ -171,7 +243,12 @@ class MenuController extends Controller
             'menu_items.*.category' => 'required|string|max:255',
             'menu_items.*.suitable_for' => 'array',
             'menu_items.*.suitable_for.*' => 'string',
-            'menu_items.*.image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'menu_items.*.image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+        ], [], [
+            'menu_items.*.image' => 'item image',
+            'menu_items.*.name'  => 'item name',
+            'menu_items.*.price' => 'item price',
+            'menu_items.*.category' => 'item category',
         ]);
 
         if ($validator->fails()) {

@@ -34,11 +34,11 @@
                             <div class="row mb-3">
                                 <div class="col-6">
                                     <strong>Date & Time:</strong><br>
-                                    {{ $reservation->reservation_time ? $reservation->reservation_time->timezone(auth()->user()->timezone ?? session('user_timezone') ?? config('app.timezone'))->format('M d, Y H:i') : 'N/A' }}
+                                    {{ $reservation->reservation_time ? $reservation->reservation_time->timezone(auth()->user()->timezone ?? session('user_timezone') ?? config('app.timezone'))->format('d/m/Y H:i:s') : 'N/A' }}
                                 </div>
                                 <div class="col-6">
                                     <strong>Created At:</strong><br>
-                                    {{ $reservation->created_at->timezone(auth()->user()->timezone ?? session('user_timezone') ?? config('app.timezone'))->format('M d, Y H:i') }}
+                                    {{ $reservation->created_at->timezone(auth()->user()->timezone ?? session('user_timezone') ?? config('app.timezone'))->format('d/m/Y H:i:s') }}
                                 </div>
                             </div>
                             <div class="row mb-3">
