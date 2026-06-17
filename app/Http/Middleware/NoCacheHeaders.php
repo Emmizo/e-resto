@@ -16,8 +16,12 @@ class NoCacheHeaders
     public function handle(Request $request, Closure $next): Response
     {
         $response = $next($request);
-        $response->header('Expires', 'Fri, 01 Jan 1990 00:00:00 GMT');
-        $response->header('Cache-Control', 'no-cache, must-revalidate, no-store, max-age=0, private');
+
+        // StreamedResponse (e.g. CSV export) does not support ->header()
+        if (!$response instanceof \Symfony\Component\HttpFoundation\StreamedResponse) {
+            $response->header('Expires', 'Fri, 01 Jan 1990 00:00:00 GMT');
+            $response->header('Cache-Control', 'no-cache, must-revalidate, no-store, max-age=0, private');
+        }
 
         return $response;
     }

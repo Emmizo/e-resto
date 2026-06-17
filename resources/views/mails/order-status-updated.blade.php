@@ -40,7 +40,7 @@
             <div class="card">
                 <div><strong>New Status:</strong> {{ ucfirst($order->status) }}</div>
                 <div><strong>Order Date:</strong> {{ $order->created_at->timezone($order->user->timezone ?? config('app.timezone'))->format('Y-m-d H:i') }}</div>
-                <div><strong>Total Amount:</strong> ${{ number_format($order->total_amount, 2) }}</div>
+                <div><strong>Total Amount:</strong> RWF {{ number_format($order->total_amount, 0) }}</div>
                 @if($order->special_instructions)
                     <div><strong>Special Instructions:</strong> {{ $order->special_instructions }}</div>
                 @endif

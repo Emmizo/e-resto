@@ -1,6 +1,5 @@
 @extends('layouts.app')
 @section('content')
-<!-- Main Content -->
 <main class="content-wrapper">
     <div class="main-content manage-users">
 
@@ -8,73 +7,78 @@
         <div class="breadcrumb-section mb-2 mb-xl-4">
             <ul class="breadcrumb-lists d-flex align-items-center flex-wrap">
                 <li class="breadcrumb-item position-relative">
-                    <a href="javascript:;" class="breadcrumb-link font-dmsans fw-medium xsmall text-primary-v1" title="Home">Home</a>
+                    <a href="{{ route('dashboard') }}" class="breadcrumb-link font-dmsans fw-medium xsmall text-primary-v1">Home</a>
                 </li>
                 <li class="breadcrumb-item position-relative">
-                    <a href="javascript:;" class="breadcrumb-link font-dmsans fw-medium xsmall text-primary-v1" title="Manage Users">Manage Roles</a>
+                    <a href="{{ route('roles') }}" class="breadcrumb-link font-dmsans fw-medium xsmall text-primary-v1">Manage Roles</a>
                 </li>
             </ul>
         </div>
 
-        <!-- Content -->
         <div class="content-inner">
             <div class="content-header">
-                <div class="heading text-start">
-                    <h4 class="font-dmsans fw-medium text-primary-v1 mb-2">Manage Roles</h4>
-                </div>
-                <div class="filter-header-options d-flex align-items-center justify-content-between flex-wrap">
-                    <div class="search-option">
-                        <div class="search-container position-relative">
-                            <input type="search" class="custom-search" placeholder="Search Article" aria-controls="manageUsersTable">
-                        </div>
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                    <div>
+                        <h4 class="font-dmsans fw-bold text-primary-v1 mb-0">Manage Roles</h4>
+                        <p class="text-muted small mb-0">Define roles and assign permissions</p>
                     </div>
-                    <div class="btn-options mt-3 mt-xl-0">
-
-                        <a href="javascript:;" class="btn btn-primary btn-xsmall font-dmsans fw-medium position-relative rounded-3" data-bs-toggle="modal" data-bs-target="#addUser" title="Add User">Add User</a>
-
-                    </div>
+                    <button class="btn btn-primary rounded-3 px-4 fw-semibold" data-bs-toggle="modal" data-bs-target="#addRoleModal">
+                        <i class="fas fa-plus me-2"></i>Add Role
+                    </button>
                 </div>
-                <div class="filter-col-options">
-                    <div class="filter-col-options-inner pt-2 mt-1">
 
-                    </div>
+                <div class="search-container position-relative mb-3" style="max-width:320px;">
+                    <i class="fas fa-search position-absolute text-muted" style="top:50%;left:12px;transform:translateY(-50%);font-size:0.8rem;"></i>
+                    <input type="search" class="custom-search form-control ps-4" placeholder="Search roles…" aria-controls="rolesTable">
                 </div>
+
                 <div class="table-block">
-                    <table id="manageUsersTable" class="display custom-datatable" style="width:100%">
+                    <table id="rolesTable" class="display custom-datatable" style="width:100%">
                         <thead>
                             <tr>
-                                <th>
-                                    <span>Roles</span>
-                                </th>
-                                <th>
-                                    <span>Permissions</span>
-                                </th>
-
-                                <th class="action-cell text-center">
-                                    <span>Action</span>
-                                </th>
+                                <th><span>Role Name</span></th>
+                                <th><span>Permissions</span></th>
+                                <th class="action-cell text-center"><span>Action</span></th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($roles as $user)
-
-
+                            @foreach ($roles as $role)
                             <tr>
                                 <td>
-                                    <span>{{$user->name}}</span>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                                             style="width:32px;height:32px;background:#ede9fe;">
+                                            <i class="fas fa-user-shield" style="font-size:0.75rem;color:#7c3aed;"></i>
+                                        </div>
+                                        <span class="fw-semibold">{{ $role->name }}</span>
+                                    </div>
                                 </td>
                                 <td>
-                                    <span>{{ $user->permissions }}</span>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        @foreach(is_array($role->permissions) ? $role->permissions : explode(',', $role->permissions ?? '') as $perm)
+                                            @if(trim($perm))
+                                            <span class="badge rounded-pill px-2 py-1" style="background:#f0fdf4;color:#166534;font-size:0.7rem;border:1px solid #bbf7d0;">
+                                                {{ trim($perm) }}
+                                            </span>
+                                            @endif
+                                        @endforeach
+                                    </div>
                                 </td>
                                 <td class="action-cell text-center">
-                                    <div class="action-col position-relative d-inline-block">
-                                        <a href="javascript:;" class="p-1" data-bs-toggle="popover" data-bs-placement="top">
-                                            <svg class="action-icon cursor-pointer" width="20" height="4" viewBox="0 0 20 4" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M10 0C11.1046 0 12 0.89543 12 2C12 3.10457 11.1046 4 10 4C8.89543 4 8 3.10457 8 2C8 0.89543 8.89543 0 10 0Z" fill="#2D264B"/>
-                                                <path d="M2 -4.76837e-07C3.10457 -4.76837e-07 4 0.89543 4 2C4 3.10457 3.10457 4 2 4C0.89543 4 0 3.10457 0 2C0 0.89543 0.89543 -4.76837e-07 2 -4.76837e-07Z" fill="#2D264B"/>
-                                                <path d="M18 2.38419e-07C19.1046 2.38419e-07 20 0.895431 20 2C20 3.10457 19.1046 4 18 4C16.8954 4 16 3.10457 16 2C16 0.895431 16.8954 2.38419e-07 18 2.38419e-07Z" fill="#2D264B"/>
-                                            </svg>
-                                        </a>
+                                    <div class="d-flex align-items-center justify-content-center gap-1">
+                                        <button class="btn btn-sm btn-light rounded-3 border edit-role-btn px-2 py-1"
+                                                data-id="{{ $role->id }}"
+                                                data-name="{{ $role->name }}"
+                                                data-permissions="{{ is_array($role->permissions) ? implode(',', $role->permissions) : $role->permissions }}"
+                                                title="Edit">
+                                            <i class="fas fa-pen text-primary" style="font-size:0.75rem;"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-light rounded-3 border delete-role-btn px-2 py-1"
+                                                data-id="{{ $role->id }}"
+                                                data-name="{{ $role->name }}"
+                                                title="Delete">
+                                            <i class="fas fa-trash text-danger" style="font-size:0.75rem;"></i>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -84,396 +88,307 @@
                 </div>
             </div>
         </div>
-
     </div>
 </main>
 
-<!-- Table Action Cell -->
-<div class="popover-content" data-name="table-action-btn">
-    <div class="action-menu">
-        <ul class="action-menu-list position-relative bg-white rounded-1 p-2">
-            <li class="action-menu-item text-start">
-                <a href="javascript:;" class="action-menu-link font-dmsans fw-normal text-primary-v1 xsmall d-block p-1 edit-action" data-bs-toggle="modal" data-bs-target="#editUser" title="Edit">Edit</a>
-            </li>
-            <li class="action-menu-item text-start">
-                <a href="javascript:;" class="action-menu-link font-dmsans fw-normal text-primary-v1 xsmall d-block p-1 delete-action" data-bs-toggle="modal" data-bs-target="#deleteUser" title="Delete">Delete</a>
-            </li>
-        </ul>
-    </div>
-</div>
-
-<!-- Add role Modal -->
-<div class="modal fade" id="addUser" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="addUserLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header border-0">
-                <h1 class="modal-title fs-5 font-dmsans fw-bold text-primary-v1" id="addUserLabel">Add Role</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div id="message-container-login"></div>
-            <form action="" method="POST" id="addRoleForm">
-            <div class="modal-body">
-
-                <div class="modal-form">
-
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="form-group m-0 mb-3 pb-1">
-                                    <label for="userName" class="form-label">Name <span class="asterik">*</span></label>
-                                    <input type="text" class="form-control rounded-3" id="userName" placeholder="Enter name" name="name">
-                                </div>
-                            </div>
-
-                            <div class="col-md-12">
-                                <div class="form-group m-0 mb-3 pb-1">
-                                    <label for="userName" class="form-label">Permission <span class="asterik">*</span></label>
-                                    <select class="form-select" aria-label="User Role" name="Permissions[]"  multiple="multiple" id="Permissions">
-
-                                        @foreach ($permissions as $key => $permission)
-                                        <option value="{{ $permission->id }}">{{ $permission->name }}
-                                        </option>
-                                    @endforeach
-                                    </select>
-                                </div>
-                            </div>
-
-
-                        </div>
-
-                </div>
-            </div>
-            <div class="modal-footer border-0 justify-content-start">
-                <button type="submit" class="btn btn-primary btn-small fw-semibold text-uppercase rounded-3">Submit</button>
-                <button type="button" class="btn btn-outline btn-small fw-semibold text-uppercase rounded-3 border border-grey-v1" data-bs-dismiss="modal">Cancel</button>
-            </div>
-        </form>
-        </div>
-    </div>
-</div>
-
-
-
-<!-- Edit User Modal -->
-<div class="modal fade" id="editUser" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editUserLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header border-0">
-                <h1 class="modal-title fs-5 font-dmsans fw-bold text-primary-v1" id="editUserLabel">Edit User</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="user-profile-add position-relative pb-3 mb-4">
-                    <div class="user-profile-icon d-flex align-items-center justify-content-center mx-auto border border-grey-v1 position-relative rounded-circle">
-                        <div class="user-profile-circle w-100 h-100 position-absolute start-0 top-0 overflow-hidden rounded-circle">
-                            <img class="user-profile-pic w-100 h-100 object-fit-cover rounded-circle" src="assets/images/user.png" alt="Profile Image">
-                        </div>
-                        <div class="user-profile-add">
-                            <svg class="upload-button position-relative cursor-pointer d-none" width="32" height="29" viewBox="0 0 32 29" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M3.3238 28.3542C2.5871 28.3542 1.96354 28.099 1.45312 27.5885C0.942708 27.0781 0.6875 26.4546 0.6875 25.7179V9.11547C0.6875 8.37877 0.942708 7.75521 1.45312 7.24479C1.96354 6.73437 2.5871 6.47917 3.3238 6.47917H7.77719L9.68432 4.41234C9.92543 4.15081 10.216 3.94385 10.556 3.79146C10.8958 3.63882 11.2522 3.5625 11.625 3.5625H17.5426C17.8524 3.5625 18.1122 3.66738 18.3217 3.87713C18.5314 4.08689 18.6363 4.34672 18.6363 4.65661C18.6363 4.96675 18.5314 5.22646 18.3217 5.43573C18.1122 5.64524 17.8524 5.75 17.5426 5.75H11.4289L8.75318 8.66667H3.3238C3.1928 8.66667 3.08524 8.70871 3.00115 8.79281C2.91705 8.87691 2.875 8.98446 2.875 9.11547V25.7179C2.875 25.8489 2.91705 25.9564 3.00115 26.0405C3.08524 26.1246 3.1928 26.1667 3.3238 26.1667H25.7595C25.8905 26.1667 25.9981 26.1246 26.0822 26.0405C26.1663 25.9564 26.2083 25.8489 26.2083 25.7179V14.4158C26.2083 14.1059 26.3132 13.8462 26.523 13.6367C26.7327 13.4269 26.9926 13.322 27.3024 13.322C27.6126 13.322 27.8723 13.4269 28.0816 13.6367C28.2911 13.8462 28.3958 14.1059 28.3958 14.4158V25.7179C28.3958 26.4546 28.1406 27.0781 27.6302 27.5885C27.1198 28.099 26.4962 28.3542 25.7595 28.3542H3.3238ZM26.2083 5.75H24.3854C24.0755 5.75 23.8157 5.64512 23.6059 5.43536C23.3964 5.22561 23.2917 4.96578 23.2917 4.65588C23.2917 4.34574 23.3964 4.08604 23.6059 3.87677C23.8157 3.66726 24.0755 3.5625 24.3854 3.5625H26.2083V1.73958C26.2083 1.42969 26.3132 1.16998 26.523 0.960468C26.7327 0.750711 26.9926 0.645832 27.3024 0.645832C27.6126 0.645832 27.8723 0.750711 28.0816 0.960468C28.2911 1.16998 28.3958 1.42969 28.3958 1.73958V3.5625H30.2187C30.5286 3.5625 30.7883 3.66738 30.9979 3.87713C31.2076 4.08689 31.3125 4.34672 31.3125 4.65661C31.3125 4.96675 31.2076 5.22646 30.9979 5.43573C30.7883 5.64524 30.5286 5.75 30.2187 5.75H28.3958V7.57292C28.3958 7.88281 28.291 8.14264 28.0812 8.35239C27.8714 8.56191 27.6116 8.66667 27.3017 8.66667C26.9916 8.66667 26.7319 8.56191 26.5226 8.35239C26.3131 8.14264 26.2083 7.88281 26.2083 7.57292V5.75ZM14.5417 23.4181C16.2151 23.4181 17.6337 22.8362 18.7974 21.6724C19.9612 20.5087 20.5431 19.0901 20.5431 17.4167C20.5431 15.7432 19.9612 14.3246 18.7974 13.1609C17.6337 11.9971 16.2151 11.4153 14.5417 11.4153C12.8682 11.4153 11.4496 11.9971 10.2859 13.1609C9.12214 14.3246 8.54026 15.7432 8.54026 17.4167C8.54026 19.0901 9.12214 20.5087 10.2859 21.6724C11.4496 22.8362 12.8682 23.4181 14.5417 23.4181ZM14.5417 21.2309C13.4647 21.2309 12.5598 20.8644 11.827 20.1314C11.0939 19.3985 10.7274 18.4936 10.7274 17.4167C10.7274 16.3397 11.0939 15.4348 11.827 14.702C12.5598 13.9689 13.4647 13.6024 14.5417 13.6024C15.6186 13.6024 16.5235 13.9689 17.2564 14.702C17.9894 15.4348 18.3559 16.3397 18.3559 17.4167C18.3559 18.4936 17.9894 19.3985 17.2564 20.1314C16.5235 20.8644 15.6186 21.2309 14.5417 21.2309Z" fill="#06152B"/>
-                            </svg>
-                            <input class="file-upload" type="file" accept="image/*">
-                        </div>
-                        <div class="user-profile-delete position-absolute rounded-circle p-1 d-flex align-items-center justify-content-center cursor-pointer">
-                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#06152B">
-                                <path d="M640-520v-80h240v80H640Zm-280 40q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47ZM40-160v-112q0-34 17.5-62.5T104-378q62-31 126-46.5T360-440q66 0 130 15.5T616-378q29 15 46.5 43.5T680-272v112H40Zm80-80h480v-32q0-11-5.5-20T580-306q-54-27-109-40.5T360-360q-56 0-111 13.5T140-306q-9 5-14.5 14t-5.5 20v32Zm240-320q33 0 56.5-23.5T440-640q0-33-23.5-56.5T360-720q-33 0-56.5 23.5T280-640q0 33 23.5 56.5T360-560Zm0-80Zm0 400Z"/>
-                            </svg>
-                        </div>
+<!-- ── Add Role Modal ─────────────────────────────────────────── -->
+<div class="modal fade" id="addRoleModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="addRoleLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:520px;">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header border-0 px-4 pt-4 pb-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+                         style="width:42px;height:42px;background:#ede9fe;">
+                        <i class="fas fa-user-shield" style="color:#7c3aed;font-size:1.1rem;"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0" id="addRoleLabel">Add New Role</h5>
+                        <p class="text-muted small mb-0">Define a role and assign permissions</p>
                     </div>
                 </div>
-                <div class="modal-form">
-                    <form>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group m-0 mb-3 pb-1">
-                                    <label for="userName" class="form-label">Name <span class="asterik">*</span></label>
-                                    <input type="text" class="form-control rounded-3" id="userName" placeholder="Enter Name" value="Alex Hamilton">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group m-0 mb-3 pb-1">
-                                    <label for="userEmail" class="form-label">Email Address <span class="asterik">*</span></label>
-                                    <input type="email" class="form-control rounded-3" id="userEmail" placeholder="Enter Email" value="alexhamil123@gmail.com">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group m-0 mb-3 pb-1">
-                                    <label for="userName" class="form-label">User Role <span class="asterik">*</span></label>
-                                    <select class="form-select" aria-label="User Role">
-                                        <option disabled>Select user role</option>
-
-                                        <option value="Manager" selected>Manager</option>
-                                        <option value="Chef">Chef</option>
-                                        <option value="Waiter">Waiter</option>
-                                        <option value="Cashier">Cashier</option>
-                                        <option value="Other">Other</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group m-0 mb-3 pb-1">
-                                    <label for="userPhone" class="form-label">Phone</label>
-                                    <input type="text" class="form-control rounded-3" id="userPhone" placeholder="Enter Phone" name="phone_number">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group m-0 mb-3 pb-1">
-                                    <label for="userName" class="form-label">Chapter <span class="asterik">*</span></label>
-                                    <select class="form-select" aria-label="Chapter">
-                                        <option selected disabled>Select chapter</option>
-                                        <option value="Chapter 1" selected>Chapter 1</option>
-                                        <option value="Chapter 2">Chapter 2</option>
-                                        <option value="Chapter 3">Chapter 3</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group m-0 mb-3 pb-1">
-                                    <label for="userName" class="form-label">Company Name</label>
-                                    <select class="form-select" aria-label="Company Name">
-                                        <option selected disabled>Select company</option>
-                                        <option value="Company 1" selected>Company 1</option>
-                                        <option value="Company 2">Company 2</option>
-                                        <option value="Company 3">Company 3</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group m-0 mb-3 pb-1">
-                                    <label for="userRegistrationNumber" class="form-label">Registration</label>
-                                    <input type="text" class="form-control rounded-3" id="userRegistrationNumber" placeholder="Enter Registration number">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group m-0 mb-3 pb-1">
-                                    <label for="userName" class="form-label">Company Name</label>
-                                    <div class="d-flex align-items-center pt-0 pt-md-3">
-                                        <div class="form-check custom-radio p-0 m-0 me-3">
-                                            <input type="radio" id="active1" name="companyStatus" class="input-radio" checked>
-                                            <label for="active1" class="form-radio-label">
-                                                <span>
-                                                    <svg viewBox="0 0 12 10" height="10px" width="12px">
-                                                        <polyline points="1.5 6 4.5 9 10.5 1"></polyline>
-                                                    </svg>
-                                                </span>
-                                                <span class="font-dmsans fw-normal text-primary-v1 position-relative d-inline-block">Active</span>
-                                            </label>
-                                        </div>
-                                        <div class="form-check custom-radio p-0 m-0">
-                                            <input type="radio" id="inactive1" name="companyStatus" class="input-radio">
-                                            <label for="inactive1" class="form-radio-label">
-                                                <span>
-                                                    <svg viewBox="0 0 12 10" height="10px" width="12px">
-                                                        <polyline points="1.5 6 4.5 9 10.5 1"></polyline>
-                                                    </svg>
-                                                </span>
-                                                <span class="font-dmsans fw-normal text-primary-v1 position-relative d-inline-block">Inactive</span>
-                                            </label>
-                                        </div>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div id="addRoleMessage"></div>
+            <form id="addRoleForm">
+                @csrf
+                <div class="modal-body px-4 py-3">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Role Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control rounded-3" name="name" id="addRoleName"
+                               placeholder="e.g. Manager, Chef, Waiter…">
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold small">Permissions <span class="text-danger">*</span></label>
+                        <div class="border rounded-3 p-3" style="background:#fafafa;">
+                            <div class="row g-2">
+                                @foreach ($permissions as $permission)
+                                <div class="col-md-6">
+                                    <div class="form-check d-flex align-items-center gap-2 p-2 rounded-3 perm-check-wrap"
+                                         style="cursor:pointer;transition:background 0.15s;">
+                                        <input class="form-check-input flex-shrink-0" type="checkbox"
+                                               name="Permissions[]"
+                                               value="{{ $permission->id }}"
+                                               id="addPerm_{{ $permission->id }}">
+                                        <label class="form-check-label small fw-medium mb-0 w-100" for="addPerm_{{ $permission->id }}" style="cursor:pointer;">
+                                            <i class="fas fa-check-circle me-1" style="color:#7c3aed;font-size:0.7rem;"></i>
+                                            {{ $permission->name }}
+                                        </label>
                                     </div>
                                 </div>
+                                @endforeach
                             </div>
                         </div>
-                    </form>
-                </div>
-            </div>
-            <div class="modal-footer border-0 justify-content-start">
-                <button type="submit" class="btn btn-primary btn-small fw-semibold text-uppercase rounded-3">Submit</button>
-                <button type="button" class="btn btn-outline btn-small fw-semibold text-uppercase rounded-3 border border-grey-v1" data-bs-dismiss="modal">Cancel</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Delete User Modal -->
-<div class="modal fade" id="deleteUser" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="deleteUserLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header border-0">
-                <h1 class="modal-title fs-5 font-dmsans fw-bold text-primary-v1" id="deleteUserLabel">Delete User</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="modal-form">
-                    <div class="row">
-                        <div class="col-md-12 text-center">
-                            <p class="font-dmsans text-primary-v1 medium mb-4">Are you sure you want to delete this User?</p>
-                            <div class="footer-btns">
-                                <button type="submit" class="btn btn-primary btn-small fw-semibold text-uppercase rounded-3">Yes</button>
-                                <button type="button" class="btn btn-outline btn-small fw-semibold text-uppercase rounded-3 border border-grey-v1" data-bs-dismiss="modal">No</button>
-                            </div>
+                        <div class="d-flex gap-2 mt-2">
+                            <button type="button" class="btn btn-link p-0 small text-primary text-decoration-none" id="addSelectAll">Select all</button>
+                            <span class="text-muted small">·</span>
+                            <button type="button" class="btn btn-link p-0 small text-muted text-decoration-none" id="addClearAll">Clear</button>
                         </div>
                     </div>
                 </div>
+                <div class="modal-footer border-0 px-4 pb-4 pt-0 gap-2">
+                    <button type="button" class="btn btn-light rounded-3 px-4 border" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary rounded-3 px-4 fw-semibold" id="addRoleSubmitBtn">
+                        <i class="fas fa-save me-1"></i> Create Role
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ── Edit Role Modal ────────────────────────────────────────── -->
+<div class="modal fade" id="editRoleModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editRoleLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:520px;">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header border-0 px-4 pt-4 pb-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+                         style="width:42px;height:42px;background:#fef3c7;">
+                        <i class="fas fa-pen" style="color:#d97706;font-size:1rem;"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0" id="editRoleLabel">Edit Role</h5>
+                        <p class="text-muted small mb-0">Update role name and permissions</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-footer border-0 justify-content-start pt-0">
+            <div id="editRoleMessage"></div>
+            <form id="editRoleForm">
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="role_id" id="editRoleId">
+                <div class="modal-body px-4 py-3">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Role Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control rounded-3" name="name" id="editRoleName"
+                               placeholder="Role name">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold small">Permissions <span class="text-danger">*</span></label>
+                        <div class="border rounded-3 p-3" style="background:#fafafa;">
+                            <div class="row g-2">
+                                @foreach ($permissions as $permission)
+                                <div class="col-md-6">
+                                    <div class="form-check d-flex align-items-center gap-2 p-2 rounded-3 perm-check-wrap"
+                                         style="cursor:pointer;transition:background 0.15s;">
+                                        <input class="form-check-input flex-shrink-0" type="checkbox"
+                                               name="Permissions[]"
+                                               value="{{ $permission->id }}"
+                                               id="editPerm_{{ $permission->id }}">
+                                        <label class="form-check-label small fw-medium mb-0 w-100" for="editPerm_{{ $permission->id }}" style="cursor:pointer;">
+                                            <i class="fas fa-check-circle me-1" style="color:#d97706;font-size:0.7rem;"></i>
+                                            {{ $permission->name }}
+                                        </label>
+                                    </div>
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 mt-2">
+                            <button type="button" class="btn btn-link p-0 small text-primary text-decoration-none" id="editSelectAll">Select all</button>
+                            <span class="text-muted small">·</span>
+                            <button type="button" class="btn btn-link p-0 small text-muted text-decoration-none" id="editClearAll">Clear</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4 pt-0 gap-2">
+                    <button type="button" class="btn btn-light rounded-3 px-4 border" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning rounded-3 px-4 fw-semibold text-white" id="editRoleSubmitBtn">
+                        <i class="fas fa-save me-1"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ── Delete Role Modal ──────────────────────────────────────── -->
+<div class="modal fade" id="deleteRoleModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:400px;">
+        <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+            <div class="modal-body px-4 pt-4 pb-3 text-center">
+                <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3"
+                     style="width:60px;height:60px;background:#fee2e2;">
+                    <i class="fas fa-trash-alt" style="color:#dc2626;font-size:1.4rem;"></i>
+                </div>
+                <h5 class="fw-bold mb-1">Delete Role</h5>
+                <p class="text-muted small mb-1">You are about to delete the role:</p>
+                <p class="fw-bold text-danger mb-3" id="deleteRoleName">—</p>
+                <div class="rounded-3 px-3 py-2 small text-start mb-1" style="background:#fef2f2;color:#991b1b;">
+                    <i class="fas fa-exclamation-circle me-1"></i>
+                    Users assigned this role will lose its permissions.
+                </div>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4 pt-0 gap-2 justify-content-center">
+                <button type="button" class="btn btn-light rounded-3 px-4 border" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger rounded-3 px-4 fw-semibold" id="deleteRoleConfirmBtn">
+                    <i class="fas fa-trash me-1"></i> Delete
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-
-
-</div>
 @section('script')
-
 <script>
-   $(document).ready(function() {
+$(document).ready(function () {
 
+    // ── Checkbox hover highlight ──────────────────────────
+    $(document).on('mouseenter', '.perm-check-wrap', function () {
+        $(this).css('background', '#f5f3ff');
+    }).on('mouseleave', '.perm-check-wrap', function () {
+        $(this).css('background', '');
+    });
 
-            //Bootstrap Duallistbox
-            $('#Permissions').bootstrapDualListbox({
-                nonSelectedListLabel: 'Non-selected',
-                selectedListLabel: 'Selected',
-                preserveSelectionOnMove: 'moved',
-                moveOnSelect: false
-            });
-// To access the non-selected list container (if needed)
-var nonSelectedList = $('[id="bootstrap-duallistbox-nonselected-list_Permissions[]"]');
+    // ── Select / Clear all helpers ────────────────────────
+    $('#addSelectAll').on('click', function () { $('#addRoleModal input[type=checkbox]').prop('checked', true); });
+    $('#addClearAll').on('click',   function () { $('#addRoleModal input[type=checkbox]').prop('checked', false); });
+    $('#editSelectAll').on('click', function () { $('#editRoleModal input[type=checkbox]').prop('checked', true); });
+    $('#editClearAll').on('click',  function () { $('#editRoleModal input[type=checkbox]').prop('checked', false); });
 
-// To access the selected list container (if needed)
-var selectedList = $('[id="bootstrap-duallistbox-selected-list_Permissions[]"]');
-
-
-$('#addRoleForm').validate({
-    rules: {
-       name: {
-            required: true,
-        },
-
-       'Permissions[]': {
-            required: true,
-        },
-
-
-    },
-    messages: {
-        name: {
-            required: "Please enter your first name",
-        },
-
-        "Permissions[]": {
-            required: "Please enter permission",
-        }
-    },
-    errorElement: 'span',
-    errorPlacement: function(error, element) {
-        error.addClass('invalid-feedback');
-        element.closest('.form-group').append(error);
-    },
-    highlight: function(element) {
-        $(element).addClass('is-invalid');
-    },
-    unhighlight: function(element) {
-        $(element).removeClass('is-invalid');
-    },
-
-        submitHandler: function(form, e) {
+    // ── Add Role ──────────────────────────────────────────
+    $('#addRoleForm').on('submit', function (e) {
         e.preventDefault();
-
-        var form_data = new FormData();
-
-
-                $('#addRoleForm input').each(function(i, e) {
-                var getID = $(this).attr('id');
-                var name = $(this).attr('name');
-                form_data.append(name, $("#" + getID).val());
-                });
-
-                $('#addRoleForm select').each(function() {
-                    var $select = $(this);
-                    var name = $select.attr('name');
-
-                    if ($select.attr('multiple')) {
-                        // For multiple select (like permissions)
-                        var values = $select.val() || []; // Get array of selected values
-
-                        values.forEach(function(value) {
-                        form_data.append(name, value); // Append each value separately
-                        });
-                    } else {
-                        // For single select
-                        form_data.append(name, $select.val());
-                    }
-                });
-
-        // Set up CSRF token
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
-
-        // Make AJAX request
-        $.ajax({
-            url: "{{ route('create-role') }}", // Use form action or fallback
-            type: "POST",
-            dataType: "json",
-            data: form_data,
-            cache: false,
-            contentType: false,
-            processData: false,
-
-            beforeSend: function() {
-                $('#send_btn2').html("<i class='fa fa-spin fa-spinner'></i> Submit");
-                $('#loader').show();
-                $('#send_btn2').prop('disabled', true);
-                $('.alert-dismissible').hide(); // Hide any previous alerts
-            },
-            success: function(result) {
-                // console.log(result);
-
-                if (result.status == '200') {
-                    $('#message-container').html('<div class="alert alert-success alert-dismissible">Thank you for join us! <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>');
-
-
-                    // Redirect after a short delay
-                    setTimeout(function() {
-                        window.location.href = result.redirect || '/roles';
-                    }, 1500);
-                } else {
-                    // Show error message
-                    $('#message-container').html('<div class="alert alert-danger alert-dismissible">' + (result.message || 'An error occurred. Please try again.') + ' <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>');
-                    // Reset button
-                    $('#send_btn2').html("Register");
-                    $('#loader').hide();
-                    $('#send_btn2').prop('disabled', false);
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error(xhr.responseText);
-
-                // Handle validation errors from Laravel
-                if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
-                    var errorMessages = '';
-                    $.each(xhr.responseJSON.errors, function(field, errors) {
-                        errorMessages += errors.join('<br>') + '<br>';
-                    });
-
-                    $('.alert-dismissible').removeClass('alert-success').addClass('alert-danger');
-                    $('.alert-dismissible').html(errorMessages);
-                } else {
-                    // Generic error message
-                    $('.alert-dismissible').removeClass('alert-success').addClass('alert-danger');
-                    $('.alert-dismissible').html('An error occurred: ' + (xhr.responseJSON ? xhr.responseJSON.message : error));
-                }
-
-                $('.alert-dismissible').show();
-                $('#send_btn2').html("Register");
-                $('#loader').hide();
-                $('#send_btn2').prop('disabled', false);
-            }
-        });
-
-        return false; // Prevent default form submission
-    }
-
-
-});
-function resetForm() {
-            document.getElementById("addUserForm").reset();
-            $('#Permissions').bootstrapDualListbox('destroy');
+        var name = $('#addRoleName').val().trim();
+        if (!name) {
+            $('#addRoleName').addClass('is-invalid').next('.invalid-feedback').text('Role name is required.');
+            return;
         }
-        $('#userPhone').mask('(000) 000-0000');
+        $('#addRoleName').removeClass('is-invalid');
+
+        var $btn = $('#addRoleSubmitBtn');
+        $btn.html('<span class="spinner-border spinner-border-sm me-1"></span> Saving…').prop('disabled', true);
+
+        $.ajax({
+            url: "{{ route('create-role') }}",
+            type: 'POST',
+            data: $(this).serialize(),
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (res) {
+                if (res.status == 200) {
+                    bootstrap.Modal.getInstance(document.getElementById('addRoleModal')).hide();
+                    toastr.success('Role created successfully');
+                    setTimeout(function () { location.reload(); }, 800);
+                } else {
+                    $('#addRoleMessage').html('<div class="alert alert-danger mx-4 mt-2 py-2 small">' + (res.message || 'Something went wrong.') + '</div>');
+                }
+            },
+            error: function (xhr) {
+                var msg = xhr.responseJSON?.message || 'Request failed.';
+                $('#addRoleMessage').html('<div class="alert alert-danger mx-4 mt-2 py-2 small">' + msg + '</div>');
+            },
+            complete: function () {
+                $btn.html('<i class="fas fa-save me-1"></i> Create Role').prop('disabled', false);
+            }
+        });
+    });
+
+    // ── Open Edit modal ───────────────────────────────────
+    $(document).on('click', '.edit-role-btn', function () {
+        var id   = $(this).data('id');
+        var name = $(this).data('name');
+        var perms = String($(this).data('permissions') || '').split(',').map(s => s.trim());
+
+        $('#editRoleId').val(id);
+        $('#editRoleName').val(name);
+        $('#editRoleModal input[type=checkbox]').each(function () {
+            $(this).prop('checked', perms.includes($(this).val()));
+        });
+        $('#editRoleMessage').html('');
+        new bootstrap.Modal(document.getElementById('editRoleModal')).show();
+    });
+
+    // ── Submit Edit Role ──────────────────────────────────
+    $('#editRoleForm').on('submit', function (e) {
+        e.preventDefault();
+        var id = $('#editRoleId').val();
+        var $btn = $('#editRoleSubmitBtn');
+        $btn.html('<span class="spinner-border spinner-border-sm me-1"></span> Saving…').prop('disabled', true);
+
+        $.ajax({
+            url: '/roles/' + id,
+            type: 'POST',
+            data: $(this).serialize(),
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (res) {
+                if (res.status == 200) {
+                    bootstrap.Modal.getInstance(document.getElementById('editRoleModal')).hide();
+                    toastr.success('Role updated successfully');
+                    setTimeout(function () { location.reload(); }, 800);
+                } else {
+                    $('#editRoleMessage').html('<div class="alert alert-danger mx-4 mt-2 py-2 small">' + (res.message || 'Something went wrong.') + '</div>');
+                }
+            },
+            error: function (xhr) {
+                var msg = xhr.responseJSON?.message || 'Request failed.';
+                $('#editRoleMessage').html('<div class="alert alert-danger mx-4 mt-2 py-2 small">' + msg + '</div>');
+            },
+            complete: function () {
+                $btn.html('<i class="fas fa-save me-1"></i> Save Changes').prop('disabled', false);
+            }
+        });
+    });
+
+    // ── Open Delete modal ─────────────────────────────────
+    var deleteRoleId = null;
+    $(document).on('click', '.delete-role-btn', function () {
+        deleteRoleId = $(this).data('id');
+        $('#deleteRoleName').text($(this).data('name'));
+        new bootstrap.Modal(document.getElementById('deleteRoleModal')).show();
+    });
+
+    // ── Confirm Delete ────────────────────────────────────
+    $('#deleteRoleConfirmBtn').on('click', function () {
+        if (!deleteRoleId) return;
+        var $btn = $(this);
+        $btn.html('<span class="spinner-border spinner-border-sm me-1"></span> Deleting…').prop('disabled', true);
+
+        $.ajax({
+            url: '/roles/' + deleteRoleId,
+            type: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (res) {
+                bootstrap.Modal.getInstance(document.getElementById('deleteRoleModal')).hide();
+                toastr.success('Role deleted');
+                setTimeout(function () { location.reload(); }, 800);
+            },
+            error: function () {
+                toastr.error('Failed to delete role.');
+            },
+            complete: function () {
+                $btn.html('<i class="fas fa-trash me-1"></i> Delete').prop('disabled', false);
+            }
+        });
+    });
+
+    // ── Reset add modal on close ──────────────────────────
+    document.getElementById('addRoleModal').addEventListener('hidden.bs.modal', function () {
+        $('#addRoleForm')[0].reset();
+        $('#addRoleName').removeClass('is-invalid');
+        $('#addRoleMessage').html('');
+    });
 });
-  </script>
+</script>
 @endsection

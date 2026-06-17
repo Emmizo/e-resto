@@ -555,6 +555,17 @@ if (document.readyState === 'loading') {
 });
 // Add this to the existing JavaScript section
 $(document).ready(function() {
+    // Opening hours time picker
+    flatpickr('#restaurant_opening_hours', {
+        enableTime: true,
+        noCalendar: true,
+        dateFormat: 'H:i',
+        altInput: true,
+        altFormat: 'H:i',
+        allowInput: false,
+        time_24hr: true,
+    });
+
     // Profile picture preview
     $('#profilePicture').on('change', function(evt) {
     const [file] = this.files;

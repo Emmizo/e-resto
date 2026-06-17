@@ -6,10 +6,13 @@ jQuery(document).ready(function() {
         jQuery('body').toggleClass('sidebar-icon-only');
     });
     jQuery(document).on('click', function(e) {
-        if (!jQuery('.collapse-menu').is(e.target) && jQuery('.collapse-menu').has(e.target).length === 0) {
-            jQuery('.collapse-menu').removeClass('active');
-            jQuery('body').removeClass('sidebar-icon-only');
+        var $target = jQuery(e.target);
+        // Don't collapse when clicking the toggle button itself or any sidebar nav link
+        if ($target.closest('.collapse-menu').length || $target.closest('#sidebar').length) {
+            return;
         }
+        jQuery('.collapse-menu').removeClass('active');
+        jQuery('body').removeClass('sidebar-icon-only');
     });
 
     // DataTable Initialization and Changes

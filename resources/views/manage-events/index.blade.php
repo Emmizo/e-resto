@@ -9,10 +9,10 @@
             <div class="breadcrumb-section mb-2 mb-xl-4">
                 <ul class="breadcrumb-lists d-flex align-items-center flex-wrap">
                     <li class="breadcrumb-item position-relative">
-                        <a href="javascript:;" class="breadcrumb-link font-dmsans fw-medium xsmall text-primary-v1" title="Home">Home</a>
+                        <a href="{{ route('dashboard') }}" class="breadcrumb-link font-dmsans fw-medium xsmall text-primary-v1" title="Home">Home</a>
                     </li>
                     <li class="breadcrumb-item position-relative">
-                        <a href="javascript:;" class="breadcrumb-link font-dmsans fw-medium xsmall text-primary-v1" title="List Events - November 2024">List Events - November 2024</a>
+                        <a href="javascript:;" class="breadcrumb-link font-dmsans fw-medium xsmall text-primary-v1" title="Manage Events">Manage Events</a>
                     </li>
                 </ul>
             </div>
@@ -177,13 +177,13 @@
                             <div class="col-md-6">
                                 <div class="form-group m-0 mb-3 pb-1">
                                     <label for="eventStartDate" class="form-label">Event Start Date <span class="asterik">*</span></label>
-                                    <input type="datetime-local" class="form-control rounded-3" id="eventStartDate">
+                                    <input type="text" class="form-control rounded-3" id="eventStartDate" placeholder="dd/mm/yyyy HH:MM">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group m-0 mb-3 pb-1">
                                     <label for="eventEndDate" class="form-label">Event End Date <span class="asterik">*</span></label>
-                                    <input type="datetime-local" class="form-control rounded-3" id="eventEndDate">
+                                    <input type="text" class="form-control rounded-3" id="eventEndDate" placeholder="dd/mm/yyyy HH:MM">
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -278,3 +278,31 @@
         </div>
     </div>
 </div>
+
+@section('script')
+<script>
+$(document).ready(function() {
+    const startPicker = flatpickr('#eventStartDate', {
+        enableTime: true,
+        dateFormat: 'Y-m-d H:i',
+        altInput: true,
+        altFormat: 'd/m/Y H:i',
+        allowInput: false,
+        time_24hr: true,
+        onChange: function(selectedDates) {
+            if (selectedDates[0]) {
+                endPicker.set('minDate', selectedDates[0]);
+            }
+        }
+    });
+    const endPicker = flatpickr('#eventEndDate', {
+        enableTime: true,
+        dateFormat: 'Y-m-d H:i',
+        altInput: true,
+        altFormat: 'd/m/Y H:i',
+        allowInput: false,
+        time_24hr: true,
+    });
+});
+</script>
+@endsection

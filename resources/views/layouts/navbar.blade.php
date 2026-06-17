@@ -4,7 +4,7 @@
     <div class="header-section position-relative">
         <div class="container-fluid p-0">
             <div class="header-container d-flex align-items-center justify-content-between">
-                <div class="header-container-left">
+                <div class="header-container-left d-flex align-items-center">
                     <div class="collapse-menu me-3">
                         <button class="navbar-toggler align-self-center b-0 m-0 p-0" type="button" data-bs-toggle="sidebar">
                             <span class="hamburger-icon d-inline-block">
@@ -13,6 +13,18 @@
                                 <span></span>
                             </span>
                         </button>
+                    </div>
+                    <div class="header-restaurant-name">
+                        @if(auth()->user()->role === 'admin')
+                            <a href="{{ route('dashboard') }}" class="text-decoration-none fw-bold text-primary font-dmsans" style="font-size:0.95rem;">
+                                <i class="fas fa-tachometer-alt me-1"></i> Admin Panel
+                            </a>
+                        @else
+                            <a href="{{ route('dashboard') }}" class="text-decoration-none fw-bold text-primary font-dmsans" style="font-size:0.95rem;">
+                                <i class="fas fa-store-alt me-1"></i>
+                                {{ session('userData')['users']->restaurant_name ?? Auth::user()->first_name }}
+                            </a>
+                        @endif
                     </div>
                 </div>
                 <div class="header-container-right d-flex align-items-center">
@@ -64,7 +76,13 @@
                         <div class="user-profile-details d-flex align-items-center pe-3 pe-sm-4" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false" role="button">
                             <div class="user-image me-2">
                                 <figure class="m-0">
-                                    <img src="{{ !empty(Auth::user()->profile_picture) ? URL::asset(Auth::user()->profile_picture) : asset('/users_pic/1114160.png') }}" alt="Profile Image" width="38" height="38" class="img-fluid rounded-3">
+                                    @if(!empty(Auth::user()->profile_picture))
+                                    <img src="{{ asset(Auth::user()->profile_picture) }}" alt="Profile" width="38" height="38" class="img-fluid rounded-3 object-fit-cover">
+                                @else
+                                    <div class="d-flex align-items-center justify-content-center rounded-3" style="width:38px;height:38px;background:#ede9fe;">
+                                        <i class="fas fa-user" style="color:#7c3aed;font-size:1rem;"></i>
+                                    </div>
+                                @endif
                                 </figure>
                             </div>
                             <div class="user-details ps-1">
