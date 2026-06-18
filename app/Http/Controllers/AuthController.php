@@ -63,26 +63,27 @@ class AuthController extends Controller
     public function signUp(Request $request)
     {
         // Validate user data
+        $isRestaurantOwner = $request->input('role') === 'restaurant_owner';
+
         $validator = Validator::make($request->all(), [
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'phone_number' => 'required|string|max:20',
-            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'fcm_token' => 'nullable|string|min:152|max:200',  // Add FCM token validation
-            // Restaurant validation
-            'restaurant_name' => 'required|string|max:255',
-            'restaurant_description' => 'required|string',
-            'restaurant_address' => 'required|string',
-            'restaurant_longitude' => 'nullable|numeric',
-            'restaurant_latitude' => 'nullable|numeric',
-            'restaurant_phone_number' => 'required|string|max:20',
-            'restaurant_email' => 'required|email|max:255',
-            'restaurant_website' => 'nullable|url',
+            'first_name'               => 'required|string|max:255',
+            'last_name'                => 'required|string|max:255',
+            'email'                    => 'required|string|email|max:255|unique:users',
+            'phone_number'             => 'required|string|max:20',
+            'profile_picture'          => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'fcm_token'                => 'nullable|string|min:152|max:200',
+            'restaurant_name'          => $isRestaurantOwner ? 'required|string|max:255'       : 'nullable|string|max:255',
+            'restaurant_description'   => $isRestaurantOwner ? 'required|string'               : 'nullable|string',
+            'restaurant_address'       => $isRestaurantOwner ? 'required|string'               : 'nullable|string',
+            'restaurant_longitude'     => 'nullable|numeric',
+            'restaurant_latitude'      => 'nullable|numeric',
+            'restaurant_phone_number'  => $isRestaurantOwner ? 'required|string|max:20'        : 'nullable|string|max:20',
+            'restaurant_email'         => $isRestaurantOwner ? 'required|email|max:255'        : 'nullable|email|max:255',
+            'restaurant_website'       => 'nullable|url',
             'restaurant_opening_hours' => 'nullable|string',
-            'restaurant_cuisine_id' => 'required|exists:cuisines,id',
-            'restaurant_price_range' => 'required|string',
-            'restaurant_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'restaurant_cuisine_id'    => $isRestaurantOwner ? 'required|exists:cuisines,id'   : 'nullable|exists:cuisines,id',
+            'restaurant_price_range'   => $isRestaurantOwner ? 'required|string'               : 'nullable|string',
+            'restaurant_image'         => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -96,7 +97,8 @@ class AuthController extends Controller
         $password = Str::random(8);
         $encryptpassword = Hash::make($password);
         $profilePicturePath = $this->handleProfilePicture($request);
-        $restaurantImagePath = $this->handleRestaurantImage($request);
+
+        $role = $isRestaurantOwner ? 'restaurant_owner' : 'client';
 
         // Create the user
         $user = User::create([
@@ -104,45 +106,41 @@ class AuthController extends Controller
             'last_name' => $request->last_name,
             'email' => $request->email,
             'password' => $encryptpassword,
-            'role' => 'restaurant_owner',
+            'role' => $role,
             'phone_number' => $request->phone_number,
             'profile_picture' => $profilePicturePath,
             'preferences' => json_encode([]),
-            'fcm_token' => $request->fcm_token,  // Add FCM token
+            'fcm_token' => $request->fcm_token,
         ]);
 
-        // Create the restaurant
-        Restaurant::create([
-            'name' => $request->restaurant_name,
-            'description' => $request->restaurant_description,
-            'address' => $request->restaurant_address,
-            'longitude' => $request->restaurant_longitude,
-            'latitude' => $request->restaurant_latitude,
-            'phone_number' => $request->restaurant_phone_number,
-            'email' => $request->restaurant_email,
-            'website' => $request->restaurant_website,
-            'opening_hours' => $request->restaurant_opening_hours,
-            'cuisine_type' => '',  // Deprecated, keep for now
-            'cuisine_id' => $request->restaurant_cuisine_id,
-            'price_range' => $request->restaurant_price_range,
-            'image' => config('app.url') . '/' . $restaurantImagePath,
-            'owner_id' => $user->id,
-            'is_approved' => false,
-        ]);
+        // Create the restaurant only for restaurant owners
+        if ($isRestaurantOwner) {
+            $restaurantImagePath = $this->handleRestaurantImage($request);
+            Restaurant::create([
+                'name' => $request->restaurant_name,
+                'description' => $request->restaurant_description,
+                'address' => $request->restaurant_address,
+                'longitude' => $request->restaurant_longitude,
+                'latitude' => $request->restaurant_latitude,
+                'phone_number' => $request->restaurant_phone_number,
+                'email' => $request->restaurant_email,
+                'website' => $request->restaurant_website,
+                'opening_hours' => $request->restaurant_opening_hours,
+                'cuisine_type' => '',
+                'cuisine_id' => $request->restaurant_cuisine_id,
+                'price_range' => $request->restaurant_price_range,
+                'image' => config('app.url') . '/' . $restaurantImagePath,
+                'owner_id' => $user->id,
+                'is_approved' => false,
+            ]);
+        }
 
         event(new NewUserCreatedEvent($user, $password));
-        auth()->login($user);
 
         return response()->json([
-            'msg' => 'success',
-            'status' => 201,
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->first_name . ' ' . $user->last_name,
-                'email' => $user->email,
-                'fcm_token' => $user->fcm_token
-            ]
-        ], 201);
+            'status' => 202,
+            'message' => 'Account created! Please check your email to verify your account before logging in.',
+        ], 202);
     }
 
     /**
@@ -204,6 +202,17 @@ class AuthController extends Controller
             if (Auth::attempt($credentials)) {
                 $user = Auth::user();
 
+                // Block unverified accounts
+                if (is_null($user->email_verified_at)) {
+                    Auth::logout();
+                    return response()->json([
+                        'status' => 403,
+                        'msg'    => 'Please verify your email address before logging in.',
+                        'email'  => $user->email,
+                        'unverified' => true,
+                    ], 403);
+                }
+
                 if ($user->status == 1 || $user->role != 'client') {
                     // Update FCM token if provided
                     if ($request->has('fcm_token')) {
@@ -211,9 +220,15 @@ class AuthController extends Controller
                         $user->save();
                     }
 
+                    $default  = ($user->role === 'client' || $user->role === 'Client')
+                        ? route('client.restaurants')
+                        : route('dashboard');
+                    $redirect = session()->pull('url.intended', $default);
+
                     return response()->json([
                         'msg' => 'success',
                         'status' => 201,
+                        'redirect' => $redirect,
                         'user' => [
                             'id' => $user->id,
                             'name' => $user->first_name . ' ' . $user->last_name,
@@ -297,9 +312,9 @@ class AuthController extends Controller
                 $request->only('email', 'password', 'password_confirmation', 'token'),
                 function ($user) use ($request) {
                     $user->forceFill([
-                        // 'account_verified'=>1,
                         'password' => \Hash::make($request->password),
                         'remember_token' => \Str::random(60),
+                        'email_verified_at' => $user->email_verified_at ?? now(),
                     ])->save();
                     event(new PasswordReset($user));
                 }
@@ -392,6 +407,56 @@ class AuthController extends Controller
      * @return \Illuminate\View\View|\Illuminate\Routing\Redirector
      * @author Caritasi:Kwizera
      */
+    public function checkEmailTaken(Request $request)
+    {
+        $validator = Validator::make($request->all(), ['email' => 'required|email', 'type' => 'required|in:user,restaurant']);
+        if ($validator->fails()) {
+            return response()->json(['taken' => false, 'message' => 'Please enter a valid email address.']);
+        }
+
+        if ($request->type === 'restaurant') {
+            $restaurant = \App\Models\Restaurant::where('email', $request->email)->first();
+            if ($restaurant) {
+                return response()->json([
+                    'taken'   => true,
+                    'message' => 'This email is already used by restaurant "' . $restaurant->name . '".',
+                ]);
+            }
+        } else {
+            $user = User::where('email', $request->email)->first();
+            if ($user) {
+                $fullName = trim($user->first_name . ' ' . $user->last_name);
+                if ($user->role === 'restaurant_owner') {
+                    $restaurant = \App\Models\Restaurant::where('owner_id', $user->id)->first();
+                    $detail = $restaurant ? ' (owner of "' . $restaurant->name . '")' : ' (restaurant owner)';
+                } elseif ($user->role === 'client') {
+                    $detail = ' (client)';
+                } else {
+                    $detail = '';
+                }
+                return response()->json([
+                    'taken'   => true,
+                    'message' => 'This email is already registered to ' . $fullName . $detail . '.',
+                ]);
+            }
+        }
+
+        return response()->json(['taken' => false, 'message' => '']);
+    }
+
+    public function checkEmailExists(Request $request)
+    {
+        $validator = Validator::make($request->all(), ['email' => 'required|email']);
+        if ($validator->fails()) {
+            return response()->json(['exists' => false, 'message' => 'Please enter a valid email address.']);
+        }
+        $exists = User::where('email', $request->email)->exists();
+        return response()->json([
+            'exists' => $exists,
+            'message' => $exists ? '' : 'No account found with that email address.',
+        ]);
+    }
+
     public function store(Request $request)
     {
         try {
@@ -410,10 +475,9 @@ class AuthController extends Controller
             $user = User::where('email', $email)->first();
             if ($user == null) {
                 return response()->json([
-                    'status' => 422,  // Validation error status code
-                    'errors' => $validator->errors(),  // Validation errors
-                    'message' => 'Validation failed. Please check your input.',  // Optional message
-                ], 422);
+                    'status' => 404,
+                    'message' => 'No account found with that email address.',
+                ], 404);
             }
             event(new ResetPasswordEvent($email));
             return response()->json(['msg' => 'success reset link sent', 'status' => 201], 201);
@@ -450,5 +514,27 @@ class AuthController extends Controller
         $user->save();
 
         return redirect()->back()->with('success', 'Password changed successfully!');
+    }
+
+    public function resendVerification(Request $request)
+    {
+        $validator = Validator::make($request->all(), ['email' => 'required|email']);
+        if ($validator->fails()) {
+            return response()->json(['status' => 422, 'message' => 'Invalid email address.'], 422);
+        }
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response()->json(['status' => 404, 'message' => 'No account found with that email.'], 404);
+        }
+
+        if ($user->email_verified_at) {
+            return response()->json(['status' => 409, 'message' => 'This account is already verified.'], 409);
+        }
+
+        event(new NewUserCreatedEvent($user, null));
+
+        return response()->json(['status' => 200, 'message' => 'Verification email resent. Please check your inbox.']);
     }
 }

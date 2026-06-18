@@ -106,7 +106,17 @@ class ReservationController extends Controller
      */
     public function show($id)
     {
+        $user        = auth()->user();
         $reservation = \App\Models\Reservation::with(['user', 'restaurant'])->findOrFail($id);
+
+        // Clients can only see their own reservations
+        if ($user->role === 'client' || $user->role === 'Client') {
+            if ($reservation->user_id !== $user->id) {
+                abort(403);
+            }
+            return view('client.reservation-detail', compact('reservation'));
+        }
+
         return view('manage-reservations.show', compact('reservation'));
     }
 }

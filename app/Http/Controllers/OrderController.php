@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Events\OrderCreated;
+use App\Events\OrderStatusChanged;
 use App\Mail\NewOrderNotification;
 use App\Mail\OrderStatusUpdated;
+use App\Models\Notification;
 use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -135,8 +137,16 @@ class OrderController extends Controller
      */
     public function show(string $id)
     {
-        $order = Order::with(['user', 'restaurant', 'orderItems.menuItem'])
-            ->findOrFail($id);
+        $user  = auth()->user();
+        $order = Order::with(['user', 'restaurant', 'orderItems.menuItem'])->findOrFail($id);
+
+        // Clients can only see their own orders
+        if ($user->role === 'client' || $user->role === 'Client') {
+            if ($order->user_id !== $user->id) {
+                abort(403);
+            }
+            return view('client.order-detail', compact('order'));
+        }
 
         return view('manage-orders.show', compact('order'));
     }
@@ -218,7 +228,7 @@ class OrderController extends Controller
      */
     public function updateStatus(Request $request, $orderId)
     {
-        $order = Order::findOrFail($orderId);
+        $order = Order::with(['restaurant', 'user'])->findOrFail($orderId);
         $oldStatus = $order->status;
         $order->status = $request->status;
         $order->save();
@@ -240,6 +250,19 @@ class OrderController extends Controller
 
         // Send notifications if status changed
         if ($oldStatus !== $order->status) {
+            // Broadcast real-time status update to client
+            event(new OrderStatusChanged($order));
+
+            // Store DB notification for client
+            Notification::create([
+                'user_id'       => $order->user_id,
+                'restaurant_id' => $order->restaurant_id,
+                'title'         => 'Order #' . $order->id . ' ' . ucfirst($order->status),
+                'body'          => 'Your order at ' . ($order->restaurant->name ?? 'the restaurant') . ' is now ' . ucfirst($order->status) . '.',
+                'data'          => ['type' => 'order_status', 'order_id' => $order->id, 'status' => $order->status],
+                'is_read'       => false,
+            ]);
+
             // Send email notification
             if ($user && $user->email) {
                 try {

@@ -109,10 +109,14 @@ Route::group([
     Route::put('/orders/{order}/status-update', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
 });
 
-// Reservation Management Routes
+// Reservation detail — accessible by any authenticated user (client or owner)
+Route::middleware(['auth', 'nocache'])->group(function () {
+    Route::get('/reservations/{reservation}', [ReservationController::class, 'show'])->name('reservations.show');
+});
+
+// Reservation Management Routes (owner/admin only)
 Route::middleware(['auth', 'nocache', 'restaurant.permission:Reservation_Management'])->group(function () {
     Route::get('/reservations', [ReservationController::class, 'index'])->name('reservations.index');
-    Route::get('/reservations/{reservation}', [ReservationController::class, 'show'])->name('reservations.show');
     Route::put('/reservations/{reservation}', [ReservationController::class, 'update'])->name('reservations.update');
     Route::delete('/reservations/{reservation}', [ReservationController::class, 'destroy'])->name('reservations.destroy');
 });
