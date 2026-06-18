@@ -23,6 +23,12 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
+
+        // Clients go to the restaurant browse portal, not the admin dashboard
+        if ($user->role === 'client' || $user->role === 'Client') {
+            return redirect()->route('client.restaurants');
+        }
+
         $isAdmin = $user->role === 'admin';
         // For non-admin users, use restaurant_id. Use -1 (matches nothing) if not set,
         // so queries never fall through to showing all-restaurant data.

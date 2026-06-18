@@ -276,9 +276,10 @@ class UserController extends Controller
     public function editProfile()
     {
         $user = \Auth::user();
-        $id = $user->id;
-        $info = User::find($id);
-        return view('manage-users.updateProfile', compact('info'));
+        $info = User::find($user->id);
+        $isClient = in_array($user->role, ['client', 'Client']);
+        $layout = $isClient ? 'layouts.client' : 'layouts.app';
+        return view('manage-users.updateProfile', compact('info', 'layout', 'isClient'));
     }
 
     public function updateProfile(Request $request)

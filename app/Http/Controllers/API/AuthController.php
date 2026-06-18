@@ -146,9 +146,8 @@ class AuthController extends Controller
                 'timezone' => $request->timezone,
             ]);
 
-            // Send welcome email with credentials (pass user object)
-            $user->plain_password = $plainPassword;  // for the email template
-            \Mail::to($user->email)->send(new \App\Mail\UserRegistered('Welcome to RestoFinder', $user));
+            // Send welcome email with credentials via the same event as the web path
+            event(new \App\Events\NewUserCreatedEvent($user, $plainPassword));
 
             // Create access token
             $token = $user->createToken('auth_token')->accessToken;

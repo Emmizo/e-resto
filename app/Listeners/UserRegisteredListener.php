@@ -27,17 +27,16 @@ class UserRegisteredListener
      */
     public function handle(NewUserCreatedEvent $event): void
     {
-        $info = $event->user;
-        $info['plain_password'] = $event->plain_password;
+        $user = User::where('email', $event->user->email)->first();
+        if (!$user) return;
 
-        $info['manage_user_link'] = route('manage-users');
-        $mail = $info['email'];
-        $mails = array($mail);
+        $user->plain_password    = $event->plain_password;
+        $user->manage_user_link  = route('manage-users');
 
-        // password reset mail
-        $subject = 'User Created Successfully';
-        $token = app(PasswordBroker::class)->createToken(User::where('email', $mail)->first());
-        $info['tokenUrl'] = url('/reset-password/' . $token . '?email=' . $mail);
-        Mail::to($mails)->send(new UserRegistered($subject, $info));
+        $token = app(PasswordBroker::class)->createToken($user);
+        $user->tokenUrl = url('/reset-password/' . $token . '?email=' . urlencode($user->email));
+
+        $subject = 'Verify your RestoFinder account';
+        Mail::to($user->email)->send(new UserRegistered($subject, $user));
     }
 }

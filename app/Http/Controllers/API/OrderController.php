@@ -252,35 +252,45 @@ class OrderController extends Controller
 
             // Calculate total amount
             $totalAmount = 0;
+            $menuItemsMap = [];
             foreach ($request->items as $item) {
                 $menuItem = MenuItem::findOrFail($item['menu_item_id']);
+                if ($menuItem->track_inventory && $menuItem->stock_quantity !== null
+                    && $menuItem->stock_quantity < $item['quantity']) {
+                    DB::rollBack();
+                    return response()->json([
+                        'status' => 422,
+                        'message' => "Sorry, only {$menuItem->stock_quantity} of \"{$menuItem->name}\" left in stock.",
+                    ], 422);
+                }
                 $totalAmount += $menuItem->price * $item['quantity'];
+                $menuItemsMap[$item['menu_item_id']] = $menuItem;
             }
 
             $user = auth()->user();
 
             // Create order
             $order = Order::create([
-                'user_id' => $user->id,
-                'restaurant_id' => $request->restaurant_id,
-                'total_amount' => $totalAmount,
-                'status' => 'pending',
-                'payment_status' => 'pending',
-                'delivery_address' => $request->delivery_address,
+                'user_id'              => $user->id,
+                'restaurant_id'        => $request->restaurant_id,
+                'total_amount'         => $totalAmount,
+                'status'               => 'pending',
+                'payment_status'       => 'pending',
+                'delivery_address'     => $request->delivery_address,
                 'special_instructions' => $request->special_instructions,
-                'order_type' => $request->order_type,
+                'order_type'           => $request->order_type,
             ]);
 
-            // Create order items
+            // Create order items and deduct inventory
             foreach ($request->items as $item) {
-                $menuItem = MenuItem::findOrFail($item['menu_item_id']);
+                $menuItem = $menuItemsMap[$item['menu_item_id']];
                 OrderItem::create([
-                    'order_id' => $order->id,
+                    'order_id'     => $order->id,
                     'menu_item_id' => $item['menu_item_id'],
-                    'quantity' => $item['quantity'],
-                    'dietary_info' => $item['dietary_info'] ?? null,
-                    'price' => $menuItem->price
+                    'quantity'     => $item['quantity'],
+                    'price'        => $menuItem->price * $item['quantity'],
                 ]);
+                $menuItem->deductStock($item['quantity']);
             }
 
             // Broadcast the order created event

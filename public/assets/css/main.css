@@ -191,16 +191,12 @@ select:focus {
     outline: none;
 }
 ::selection {
-    background-color: var(--secondary);
-    color: var(--white);
+    background-color: #3B82F6;
+    color: #ffffff;
 }
 ::-moz-selection {
-    background-color: var(--secondary);
-    color: var(--white);
-}
-::-webkit-selection {
-    background-color: var(--secondary);
-    color: var(--white);
+    background-color: #3B82F6;
+    color: #ffffff;
 }
 .form-control::-webkit-input-placeholder {
     color: var(--black);

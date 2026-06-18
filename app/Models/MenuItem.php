@@ -23,18 +23,39 @@ class MenuItem extends Model
         'category',
         'dietary_info',
         'is_available',
+        'stock_quantity',
+        'total_sold',
+        'track_inventory',
     ];
 
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array
-     */
     protected $casts = [
-        'price' => 'decimal:2',  // Cast price to a decimal with 2 decimal places
-        'dietary_info' => 'array',  // Cast JSON field to array
-        'is_available' => 'boolean',  // Cast boolean field
+        'price'           => 'decimal:2',
+        'dietary_info'    => 'array',
+        'is_available'    => 'boolean',
+        'track_inventory' => 'boolean',
     ];
+
+    /** Returns true when the item can still be ordered */
+    public function isInStock(): bool
+    {
+        if (!$this->track_inventory) return true;
+        return $this->stock_quantity === null || $this->stock_quantity > 0;
+    }
+
+    /** Deduct quantity sold and auto-disable when stock hits 0 */
+    public function deductStock(int $qty): void
+    {
+        if (!$this->track_inventory) return;
+        $this->increment('total_sold', $qty);
+        if ($this->stock_quantity !== null) {
+            $newStock = max(0, $this->stock_quantity - $qty);
+            $this->stock_quantity = $newStock;
+            if ($newStock === 0) {
+                $this->is_available = false;
+            }
+            $this->save();
+        }
+    }
 
     /**
      * Get the menu associated with this menu item.

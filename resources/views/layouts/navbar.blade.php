@@ -132,3 +132,89 @@
         </div>
     </div>
 </header>
+
+{{-- ── Real-time Pusher notifications for restaurant owner / admin ── --}}
+@if(auth()->check() && in_array(auth()->user()->role, ['restaurant_owner', 'admin']))
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof window.Echo === 'undefined') return;
+
+    var notifBadge  = document.querySelector('.notification-badge');
+    var notifList   = document.querySelector('.notification-list');
+    var orderBadge  = document.querySelector('.order-badge');
+    var orderList   = document.querySelector('.order-list');
+    var notifCount  = 0;
+    var orderCount  = 0;
+
+    // ── Helper: prepend a notification item ────────────────
+    function prependNotif(icon, iconColor, title, body, time) {
+        notifCount++;
+        if (notifBadge) {
+            notifBadge.style.display = 'flex';
+            notifBadge.textContent   = notifCount;
+        }
+        var el = document.createElement('li');
+        el.className = 'px-3 py-2 border-bottom notif-item';
+        el.innerHTML = '<div class="d-flex align-items-start gap-2">'
+            + '<span class="mt-1 flex-shrink-0" style="color:' + iconColor + ';font-size:1rem;">' + icon + '</span>'
+            + '<div style="flex:1;min-width:0;">'
+            + '<div class="fw-semibold text-dark" style="font-size:.82rem;">' + title + '</div>'
+            + '<div class="text-muted text-truncate" style="font-size:.75rem;">' + body + '</div>'
+            + '<div class="text-muted" style="font-size:.68rem;">' + time + '</div>'
+            + '</div></div>';
+        if (notifList) notifList.insertBefore(el, notifList.firstChild);
+
+        // Browser push notification
+        if (Notification && Notification.permission === 'granted') {
+            new Notification(title, { body: body, icon: '/assets/images/logo.png' });
+        }
+    }
+
+    function prependOrder(order) {
+        orderCount++;
+        if (orderBadge) {
+            orderBadge.style.display = 'flex';
+            orderBadge.textContent   = orderCount;
+        }
+        var total = parseFloat(order.total_amount).toLocaleString('en-RW');
+        var el = document.createElement('li');
+        el.className = 'px-3 py-2 border-bottom';
+        el.innerHTML = '<div class="d-flex justify-content-between align-items-start">'
+            + '<div>'
+            + '<div class="fw-semibold text-dark" style="font-size:.82rem;">Order #' + order.id + '</div>'
+            + '<div class="text-muted" style="font-size:.75rem;">' + (order.customer?.name || 'Customer') + ' · ' + order.order_type + '</div>'
+            + '</div>'
+            + '<span class="badge bg-warning rounded-pill ms-2" style="font-size:.7rem;">RWF ' + total + '</span>'
+            + '</div>';
+        if (orderList) orderList.insertBefore(el, orderList.firstChild);
+    }
+
+    // Request browser notification permission
+    if (Notification && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+
+    // ── Listen on private owner channel ────────────────────
+    var userId = {{ auth()->id() }};
+    window.Echo.private('owner.' + userId)
+        .listen('OrderCreated', function (e) {
+            var o = e.order;
+            prependOrder(o);
+            prependNotif('🛒', '#f59e0b',
+                'New Order #' + o.id,
+                (o.customer?.name || 'Customer') + ' — RWF ' + parseFloat(o.total_amount).toLocaleString(),
+                'Just now'
+            );
+        })
+        .listen('ReservationCreated', function (e) {
+            var r = e.reservation;
+            var dt = r.reservation_time ? new Date(r.reservation_time).toLocaleString() : '';
+            prependNotif('📅', '#6366f1',
+                'New Reservation',
+                (r.customer?.name || 'Customer') + ' for ' + r.number_of_people + ' — ' + dt,
+                'Just now'
+            );
+        });
+});
+</script>
+@endif

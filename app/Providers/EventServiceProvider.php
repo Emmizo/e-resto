@@ -2,57 +2,35 @@
 
 namespace App\Providers;
 
+use App\Events\NewUserCreatedEvent;
+use App\Events\ResetCreateEvent;
+use App\Events\ResetPasswordEvent;
+use App\Events\WelcomeEmailEvent;
+use App\Listeners\ResetListener;
+use App\Listeners\ResetPasswordListener;
+use App\Listeners\UserRegisteredListener;
+use App\Listeners\WelcomeEmailListener;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
-use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Illuminate\Foundation\Support\Providers\EventServiceProvider as BaseEventServiceProvider;
 use Illuminate\Support\Facades\Event;
-
-
+use Illuminate\Support\ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
 {
-    /**
-     * The event to listener mappings for the application.
-     *
-     * @var array<class-string, array<int, class-string>>
-     */
-    protected $listen = [
-        Registered::class => [
-            SendEmailVerificationNotification::class,
-        ],
-        'App\Events\ResetPasswordEvent' => [
-            'App\Listeners\ResetPasswordListener',
-        ],
-        'App\Events\UserRegisteredEvent' => [
-            'App\Listeners\UserRegisteredListener',
-        ],
-        'App\Events\ResetCreateEvent' => [
-            'App\Listeners\ResetListener',
-        ],
-        'App\Events\WelcomeEmailEvent' => [
-            'App\Listeners\WelcomeEmailListener',
-        ],
-
-    ];
-
-    /**
-     * Register any events for your application.
-     *
-     * @return void
-     */
-    public function boot()
+    public function register(): void
     {
-        //
-        parent::boot();
+        // Disable auto-discovery to prevent the base EventServiceProvider
+        // from scanning app/Listeners and double-registering all listeners.
+        BaseEventServiceProvider::disableEventDiscovery();
     }
 
-    /**
-     * Determine if events and listeners should be automatically discovered.
-     *
-     * @return bool
-     */
-    public function shouldDiscoverEvents()
+    public function boot(): void
     {
-        return false;
+        Event::listen(Registered::class, SendEmailVerificationNotification::class);
+        Event::listen(ResetPasswordEvent::class, [ResetPasswordListener::class, 'handle']);
+        Event::listen(NewUserCreatedEvent::class, [UserRegisteredListener::class, 'handle']);
+        Event::listen(ResetCreateEvent::class, [ResetListener::class, 'handle']);
+        Event::listen(WelcomeEmailEvent::class, [WelcomeEmailListener::class, 'handle']);
     }
 }
