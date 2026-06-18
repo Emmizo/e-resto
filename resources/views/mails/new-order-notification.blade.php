@@ -27,9 +27,9 @@
 <body>
     <div class="mail-container">
         <div class="header">
-            <img src="{{ asset('assets/images/logo.png') }}" alt="Platform Logo" class="logo">
+            <img src="{{ url(asset('assets/images/logo.png')) }}" alt="Platform Logo" class="logo">
             @if(isset($restaurant_image) && $restaurant_image)
-                <img src="{{ $restaurant_image }}" alt="{{ $restaurant_name }} Logo" class="restaurant-logo">
+                <img src="{{ url($restaurant_image) }}" alt="{{ $restaurant_name }} Logo" class="restaurant-logo">
             @endif
             <div class="heading">New Order Received</div>
             <div class="subheading">{{ $restaurant_name ?? config('app.name') }}</div>

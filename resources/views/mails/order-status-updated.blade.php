@@ -25,9 +25,9 @@
 <body>
     <div class="mail-container">
         <div class="header">
-            <img src="{{ asset('assets/images/logo.png') }}" alt="Platform Logo" class="logo">
+            <img src="{{ url(asset('assets/images/logo.png')) }}" alt="Platform Logo" class="logo">
             @if($order->restaurant && $order->restaurant->image)
-                <img src="{{ $order->restaurant->image }}" alt="{{ $order->restaurant->name }} Logo" class="restaurant-logo">
+                <img src="{{ url($order->restaurant->image) }}" alt="{{ $order->restaurant->name }} Logo" class="restaurant-logo">
             @endif
             <div class="heading">Order Status Update</div>
             <div class="subheading">{{ $order->restaurant->name ?? config('app.name') }}</div>
@@ -45,7 +45,7 @@
                     <div><strong>Special Instructions:</strong> {{ $order->special_instructions }}</div>
                 @endif
             </div>
-            <a href="{{ url('/dashboard/orders/'.$order->id) }}" class="cta-btn">View Order</a>
+            <a href="{{ route('orders.show', $order->id) }}" class="cta-btn">View Order</a>
             <hr class="divider">
             <div class="desc">Thank you for your order!</div>
         </div>

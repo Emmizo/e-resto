@@ -25,9 +25,9 @@
 <body>
     <div class="mail-container">
         <div class="header">
-            <img src="{{ asset('assets/images/logo.png') }}" alt="Platform Logo" class="logo">
+            <img src="{{ url(asset('assets/images/logo.png')) }}" alt="Platform Logo" class="logo">
             @if($reservation->restaurant && $reservation->restaurant->image)
-                <img src="{{ $reservation->restaurant->image }}" alt="{{ $reservation->restaurant->name }} Logo" class="restaurant-logo">
+                <img src="{{ url($reservation->restaurant->image) }}" alt="{{ $reservation->restaurant->name }} Logo" class="restaurant-logo">
             @endif
             <div class="heading">Reservation Status Update</div>
             <div class="subheading">{{ $reservation->restaurant->name ?? config('app.name') }}</div>
@@ -45,7 +45,7 @@
                     <div><strong>Special Requests:</strong> {{ $reservation->special_requests }}</div>
                 @endif
             </div>
-            <a href="{{ url('/dashboard/reservations/'.$reservation->id) }}" class="cta-btn">View Reservation</a>
+            <a href="{{ route('reservations.show', $reservation->id) }}" class="cta-btn">View Reservation</a>
             <hr class="divider">
             <div class="desc">Thank you for choosing us!</div>
         </div>

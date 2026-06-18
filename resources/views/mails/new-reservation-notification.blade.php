@@ -25,9 +25,9 @@
 <body>
     <div class="mail-container">
         <div class="header">
-            <img src="{{ asset('assets/images/logo.png') }}" alt="Platform Logo" class="logo">
+            <img src="{{ url(asset('assets/images/logo.png')) }}" alt="Platform Logo" class="logo">
             @if($reservation->restaurant && $reservation->restaurant->image)
-                <img src="{{ $reservation->restaurant->image }}" alt="{{ $reservation->restaurant->name }} Logo" class="restaurant-logo">
+                <img src="{{ url($reservation->restaurant->image) }}" alt="{{ $reservation->restaurant->name }} Logo" class="restaurant-logo">
             @endif
             <div class="heading">New Reservation Received</div>
             <div class="subheading">{{ $reservation->restaurant->name ?? config('app.name') }}</div>
