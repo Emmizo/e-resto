@@ -27,7 +27,7 @@ class ReservationController extends Controller
             ->join('users', 'reservations.user_id', '=', 'users.id')
             ->join('restaurants', 'reservations.restaurant_id', '=', 'restaurants.id')
             ->when(!$isAdmin, fn($q) => $q->where('reservations.restaurant_id', $restaurantId))
-            ->orderByRaw("FIELD(reservations.status, 'pending', 'confirmed', 'cancelled', 'completed')")
+            ->orderByRaw("FIELD(reservations.status, 'pending', 'confirmed', 'completed', 'cancelled')")
             ->orderBy('reservations.reservation_time', 'asc')
             ->get();
         return view('manage-reservations.index', compact('reservations', 'isAdmin'));
