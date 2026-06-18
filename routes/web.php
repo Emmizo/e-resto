@@ -3,6 +3,7 @@
 use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\AdminTermsAndConditionsController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventsController;
 use App\Http\Controllers\FirebaseController;
@@ -41,6 +42,9 @@ Route::post('/signup', [AuthController::class, 'signUp'])->name('signup');
 Route::get('/forgot-password', [AuthController::class, 'forgot'])->name('forgot-password');
 Route::post('/welcome', [AuthController::class, 'welcomeEmail'])->name('welcome-post');
 Route::post('/forgot-password', [AuthController::class, 'store'])->name('forgot-password-post');
+Route::post('/check-email-exists', [AuthController::class, 'checkEmailExists'])->name('check-email-exists');
+Route::post('/check-email-taken', [AuthController::class, 'checkEmailTaken'])->name('check-email-taken');
+Route::post('/resend-verification', [AuthController::class, 'resendVerification'])->name('resend-verification');
 Route::get('/reset-password/{token}', [AuthController::class, 'viewReset'])->name('reset-password');
 Route::get('/reset/{id}', [AuthController::class, 'Reset'])->name('reset');
 Route::post('/reset-password', [AuthController::class, 'storePassword'])->name('reset-password-post');
@@ -87,6 +91,8 @@ Route::group(['middleware' => ['auth', 'nocache', 'restaurant.permission:Menu_Ma
     Route::get('menu/{menuId}/edit', [MenuController::class, 'getMenuItems']);
     Route::patch('user/{userId}/status', [UserController::class, 'activateAccount']);
     Route::patch('/menu-items/{id}/toggle-status', [App\Http\Controllers\MenuController::class, 'toggleStatus'])->name('menu-items.toggle-status');
+    Route::get('/inventory', [MenuController::class, 'inventory'])->name('inventory.index');
+    Route::patch('/inventory/{id}', [MenuController::class, 'updateInventory'])->name('inventory.update');
 });
 
 // Order Management Routes
@@ -159,3 +165,14 @@ Route::get('/test-push', function () {
     );
     return 'Notification sent!';
 })->middleware('auth');
+
+// ── Client Portal ────────────────────────────────────────────────────────────
+Route::middleware(['auth', 'nocache'])->prefix('browse')->name('client.')->group(function () {
+    Route::get('/',                [ClientController::class, 'restaurants'])->name('restaurants');
+    Route::get('/restaurant/{id}', [ClientController::class, 'restaurant'])->name('restaurant');
+    Route::post('/order',          [ClientController::class, 'placeOrder'])->name('order');
+    Route::post('/reservation',    [ClientController::class, 'makeReservation'])->name('reservation');
+    Route::get('/my-orders',       [ClientController::class, 'myOrders'])->name('my-orders');
+    Route::get('/my-reservations', [ClientController::class, 'myReservations'])->name('my-reservations');
+    Route::post('/favorite',       [ClientController::class, 'toggleFavorite'])->name('favorite');
+});

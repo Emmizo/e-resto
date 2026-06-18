@@ -3,14 +3,13 @@
 namespace App\Events;
 
 use App\Models\Order;
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class OrderCreated implements ShouldBroadcastNow
+class OrderStatusChanged implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -18,13 +17,13 @@ class OrderCreated implements ShouldBroadcastNow
 
     public function __construct(Order $order)
     {
-        $this->order = $order->loadMissing(['restaurant.owner', 'user', 'orderItems.menuItem']);
+        $this->order = $order->loadMissing(['restaurant.owner', 'user']);
     }
 
     public function broadcastOn(): array
     {
-        $ownerId = $this->order->restaurant->owner_id ?? null;
-        $channels = [new Channel('orders')];
+        $channels = [new PrivateChannel('user.' . $this->order->user_id)];
+        $ownerId  = $this->order->restaurant->owner_id ?? null;
         if ($ownerId) {
             $channels[] = new PrivateChannel('owner.' . $ownerId);
         }
@@ -33,28 +32,15 @@ class OrderCreated implements ShouldBroadcastNow
 
     public function broadcastWith(): array
     {
-        $items = $this->order->orderItems->map(fn($i) => [
-            'name'     => $i->menuItem->name ?? 'Item',
-            'quantity' => $i->quantity,
-            'price'    => $i->price,
-        ]);
-
         return [
             'order' => [
                 'id'           => $this->order->id,
                 'status'       => $this->order->status,
-                'order_type'   => $this->order->order_type,
                 'total_amount' => $this->order->total_amount,
-                'customer'     => $this->order->user ? [
-                    'name'  => $this->order->user->first_name . ' ' . $this->order->user->last_name,
-                    'email' => $this->order->user->email,
-                ] : null,
                 'restaurant'   => $this->order->restaurant ? [
-                    'id'   => $this->order->restaurant->id,
                     'name' => $this->order->restaurant->name,
                 ] : null,
-                'items'        => $items,
-                'created_at'   => $this->order->created_at?->toISOString(),
+                'updated_at'   => $this->order->updated_at?->toISOString(),
             ],
         ];
     }

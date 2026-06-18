@@ -12,13 +12,13 @@
                     <div class="district-left-content position-relative h-100">
                         <div class="login-left position-relative d-flex align-items-start justify-content-between flex-column h-100 animate__animated animate__fadeIn">
                             <div class="login-left-top mb-4">
-                                <a href="javascript:;" class="district-logo animate__animated animate__bounceIn animate__delay-1s" title="FoodFinder">
+                                <a href="{{ route('login') }}" class="district-logo animate__animated animate__bounceIn animate__delay-1s" title="FoodFinder">
                                     <img src="{{asset('assets/images/logo.png')}}" alt="FoodFinder" width="96" height="134" class="district-logo-img">
                                 </a>
                             </div>
                             <div class="login-left-bottom animate__animated animate__fadeInUp animate__delay-1s">
                                 <h2 class="font-dmsans fw-bold medium text-white mb-4">Welcome to the RestoFinder app</h2>
-                                <p class="font-dmsans fw-normal text-white lh-base">RestoFinder is an AI-Based Restaurant Recommendation System that helps users discover restaurants around their location using geolocation technology, providing personalized dining suggestions based on preferences and real-time availability.</p>
+                                <p class="font-dmsans fw-normal text-white lh-base">RestoFinder helps users discover restaurants around their location using geolocation technology, providing personalized dining suggestions based on preferences and real-time availability.</p>
                                 <ul class="login-content-list my-3 ps-2">
                                     <li>
                                         <p class="font-dmsans fw-normal text-white lh-base position-relative ps-3">
@@ -32,7 +32,7 @@
                                     </li>
                                     <li>
                                         <p class="font-dmsans fw-normal text-white lh-base position-relative ps-3">
-                                            <span>AI-Powered Meal Recommendations</span>
+                                            <span>Smart Meal Recommendations</span>
                                         </p>
                                     </li>
                                     <li>
@@ -94,7 +94,15 @@
                                             <h2 class="font-dmsans fw-bold medium text-dark-v2 mb-1">Sign in to your Account</h2>
                                             <p class="font-dmsans fw-normal text-dark-v2 lh-base pb-2">Are you a new user? Click on the Register tab to create your account.</p>
                                         </div>
-                                        <div id="message-container-login"></div>
+                                        <div id="message-container-login">
+                                            @if(session('success'))
+                                            <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2 mb-3" role="alert">
+                                                <i class="fas fa-check-circle"></i>
+                                                <span>{{ session('success') }}</span>
+                                                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+                                            </div>
+                                            @endif
+                                        </div>
                                         <form action="{{ route('login') }}" method="POST" id="loginForm" name="loginForm">
                                             @csrf
                                             <div class="row">
@@ -113,14 +121,46 @@
                                                         </span>
                                                     </div>
                                                 </div>
-                                                <div class="col-md-12">
-                                                    <div class="m-0 mb-3 text-end">
-                                                        <a href="{{route('forgot-password')}}" class="font-dmsans fw-medium small text-secondary position-relative d-inline-block" title="Forgot Password?">Forgot Password?</a>
-                                                    </div>
+                                                <div class="col-md-12 d-flex align-items-center justify-content-end mb-3">
+                                                    <a href="javascript:void(0)" id="showForgotBtn" class="forgot-password-link">Forgot Password?</a>
                                                 </div>
                                                 <div class="col-md-12">
                                                     <button type="submit" class="btn btn-primary btn-small fw-semibold text-uppercase rounded-3 w-100 text-center animate__animated animate__pulse animate__infinite animate__slow" id="send_btn">
                                                         <span>Sign In</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+
+                                    <!-- Forgot Password Tab (shown in place of Register when triggered) -->
+                                    <div class="tab-pane fade animate__animated animate__fadeIn" id="forgot-panel" role="tabpanel">
+                                        <div class="forgot-icon-wrap mb-3">
+                                            <div class="forgot-icon-circle">
+                                                <i class="fa fa-lock"></i>
+                                            </div>
+                                        </div>
+                                        <div class="login-heading mb-2">
+                                            <h2 class="font-dmsans fw-bold medium text-dark-v2 mb-1">Forgot Password?</h2>
+                                            <p class="font-dmsans fw-normal text-muted lh-base pb-1">No worries! Enter your email and we'll send you a reset link.</p>
+                                        </div>
+                                        <div id="message-container-forgot"></div>
+                                        <form method="POST" action="" id="forgotForm" name="forgotForm">
+                                            @csrf
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <div class="form-group m-0 mb-3 position-relative">
+                                                        <label for="forgotEmail" class="form-label">Email Address <span class="asterik">*</span></label>
+                                                        <div class="input-wrapper position-relative">
+                                                            <input type="email" class="form-control rounded-3 pe-5" id="forgotEmail" placeholder="Enter your registered email" name="email" required autocomplete="off">
+                                                            <span id="forgotEmailStatus" class="forgot-email-status"></span>
+                                                        </div>
+                                                        <div id="forgotEmailFeedback" class="forgot-email-feedback"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-12 mt-1">
+                                                    <button type="submit" class="btn btn-primary btn-small fw-semibold text-uppercase rounded-3 w-100 text-center" id="forgot_btn" disabled>
+                                                        <i class="fa fa-paper-plane me-2"></i><span>Send Reset Link</span>
                                                     </button>
                                                 </div>
                                             </div>
@@ -154,7 +194,11 @@
                                                 <div class="col-md-12">
                                                     <div class="form-group m-0 mb-3">
                                                         <label for="registerEmail" class="form-label">Email Address <span class="asterik">*</span></label>
-                                                        <input type="email" class="form-control rounded-3" id="registerEmail" name="email" placeholder="Enter Email Address" required>
+                                                        <div class="position-relative">
+                                                            <input type="email" class="form-control rounded-3 pe-5" id="registerEmail" name="email" placeholder="Enter Email Address" required autocomplete="off">
+                                                            <span id="registerEmailStatus" class="forgot-email-status"></span>
+                                                        </div>
+                                                        <div id="registerEmailFeedback" class="forgot-email-feedback"></div>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-12">
@@ -238,7 +282,11 @@
                                                     <div class="col-md-12">
                                                         <div class="form-group m-0 mb-3">
                                                             <label for="restaurantEmail" class="form-label">Restaurant Email<span class="asterik">*</span></label>
-                                                            <input type="email" class="form-control rounded-3" id="restaurantEmail" name="restaurant_email" placeholder="Enter Restaurant Email" required>
+                                                            <div class="position-relative">
+                                                                <input type="email" class="form-control rounded-3 pe-5" id="restaurantEmail" name="restaurant_email" placeholder="Enter Restaurant Email" required autocomplete="off">
+                                                                <span id="restaurantEmailStatus" class="forgot-email-status"></span>
+                                                            </div>
+                                                            <div id="restaurantEmailFeedback" class="forgot-email-feedback"></div>
                                                         </div>
                                                     </div>
                                                     <div class="col-md-12">
@@ -296,19 +344,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="login-right-bottom d-flex flex-column justify-content-end w-100">
-                                <ul class="login-content-links d-flex align-items-center justify-content-center flex-wrap my-3 my-xl-0 animate__animated animate__fadeInUp animate__delay-1s">
-                                    <li>
-                                        <a href="https://www.necadistrict10.com/user/contact" class="font-dmsans fw-medium xsmall text-decoration-underline link-offset-2 position-relative d-inline-block" title="Contact us" target="_blank">Contact us</a>
-                                    </li>
-                                    <li>
-                                        <a href="https://www.necadistrict10.com/user/directory" class="font-dmsans fw-medium xsmall text-decoration-underline link-offset-2 position-relative d-inline-block" title="Directory" target="_blank">Directory</a>
-                                    </li>
-                                    <li>
-                                        <a href="https://www.necadistrict10.com/user/member-projects" class="font-dmsans fw-medium xsmall text-decoration-underline link-offset-2 position-relative d-inline-block" title="Member Projects" target="_blank">Member Projects</a>
-                                    </li>
-                                </ul>
-                            </div>
+                            <div class="login-right-bottom d-flex flex-column justify-content-end w-100"></div>
                         </div>
                     </div>
                 </div>
@@ -318,7 +354,9 @@
     </div>
 
     <!-- Required JS Files -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
@@ -389,8 +427,7 @@
                 document.getElementById('restaurantAddress').required = false;
                 document.getElementById('restaurantPhone').required = false;
 
-                // Disable registration button for regular users
-                registerButton.disabled = true;
+                registerButton.disabled = false;
 
                 // Show app download message
                 appMessageContainer.classList.remove('d-none');
@@ -401,7 +438,7 @@
     // Check the initial state when page loads
     const userRoleRadio = document.getElementById('roleUser');
     if (userRoleRadio && userRoleRadio.checked) {
-        registerButton.disabled = true;
+        registerButton.disabled = false;
         appMessageContainer.classList.remove('d-none');
     }
 
@@ -628,7 +665,9 @@ $('#registerForm').validate({
             email: true,
         },
         restaurant_opening_hours:{
-            required: true,
+            required: function() {
+                return $('input[name="role"]:checked').val() === 'restaurant_owner';
+            }
         },
         phone_number: {
             required: true,
@@ -741,36 +780,7 @@ $('#registerForm').validate({
         submitHandler: function(form, e) {
         e.preventDefault();
 
-        var form_data = new FormData();
-
-
-                $('#registerForm input').each(function(i, e) {
-                var getID = $(this).attr('id');
-                var name = $(this).attr('name');
-                form_data.append(name, $("#" + getID).val());
-                });
-
-                $('#registerForm select').each(function() {
-                var getID = $(this).attr('id');
-                var name = $(this).attr('name');
-
-                form_data.append(name, $("#" + getID).val());
-                });
-                // Loop through textarea elements
-                $('#registerForm textarea').each(function() {
-                var getID = $(this).attr('id');
-                var name = $(this).attr('name');
-                form_data.append(name, $("#" + getID).val());
-                });
-                $('#registerForm input[type="file"]').each(function() {
-    var getID = $(this).attr('id');
-    var name = $(this).attr('name');
-    var file = $("#" + getID)[0].files[0]; // Get the first selected file
-
-    if (file) {
-        form_data.append(name, file); // Append the file to form_data
-    }
-});
+        var form_data = new FormData(form);
 
         // Set up CSRF token
         $.ajaxSetup({
@@ -802,23 +812,21 @@ $('#registerForm').validate({
     }, 5000);
             },
             success: function(result) {
-                console.log(result.status);
-
-                if (result.status == '201') {
-                    $('#message-container').html('<div class="alert alert-success alert-dismissible">Thank you for join us! <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>');
-
-
-                    // Redirect after a short delay
-                    setTimeout(function() {
-                        window.location.href = result.redirect || '/dashboard';
-                    }, 1500);
-                } else {
-                    // Show error message
-                    $('#message-container').html('<div class="alert alert-danger alert-dismissible">' + (result.message || 'An error occurred. Please try again.') + ' <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>');
-                    // Reset button
-                    $('#send_btn2').html("Register");
+                if (result.status == 202) {
+                    $('#message-container').html(
+                        '<div class="alert alert-success">' +
+                        '<i class="fa fa-envelope-circle-check me-2"></i>' +
+                        '<strong>Account created!</strong> A verification email has been sent to <strong>' + ($('#registerEmail').val()) + '</strong>. ' +
+                        'Please check your inbox and click the link to activate your account.' +
+                        '</div>'
+                    );
+                    $('#registerForm')[0].reset();
+                    $('#send_btn2').html("Register").prop('disabled', false);
                     $('#loader').hide();
-                    $('#send_btn2').prop('disabled', false);
+                } else {
+                    $('#message-container').html('<div class="alert alert-danger">' + (result.message || 'An error occurred. Please try again.') + '</div>');
+                    $('#send_btn2').html("Register").prop('disabled', false);
+                    $('#loader').hide();
                 }
             },
             error: function(xhr, status, error) {
@@ -960,15 +968,24 @@ $('#loginForm').validate({
                 console.log(result.status);
 
                 if (result.status == '201') {
-                    // Show success message before redirect
-                    $('#message-container-login').html('<div class="alert alert-success alert-dismissible">Logged In! <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>');
-                    // Redirect after a short delay
+                    $('#message-container-login').html('<div class="alert alert-success">Logged in! Redirecting...</div>');
                     setTimeout(function() {
                         window.location.href = result.redirect || '/dashboard';
-                    }, 1500);
+                    }, 1000);
+                } else if (result.status == 403 && result.unverified) {
+                    var email = result.email || '';
+                    $('#message-container-login').html(
+                        '<div class="alert alert-warning" id="unverified-alert">' +
+                        '<i class="fa fa-envelope me-2"></i>' +
+                        '<strong>Email not verified.</strong> Please check your inbox for the verification link.' +
+                        '<div class="mt-2">' +
+                        '<button type="button" class="btn btn-sm btn-outline-warning" id="resendVerifyBtn" data-email="' + email + '">' +
+                        '<i class="fa fa-rotate-right me-1"></i>Resend verification email' +
+                        '</button>' +
+                        '</div></div>'
+                    );
                 } else {
-                    // Show error message
-                    $('#message-container-login').html('<div class="alert alert-danger alert-dismissible">' + (result.msg || 'An error occurred. Please try again.') + ' <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>');
+                    $('#message-container-login').html('<div class="alert alert-danger">' + (result.msg || 'An error occurred. Please try again.') + '</div>');
 
                     // Reset button
                     $('#send_btn2').html("Register");
@@ -976,31 +993,25 @@ $('#loginForm').validate({
                     $('#send_btn2').prop('disabled', false);
                 }
             },
-            error: function(xhr, status, error) {
-                console.log(xhr.responseText);
-                var response = JSON.parse(xhr.responseText);
-                console.log(response.msg);
-                // Handle validation errors from Laravel
-                if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
-                    var errorMessages = '';
-                    $.each(xhr.responseJSON.errors, function(field, errors) {
-                        errorMessages += errors.join('<br>') + '<br>';
-                    });
-
-                    $('#message-container-login').html('<div class="alert alert-danger alert-dismissible">' + (response.msg || 'An error occurred. Please try again.') + ' <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>');
-
-
-                } else {
-                    // Generic error message
-                    $('#message-container-login').html('<div class="alert alert-danger alert-dismissible">' + (response.msg) + ' <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>');
-
-
-                }
-
-                $('.alert-dismissible').show();
-                $('#send_btn2').html("Register");
+            error: function(xhr) {
+                var response = xhr.responseJSON || {};
+                $('#send_btn').html("<i class='fa fa-sign-in-alt me-2'></i>Sign In").prop('disabled', false);
                 $('#loader').hide();
-                $('#send_btn2').prop('disabled', false);
+
+                if (xhr.status === 403 && response.unverified) {
+                    var email = response.email || '';
+                    $('#message-container-login').html(
+                        '<div class="alert alert-warning">' +
+                        '<i class="fa fa-envelope me-2"></i>' +
+                        '<strong>Email not verified.</strong> Please check your inbox for the verification link.' +
+                        '<div class="mt-2">' +
+                        '<button type="button" class="btn btn-sm btn-outline-warning" id="resendVerifyBtn" data-email="' + email + '">' +
+                        '<i class="fa fa-rotate-right me-1"></i>Resend verification email' +
+                        '</button></div></div>'
+                    );
+                } else {
+                    $('#message-container-login').html('<div class="alert alert-danger">' + (response.msg || 'An error occurred. Please try again.') + '</div>');
+                }
             }
         });
 
@@ -1019,6 +1030,29 @@ $('input[name="role"]').on('change', function() {
         // Make restaurant fields not required
         $('#restaurantFields input, #restaurantFields textarea').prop('required', false);
     }
+});
+
+// Resend verification email
+$(document).on('click', '#resendVerifyBtn', function() {
+    var btn = $(this);
+    var email = btn.data('email');
+    btn.prop('disabled', true).html('<i class="fa fa-spin fa-spinner me-1"></i>Sending...');
+    $.ajax({
+        url: "{{ route('resend-verification') }}",
+        type: 'POST',
+        dataType: 'json',
+        data: { email: email, _token: $('meta[name="csrf-token"]').attr('content') },
+        success: function(res) {
+            btn.closest('.alert').html(
+                '<i class="fa fa-check-circle me-2 text-success"></i>' + (res.message || 'Verification email sent. Check your inbox.')
+            );
+        },
+        error: function(xhr) {
+            var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Failed to resend. Please try again.';
+            btn.prop('disabled', false).html('<i class="fa fa-rotate-right me-1"></i>Resend verification email');
+            btn.after('<div class="text-danger small mt-1">' + msg + '</div>');
+        }
+    });
 });
 
 // Trigger change on page load to set initial state
@@ -1076,6 +1110,266 @@ window.addEventListener('online', async function() {
     await localforage.setItem('loginQueue', []);
 });
 
+// Forgot Password: swap Register tab → Forgot Password tab
+$('#showForgotBtn').on('click', function() {
+    // Rename and retarget the register tab button to forgot
+    $('#register-tab')
+        .text('Forgot Password')
+        .attr('data-bs-target', '#forgot-panel')
+        .attr('aria-controls', 'forgot-panel');
+    // Activate the (now relabelled) tab
+    new bootstrap.Tab(document.getElementById('register-tab')).show();
+    $('#message-container-forgot').html('');
+    $('#forgotForm')[0].reset();
+});
+
+// When Sign In tab is clicked, restore Register tab
+$('#login-tab').on('click', function() {
+    $('#register-tab')
+        .text('Register')
+        .attr('data-bs-target', '#register-panel')
+        .attr('aria-controls', 'register-panel');
+});
+
+// Forgot Password — live email validation
+var forgotEmailTimer = null;
+var forgotEmailValid = false;
+
+function setForgotEmailState(state, message) {
+    var $input    = $('#forgotEmail');
+    var $status   = $('#forgotEmailStatus');
+    var $feedback = $('#forgotEmailFeedback');
+    var $btn      = $('#forgot_btn');
+
+    $input.removeClass('is-valid is-invalid');
+    $feedback.removeClass('text-success text-danger text-muted').text('');
+    $status.removeClass('fa fa-check-circle fa-times-circle fa-spin fa-spinner').text('');
+
+    if (state === 'checking') {
+        $status.addClass('fa fa-spin fa-spinner text-muted');
+        $feedback.addClass('text-muted').text('Checking...');
+        $btn.prop('disabled', true);
+        forgotEmailValid = false;
+    } else if (state === 'valid') {
+        $input.addClass('is-valid');
+        $status.addClass('fa fa-check-circle').css('color', '#198754');
+        $feedback.addClass('text-success').text(message || 'Account found.');
+        $btn.prop('disabled', false);
+        forgotEmailValid = true;
+    } else if (state === 'invalid') {
+        $input.addClass('is-invalid');
+        $status.addClass('fa fa-times-circle').css('color', '#dc3545');
+        $feedback.addClass('text-danger').text(message || 'Email not found.');
+        $btn.prop('disabled', true);
+        forgotEmailValid = false;
+    } else {
+        $btn.prop('disabled', true);
+        forgotEmailValid = false;
+    }
+}
+
+$('#forgotEmail').on('input', function() {
+    var email = $(this).val().trim();
+    clearTimeout(forgotEmailTimer);
+
+    // Reset on empty
+    if (!email) {
+        setForgotEmailState('reset');
+        return;
+    }
+
+    // Basic format check before hitting server
+    var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        setForgotEmailState('invalid', 'Please enter a valid email address.');
+        return;
+    }
+
+    setForgotEmailState('checking');
+
+    forgotEmailTimer = setTimeout(function() {
+        $.ajax({
+            url: "{{ route('check-email-exists') }}",
+            type: "POST",
+            dataType: "json",
+            data: { email: email, _token: $('meta[name="csrf-token"]').attr('content') },
+            success: function(result) {
+                if (result.exists) {
+                    setForgotEmailState('valid', 'Account found. You can send the reset link.');
+                } else {
+                    setForgotEmailState('invalid', result.message || 'No account found with that email address.');
+                }
+            },
+            error: function() {
+                setForgotEmailState('invalid', 'Could not verify email. Please try again.');
+            }
+        });
+    }, 500);
+});
+
+// Forgot Password form submit
+$('#forgotForm').on('submit', function(e) {
+    e.preventDefault();
+    if (!forgotEmailValid) return false;
+
+    var form_data = new FormData();
+    form_data.append('email', $('#forgotEmail').val().trim());
+    form_data.append('_token', $('meta[name="csrf-token"]').attr('content'));
+
+    $.ajax({
+        url: "{{ route('forgot-password-post') }}",
+        type: "POST",
+        dataType: "json",
+        data: form_data,
+        cache: false,
+        contentType: false,
+        processData: false,
+        beforeSend: function() {
+            $('#forgot_btn').html("<i class='fa fa-spin fa-spinner'></i> Sending...").prop('disabled', true);
+            $('#message-container-forgot').html('');
+        },
+        success: function(result) {
+            if (result.status == '201') {
+                $('#message-container-forgot').html('<div class="alert alert-success"><i class="fa fa-check-circle me-2"></i>Reset link sent! Please check your inbox.</div>');
+                $('#forgotForm')[0].reset();
+                setForgotEmailState('reset');
+            } else {
+                $('#message-container-forgot').html('<div class="alert alert-danger">' + (result.message || 'An error occurred.') + '</div>');
+                $('#forgot_btn').html("<i class='fa fa-paper-plane me-2'></i><span>Send Reset Link</span>").prop('disabled', false);
+            }
+        },
+        error: function(xhr) {
+            var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'An error occurred. Please try again.';
+            $('#message-container-forgot').html('<div class="alert alert-danger">' + msg + '</div>');
+            $('#forgot_btn').html("<i class='fa fa-paper-plane me-2'></i><span>Send Reset Link</span>").prop('disabled', false);
+        }
+    });
+    return false;
+});
+
+
+// ── Sign-up live email validation ───────────────────────────────────────────
+var registerEmailTimer = null;
+var registerEmailValid = true; // allow submit until user types something
+var restaurantEmailTimer = null;
+var restaurantEmailValid = true;
+
+function setSignupEmailState(statusId, feedbackId, state, message) {
+    var $status   = $('#' + statusId);
+    var $feedback = $('#' + feedbackId);
+    $status.removeClass('state-checking state-valid state-invalid').html('');
+    $feedback.removeClass('text-success text-danger').html('');
+
+    if (state === 'checking') {
+        $status.addClass('state-checking').html('<i class="fa fa-spin fa-spinner text-muted"></i>');
+    } else if (state === 'valid') {
+        $status.addClass('state-valid').html('<i class="fa fa-check-circle text-success"></i>');
+        if (message) $feedback.addClass('text-success').html(message);
+    } else if (state === 'invalid') {
+        $status.addClass('state-invalid').html('<i class="fa fa-times-circle text-danger"></i>');
+        if (message) $feedback.addClass('text-danger').html(message);
+    } else {
+        // reset
+    }
+}
+
+$('#registerEmail').on('input', function() {
+    var email = $(this).val().trim();
+    clearTimeout(registerEmailTimer);
+    setSignupEmailState('registerEmailStatus', 'registerEmailFeedback', 'reset');
+
+    if (!email) {
+        registerEmailValid = true;
+        return;
+    }
+
+    setSignupEmailState('registerEmailStatus', 'registerEmailFeedback', 'checking');
+
+    registerEmailTimer = setTimeout(function() {
+        $.ajax({
+            url: "{{ route('check-email-taken') }}",
+            type: "POST",
+            dataType: "json",
+            data: { email: email, type: 'user', _token: $('meta[name="csrf-token"]').attr('content') },
+            success: function(result) {
+                if (result.taken) {
+                    registerEmailValid = false;
+                    setSignupEmailState('registerEmailStatus', 'registerEmailFeedback', 'invalid', result.message || 'This email is already registered.');
+                } else {
+                    registerEmailValid = true;
+                    setSignupEmailState('registerEmailStatus', 'registerEmailFeedback', 'valid', 'Email is available.');
+                }
+            },
+            error: function() {
+                registerEmailValid = true;
+                setSignupEmailState('registerEmailStatus', 'registerEmailFeedback', 'reset');
+            }
+        });
+    }, 500);
+});
+
+$('#restaurantEmail').on('input', function() {
+    var email = $(this).val().trim();
+    clearTimeout(restaurantEmailTimer);
+    setSignupEmailState('restaurantEmailStatus', 'restaurantEmailFeedback', 'reset');
+
+    if (!email) {
+        restaurantEmailValid = true;
+        return;
+    }
+
+    setSignupEmailState('restaurantEmailStatus', 'restaurantEmailFeedback', 'checking');
+
+    restaurantEmailTimer = setTimeout(function() {
+        $.ajax({
+            url: "{{ route('check-email-taken') }}",
+            type: "POST",
+            dataType: "json",
+            data: { email: email, type: 'restaurant', _token: $('meta[name="csrf-token"]').attr('content') },
+            success: function(result) {
+                if (result.taken) {
+                    restaurantEmailValid = false;
+                    setSignupEmailState('restaurantEmailStatus', 'restaurantEmailFeedback', 'invalid', result.message || 'This email is already registered.');
+                } else {
+                    restaurantEmailValid = true;
+                    setSignupEmailState('restaurantEmailStatus', 'restaurantEmailFeedback', 'valid', 'Email is available.');
+                }
+            },
+            error: function() {
+                restaurantEmailValid = true;
+                setSignupEmailState('restaurantEmailStatus', 'restaurantEmailFeedback', 'reset');
+            }
+        });
+    }, 500);
+});
+
+// Block sign-up submit if any taken email is detected
+$('#signupForm').on('submit', function(e) {
+    if (!registerEmailValid) {
+        e.preventDefault();
+        setSignupEmailState('registerEmailStatus', 'registerEmailFeedback', 'invalid', 'Please use a different email address.');
+        $('#registerEmail').focus();
+        return false;
+    }
+    var isRestaurantOwner = $('#roleRestaurantOwner').is(':checked');
+    if (isRestaurantOwner && !restaurantEmailValid) {
+        e.preventDefault();
+        setSignupEmailState('restaurantEmailStatus', 'restaurantEmailFeedback', 'invalid', 'Please use a different restaurant email address.');
+        $('#restaurantEmail').focus();
+        return false;
+    }
+});
+
+// Searchable cuisine type dropdown
+if (document.getElementById('cuisineType')) {
+    new TomSelect('#cuisineType', {
+        placeholder: 'Search cuisine type...',
+        allowEmptyOption: true,
+        maxOptions: null,
+        create: false,
+    });
+}
+
 });
     </script>
 
@@ -1096,6 +1390,53 @@ window.addEventListener('online', async function() {
         .district-right-content {
             overflow-y: auto;
             max-height: 100vh;
+        }
+
+        /* Forgot email live validation */
+        .forgot-email-status {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 15px;
+            pointer-events: none;
+        }
+        .forgot-email-feedback {
+            font-size: 12.5px;
+            margin-top: 4px;
+            min-height: 18px;
+        }
+
+        /* Forgot password link */
+        .forgot-password-link {
+            font-size: 13px;
+            font-weight: 500;
+            color: #184C55;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .forgot-password-link:hover {
+            color: #0d6efd;
+            text-decoration: underline;
+        }
+
+        /* Lock icon circle */
+        .forgot-icon-wrap {
+            text-align: center;
+        }
+        .forgot-icon-circle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e8f4f6 0%, #d0eaf0 100%);
+            border: 2px solid #b8dde5;
+        }
+        .forgot-icon-circle .fa {
+            font-size: 26px;
+            color: #184C55;
         }
 
         /* Adjust form layout for better spacing */

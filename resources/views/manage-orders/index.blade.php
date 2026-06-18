@@ -308,7 +308,7 @@ $(document).ready(function() {
             var d = new Date(r.created_at);
             var dateStr = pad(d.getDate()) + '/' + pad(d.getMonth()+1) + '/' + d.getFullYear() + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
             var label = r.status.charAt(0).toUpperCase() + r.status.slice(1);
-            return '<tr><td>' + r.id + '</td><td>' + (r.first_name || '') + ' ' + (r.last_name || '') + '</td><td>RWF ' + Math.round(parseFloat(r.total_amount || 0)).toLocaleString() + '</td><td><span class="status-badge" style="background:' + color + ';">' + label + '</span></td><td>' + (r.order_type || '') + '</td><td>' + dateStr + '</td></tr>';
+            return '<tr><td>' + r.id + '</td><td>' + (r.first_name || '') + ' ' + (r.last_name || '') + '</td><td>RWF ' + Math.round(parseFloat(r.total_amount || 0)).toLocaleString() + '</td><td><span class="status-badge order-status-badge" data-order-id="' + r.id + '" style="background:' + color + ';">' + label + '</span></td><td>' + (r.order_type || '') + '</td><td>' + dateStr + '</td></tr>';
         }).join('');
         var now = new Date().toLocaleString();
         @php
@@ -365,4 +365,51 @@ $(document).ready(function() {
     });
 });
 </script>
+
+{{-- Real-time new order listener --}}
+@if(auth()->check() && in_array(auth()->user()->role, ['restaurant_owner', 'admin']))
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof window.Echo === 'undefined') return;
+
+    var statusColors = { pending: '#f59e0b', processing: '#0ea5e9', completed: '#22c55e', cancelled: '#ef4444' };
+    var table = $('#manageUsersTable').DataTable();
+
+    window.Echo.private('owner.' + {{ auth()->id() }})
+        // ── New order arrives ────────────────────────────────────
+        .listen('OrderCreated', function(e) {
+            var o = e.order;
+            if (!o) return;
+            var statusColor = statusColors[o.status] || '#6b7280';
+            var dateStr = new Date(o.created_at).toLocaleString();
+            table.row.add([
+                o.id,
+                (o.customer ? o.customer.name : 'Customer'),
+                'RWF ' + Math.round(parseFloat(o.total_amount || 0)).toLocaleString(),
+                '<span class="badge rounded-pill px-3 py-1 order-status-badge" data-order-id="' + o.id + '" style="background:' + statusColor + ';color:#fff;font-size:.72rem;">' + (o.status.charAt(0).toUpperCase() + o.status.slice(1)) + '</span>',
+                o.order_type || '',
+                dateStr,
+                '<button class="btn btn-sm update-status-action" data-order-id="' + o.id + '" data-order-status="' + o.status + '" data-bs-toggle="modal" data-bs-target="#updateStatus" style="background:#e0f2fe;border:none;width:30px;height:30px;border-radius:8px;" title="Update Status"><i class="fas fa-edit" style="color:#0284c7;font-size:.75rem;"></i></button>'
+            ]).draw(false);
+            toastr.info('New order #' + o.id + ' received from ' + (o.customer ? o.customer.name : 'a customer'));
+        })
+        // ── Order status changed (from other admin or system) ────
+        .listen('OrderStatusChanged', function(e) {
+            var o = e.order;
+            if (!o) return;
+            var color = statusColors[o.status] || '#6b7280';
+            var label = o.status.charAt(0).toUpperCase() + o.status.slice(1);
+            // Update badge in existing rows
+            document.querySelectorAll('.order-status-badge[data-order-id="' + o.id + '"]').forEach(function(el) {
+                el.style.background = color;
+                el.textContent = label;
+            });
+            // Also update the update-status-action button
+            document.querySelectorAll('[data-order-id="' + o.id + '"].update-status-action').forEach(function(btn) {
+                btn.dataset.orderStatus = o.status;
+            });
+        });
+});
+</script>
+@endif
 @endsection

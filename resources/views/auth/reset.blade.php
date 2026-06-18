@@ -9,13 +9,13 @@
                     <div class="district-left-content position-relative h-100">
                         <div class="login-left position-relative d-flex align-items-start justify-content-between flex-column h-100 animate__animated animate__fadeIn">
                             <div class="login-left-top mb-4">
-                                <a href="javascript:;" class="district-logo animate__animated animate__bounceIn animate__delay-1s" title="RestoFinder">
+                                <a href="{{ route('login') }}" class="district-logo animate__animated animate__bounceIn animate__delay-1s" title="RestoFinder">
                                     <img src="{{asset('assets/images/logo.png')}}" alt="RestoFinder" width="96" height="134" class="district-logo-img">
                                 </a>
                             </div>
                             <div class="login-left-bottom animate__animated animate__fadeInUp animate__delay-1s">
                                 <h2 class="font-dmsans fw-bold medium text-white mb-4">Welcome to the RestoFinder app</h2>
-                                <p class="font-dmsans fw-normal text-white lh-base">RestoFinder is an AI-Based Restaurant Recommendation System that helps users discover restaurants around their location using geolocation technology, providing personalized dining suggestions based on preferences and real-time availability.</p>
+                                <p class="font-dmsans fw-normal text-white lh-base">RestoFinder helps users discover restaurants around their location using geolocation technology, providing personalized dining suggestions based on preferences and real-time availability.</p>
                                 <ul class="login-content-list my-3 ps-2">
                                     <li>
                                         <p class="font-dmsans fw-normal text-white lh-base position-relative ps-3">
@@ -29,7 +29,7 @@
                                     </li>
                                     <li>
                                         <p class="font-dmsans fw-normal text-white lh-base position-relative ps-3">
-                                            <span>AI-Powered Meal Recommendations</span>
+                                            <span>Smart Meal Recommendations</span>
                                         </p>
                                     </li>
                                     <li>

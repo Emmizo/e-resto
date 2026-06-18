@@ -43,7 +43,7 @@
                     <div><strong>Special Requests:</strong> {{ $reservation->special_requests }}</div>
                 @endif
             </div>
-            <a href="{{ url('/reservations/'.$reservation->id) }}" class="cta-btn">View Reservation</a>
+            <a href="{{ route('reservations.show', $reservation->id) }}" class="cta-btn">View Reservation</a>
             <hr class="divider">
             <div class="desc">Please log in to your dashboard to view and manage this reservation.</div>
         </div>

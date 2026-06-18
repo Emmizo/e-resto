@@ -376,4 +376,64 @@ class MenuController extends Controller
         $menuItem->save();
         return response()->json(['status' => 200]);
     }
+
+    public function inventory()
+    {
+        $user = auth()->user();
+
+        // Inventory is a per-restaurant feature — only restaurant owners can access it
+        if ($user->role !== 'restaurant_owner') {
+            abort(403, 'Access denied. Inventory management is for restaurant owners only.');
+        }
+
+        $restaurant = \App\Models\Restaurant::where('owner_id', $user->id)->first();
+        $items = $restaurant
+            ? MenuItem::with('menu.restaurant')
+                ->whereHas('menu', fn($q) => $q->where('restaurant_id', $restaurant->id))
+                ->orderBy('total_sold', 'desc')
+                ->get()
+            : collect();
+
+        return view('manage-menu.inventory', compact('items'));
+    }
+
+    public function updateInventory(Request $request, $id)
+    {
+        $user     = auth()->user();
+        $menuItem = MenuItem::with('menu')->findOrFail($id);
+
+        // Only the owning restaurant_owner can update their items
+        if ($user->role !== 'restaurant_owner') {
+            return response()->json(['status' => 403, 'message' => 'Access denied.'], 403);
+        }
+
+        $restaurant = \App\Models\Restaurant::where('owner_id', $user->id)->first();
+        if (!$restaurant || $menuItem->menu->restaurant_id !== $restaurant->id) {
+            return response()->json(['status' => 403, 'message' => 'This item does not belong to your restaurant.'], 403);
+        }
+
+        $validated = $request->validate([
+            'track_inventory' => 'sometimes|boolean',
+            'stock_quantity'  => 'nullable|integer|min:0',
+        ]);
+
+        if (array_key_exists('track_inventory', $validated)) {
+            $menuItem->track_inventory = $validated['track_inventory'];
+        }
+
+        if (array_key_exists('stock_quantity', $validated)) {
+            $menuItem->stock_quantity = $validated['stock_quantity'];
+            if ($validated['stock_quantity'] > 0) {
+                $menuItem->is_available = true;
+            }
+        }
+
+        $menuItem->save();
+        return response()->json(['status' => 200, 'item' => [
+            'id'              => $menuItem->id,
+            'stock_quantity'  => $menuItem->stock_quantity,
+            'track_inventory' => $menuItem->track_inventory,
+            'is_available'    => $menuItem->is_available,
+        ]]);
+    }
 }

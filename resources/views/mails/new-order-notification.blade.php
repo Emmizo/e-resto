@@ -54,7 +54,7 @@
                     <pre style="background:#f3f5f8; border-radius:8px; padding:12px;">{{ json_encode($order->dietary_info, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
                 @endif
             </div>
-            <a href="{{ url('/orders/'.$order->id) }}" class="cta-btn">View Order</a>
+            <a href="{{ route('orders.show', $order->id) }}" class="cta-btn">View Order</a>
             <hr class="divider">
             <div class="desc">Please log in to your dashboard to view and process this order.</div>
         </div>

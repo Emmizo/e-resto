@@ -1,28 +1,33 @@
 <?php
 
+use App\Models\Restaurant;
 use Illuminate\Support\Facades\Broadcast;
-
-/*
- * |--------------------------------------------------------------------------
- * | Broadcast Channels
- * |--------------------------------------------------------------------------
- * |
- * | Here you may register all of the event broadcasting channels that your
- * | application supports. The given channel authorization callbacks are
- * | used to check if an authenticated user can listen to the channel.
- * |
- */
 
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
 
-// Add channel for restaurant orders
-Broadcast::channel('restaurant.{restaurantId}', function ($user, $restaurantId) {
-    return $user->restaurant_id == $restaurantId;
+// Restaurant owner channel: receives new orders & reservations
+Broadcast::channel('owner.{ownerId}', function ($user, $ownerId) {
+    return (int) $user->id === (int) $ownerId;
 });
 
-// Add channel for service status updates
+// Per-user channel: client receives order/reservation status updates
+Broadcast::channel('user.{userId}', function ($user, $userId) {
+    return (int) $user->id === (int) $userId;
+});
+
+// Legacy restaurant channels
+Broadcast::channel('restaurant.{restaurantId}', function ($user, $restaurantId) {
+    if ($user->role === 'restaurant_owner') {
+        return Restaurant::where('id', $restaurantId)->where('owner_id', $user->id)->exists();
+    }
+    return false;
+});
+
 Broadcast::channel('service-status.{restaurantId}', function ($user, $restaurantId) {
-    return $user->restaurant_id == $restaurantId;
+    if ($user->role === 'restaurant_owner') {
+        return Restaurant::where('id', $restaurantId)->where('owner_id', $user->id)->exists();
+    }
+    return false;
 });

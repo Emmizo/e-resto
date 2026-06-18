@@ -1,9 +1,14 @@
-@extends('layouts.app')
+@extends($layout ?? 'layouts.app')
 @section('content')
+@if(($isClient ?? false))
+<div style="padding:24px;background:#f7f7f5;min-height:calc(100vh - 56px);">
+@else
 <main class="content-wrapper">
     <div class="main-content">
+@endif
 
-        <!-- Breadcrumb -->
+        <!-- Breadcrumb (non-clients only) -->
+        @if(empty($isClient))
         <div class="breadcrumb-section mb-2 mb-xl-4">
             <ul class="breadcrumb-lists d-flex align-items-center flex-wrap">
                 <li class="breadcrumb-item position-relative">
@@ -17,6 +22,14 @@
                 </li>
             </ul>
         </div>
+        @else
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <a href="{{ route('client.restaurants') }}" class="btn btn-sm btn-light rounded-circle border" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;">
+                <i class="fas fa-arrow-left" style="font-size:0.8rem;"></i>
+            </a>
+            <h5 class="fw-bold mb-0">Edit Profile</h5>
+        </div>
+        @endif
 
         <form action="{{ route('manage-update-profile') }}" method="POST" id="updateProfileForm" enctype="multipart/form-data">
             @csrf
@@ -135,7 +148,7 @@
                             <button type="submit" class="btn btn-primary rounded-3 px-4 fw-semibold">
                                 <i class="fas fa-save me-1"></i> Save Changes
                             </button>
-                            <a href="{{ route('manage-users') }}" class="btn btn-light rounded-3 px-4 border">
+                            <a href="{{ ($isClient ?? false) ? route('client.restaurants') : route('manage-users') }}" class="btn btn-light rounded-3 px-4 border">
                                 Cancel
                             </a>
                         </div>
@@ -145,7 +158,11 @@
             </div>
         </form>
     </div>
+@if(($isClient ?? false))
+</div>
+@else
 </main>
+@endif
 
 @section('script')
 <script>

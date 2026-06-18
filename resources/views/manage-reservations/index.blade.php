@@ -102,7 +102,8 @@
                                     <span>{{ $reservation->phone_number ?? 'N/A' }}</span>
                                 </td>
                                 <td>
-                                    <span class="badge rounded-pill bg-{{ $reservation->status === 'confirmed' ? 'success' : ($reservation->status === 'cancelled' ? 'danger' : 'warning') }}">
+                                    <span class="badge rounded-pill reservation-status-badge bg-{{ $reservation->status === 'confirmed' ? 'success' : ($reservation->status === 'cancelled' ? 'danger' : 'warning') }}"
+                                          data-reservation-id="{{ $reservation->id }}">
                                         {{ ucfirst($reservation->status) }}
                                     </span>
                                 </td>
@@ -386,4 +387,59 @@ $(document).ready(function() {
     });
 });
 </script>
+
+{{-- Real-time new reservation listener --}}
+@if(auth()->check() && in_array(auth()->user()->role, ['restaurant_owner', 'admin']))
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof window.Echo === 'undefined') return;
+
+    var statusColors = { pending: '#f59e0b', confirmed: '#22c55e', cancelled: '#ef4444', completed: '#0ea5e9' };
+    var table = $('#manageUsersTable').DataTable();
+
+    var statusBgMap = { pending: '#f59e0b', confirmed: '#22c55e', cancelled: '#ef4444', completed: '#0ea5e9' };
+
+    window.Echo.private('owner.' + {{ auth()->id() }})
+        // ── New reservation arrives ────────────────────────────
+        .listen('ReservationCreated', function(e) {
+            var r = e.reservation;
+            if (!r) return;
+            var statusColor = statusBgMap[r.status] || '#6b7280';
+            var dt = r.reservation_time ? new Date(r.reservation_time).toLocaleString() : '';
+            var statusBadge = '<span class="badge rounded-pill reservation-status-badge px-2" data-reservation-id="' + r.id + '" style="background:' + statusColor + ';color:#fff;font-size:.7rem;">' + (r.status.charAt(0).toUpperCase() + r.status.slice(1)) + '</span>';
+            var actions = '<div class="d-flex gap-1">'
+                + '<button class="btn btn-sm approve-action" data-reservation-id="' + r.id + '" style="background:#dcfce7;border:none;width:30px;height:30px;border-radius:8px;" title="Approve"><i class="fas fa-check" style="color:#16a34a;font-size:.75rem;"></i></button>'
+                + '<button class="btn btn-sm update-status-action" data-reservation-id="' + r.id + '" data-reservation-status="' + r.status + '" data-bs-toggle="modal" data-bs-target="#updateStatus" style="background:#e0f2fe;border:none;width:30px;height:30px;border-radius:8px;" title="Update Status"><i class="fas fa-edit" style="color:#0284c7;font-size:.75rem;"></i></button>'
+                + '</div>';
+            table.row.add([
+                r.id,
+                r.customer ? r.customer.name : 'Guest',
+                dt,
+                r.number_of_people || '—',
+                r.phone_number || '—',
+                statusBadge,
+                actions,
+            ]).draw(false);
+            toastr.info('New reservation #' + r.id + ' from ' + (r.customer ? r.customer.name : 'a guest'));
+        })
+        // ── Reservation status changed ─────────────────────────
+        .listen('ReservationStatusChanged', function(e) {
+            var r = e.reservation;
+            if (!r) return;
+            var color = statusBgMap[r.status] || '#6b7280';
+            var label = r.status.charAt(0).toUpperCase() + r.status.slice(1);
+            document.querySelectorAll('.reservation-status-badge[data-reservation-id="' + r.id + '"]').forEach(function(el) {
+                el.style.background = color;
+                el.className = 'badge rounded-pill reservation-status-badge';
+                el.style.color = '#fff';
+                el.textContent = label;
+                el.dataset.reservationId = r.id;
+            });
+            document.querySelectorAll('[data-reservation-id="' + r.id + '"].update-status-action').forEach(function(btn) {
+                btn.dataset.reservationStatus = r.status;
+            });
+        });
+});
+</script>
+@endif
 @endsection

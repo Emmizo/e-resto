@@ -91,6 +91,14 @@
                         <span class="menu-title">Manage Menu</span>
                     </a>
                 </li>
+                @if(!$isAdmin)
+                <li class="nav-item">
+                    <a class="nav-link {{ sidebarActive('inventory') }}" href="{{ route('inventory.index') }}">
+                        <span class="sidebar-icon"><i class="fas fa-boxes"></i></span>
+                        <span class="menu-title">Inventory</span>
+                    </a>
+                </li>
+                @endif
                 @endhasrestaurantpermission
 
                 @if(!$isAdmin)

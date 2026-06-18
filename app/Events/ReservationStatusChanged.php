@@ -3,14 +3,13 @@
 namespace App\Events;
 
 use App\Models\Reservation;
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class ReservationCreated implements ShouldBroadcastNow
+class ReservationStatusChanged implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -23,8 +22,8 @@ class ReservationCreated implements ShouldBroadcastNow
 
     public function broadcastOn(): array
     {
-        $ownerId = $this->reservation->restaurant->owner_id ?? null;
-        $channels = [new Channel('restaurant.' . $this->reservation->restaurant_id)];
+        $channels = [new PrivateChannel('user.' . $this->reservation->user_id)];
+        $ownerId  = $this->reservation->restaurant->owner_id ?? null;
         if ($ownerId) {
             $channels[] = new PrivateChannel('owner.' . $ownerId);
         }
@@ -36,20 +35,12 @@ class ReservationCreated implements ShouldBroadcastNow
         return [
             'reservation' => [
                 'id'              => $this->reservation->id,
-                'customer'        => $this->reservation->user ? [
-                    'name'  => $this->reservation->user->first_name . ' ' . $this->reservation->user->last_name,
-                    'email' => $this->reservation->user->email,
-                ] : null,
+                'status'          => $this->reservation->status,
                 'restaurant'      => $this->reservation->restaurant ? [
-                    'id'   => $this->reservation->restaurant->id,
                     'name' => $this->reservation->restaurant->name,
                 ] : null,
                 'reservation_time' => $this->reservation->reservation_time?->toISOString(),
-                'number_of_people' => $this->reservation->number_of_people,
-                'phone_number'    => $this->reservation->phone_number,
-                'special_requests'=> $this->reservation->special_requests,
-                'status'          => $this->reservation->status,
-                'created_at'      => $this->reservation->created_at?->toISOString(),
+                'updated_at'      => $this->reservation->updated_at?->toISOString(),
             ],
         ];
     }

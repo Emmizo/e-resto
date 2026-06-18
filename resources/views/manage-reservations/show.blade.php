@@ -55,10 +55,31 @@
                                 <span class="text-muted small">{{ $reservation->user->email ?? '' }}</span>
                             </div>
                             @if($reservation->special_requests)
+                            @php
+                                $srText = $reservation->special_requests;
+                                $preorderNote = null; $userNote = $srText;
+                                if (str_contains($srText, 'Pre-ordered food:')) {
+                                    $parts = explode('Pre-ordered food:', $srText, 2);
+                                    $userNote = trim($parts[0]);
+                                    $preorderNote = trim($parts[1] ?? '');
+                                }
+                            @endphp
+                            @if($userNote)
                                 <div class="mb-3">
                                     <strong>Special Requests:</strong><br>
-                                    <span>{{ $reservation->special_requests }}</span>
+                                    <span>{{ $userNote }}</span>
                                 </div>
+                            @endif
+                            @if($preorderNote)
+                                <div class="mb-3">
+                                    <strong><i class="fas fa-utensils me-1" style="color:#0f3d45;"></i>Pre-ordered Food:</strong><br>
+                                    <div style="background:#f0f9fa;border:1px solid #c5e6ea;border-radius:8px;padding:10px 12px;margin-top:6px;font-size:.85rem;color:#0f3d45;">
+                                        @foreach(explode(',', $preorderNote) as $poItem)
+                                        <div>{{ trim($poItem) }}</div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
                             @endif
                             <a href="{{ route('reservations.index') }}" class="btn btn-outline-primary mt-3">Back to Reservations</a>
                         </div>
