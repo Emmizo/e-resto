@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Events\ReservationCreated;
+use App\Events\ReservationStatusChanged;
 use App\Mail\ReservationStatusUpdated;
+use App\Models\Notification;
 use App\Models\Reservation;
 use App\Models\Restaurant;
 use App\Models\User;
@@ -25,7 +27,8 @@ class ReservationController extends Controller
             ->join('users', 'reservations.user_id', '=', 'users.id')
             ->join('restaurants', 'reservations.restaurant_id', '=', 'restaurants.id')
             ->when(!$isAdmin, fn($q) => $q->where('reservations.restaurant_id', $restaurantId))
-            ->orderBy('reservations.reservation_time', 'desc')
+            ->orderByRaw("FIELD(reservations.status, 'pending', 'confirmed', 'cancelled', 'completed')")
+            ->orderBy('reservations.reservation_time', 'asc')
             ->get();
         return view('manage-reservations.index', compact('reservations', 'isAdmin'));
     }
@@ -47,14 +50,25 @@ class ReservationController extends Controller
             ], 422);
         }
 
-        $reservation = Reservation::with('user')->findOrFail($id);
+        $reservation = Reservation::with(['user', 'restaurant'])->findOrFail($id);
         $oldStatus = $reservation->status;
 
         $reservation->status = $request->status;
         $reservation->save();
 
-        // Broadcast the reservation update
-        event(new ReservationCreated($reservation));
+        // Broadcast status change to client in real-time
+        if ($oldStatus !== $reservation->status) {
+            event(new ReservationStatusChanged($reservation));
+
+            Notification::create([
+                'user_id'       => $reservation->user_id,
+                'restaurant_id' => $reservation->restaurant_id,
+                'title'         => 'Reservation ' . ucfirst($reservation->status),
+                'body'          => 'Your reservation at ' . ($reservation->restaurant->name ?? 'the restaurant') . ' has been ' . $reservation->status . '.',
+                'data'          => ['type' => 'reservation_status', 'reservation_id' => $reservation->id, 'status' => $reservation->status],
+                'is_read'       => false,
+            ]);
+        }
 
         $user = $reservation->user;
         if ($user) {
