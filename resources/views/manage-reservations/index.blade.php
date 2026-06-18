@@ -101,7 +101,10 @@
                                 <td>
                                     <span>{{ $reservation->phone_number ?? 'N/A' }}</span>
                                 </td>
-                                <td>
+                                @php
+                                    $statusOrder = ['pending'=>0,'confirmed'=>1,'cancelled'=>2,'completed'=>3];
+                                @endphp
+                                <td data-order="{{ $statusOrder[$reservation->status] ?? 9 }}">
                                     <span class="badge rounded-pill reservation-status-badge bg-{{ $reservation->status === 'confirmed' ? 'success' : ($reservation->status === 'cancelled' ? 'danger' : 'warning') }}"
                                           data-reservation-id="{{ $reservation->id }}">
                                         {{ ucfirst($reservation->status) }}
@@ -241,7 +244,7 @@ $(document).ready(function() {
     }
     $('#manageReservationsTable').DataTable({
         responsive: true,
-        order: [[2, 'desc']],
+        order: [[5, 'asc'], [2, 'asc']],
         language: { emptyTable: "No reservations found" },
         dom: 'lrtip',
         pageLength: 10,
