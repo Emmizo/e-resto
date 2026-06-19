@@ -32,7 +32,7 @@ class DashboardController extends Controller
         $isAdmin = $user->role === 'admin';
         // For non-admin users, use restaurant_id. Use -1 (matches nothing) if not set,
         // so queries never fall through to showing all-restaurant data.
-        $restaurantId = $isAdmin ? null : (session('userData')['users']->restaurant_id ?? -1);
+        $restaurantId = $isAdmin ? null : $this->resolveRestaurantId($user);
 
         $dateRange = $request->get('range', 'year');
         $startDate = null;
@@ -353,7 +353,7 @@ class DashboardController extends Controller
     public function toggleService(Request $request)
     {
         $user = Auth::user();
-        $restaurantId = session('userData')['users']->restaurant_id ?? null;
+        $restaurantId = $this->resolveRestaurantId($user);
         if (!$restaurantId || $restaurantId < 1) {
             return response()->json(['status' => 'error', 'message' => 'No restaurant found.'], 404);
         }
@@ -379,11 +379,35 @@ class DashboardController extends Controller
         }
     }
 
+    private function resolveRestaurantId($user): int
+    {
+        // Try the session first (already populated on subsequent requests)
+        $fromSession = session('userData')['users']->restaurant_id ?? null;
+        if ($fromSession) {
+            return (int) $fromSession;
+        }
+
+        // On the first request after login the view composer hasn't run yet,
+        // so fall back to a direct DB lookup.
+        $row = \DB::table('users')
+            ->leftJoin('restaurant_employees', 'restaurant_employees.user_id', '=', 'users.id')
+            ->leftJoin('restaurants', function ($join) {
+                $join->on('restaurants.id', '=', 'restaurant_employees.restaurant_id')
+                     ->orOn('restaurants.owner_id', '=', 'users.id');
+            })
+            ->where('users.id', $user->id)
+            ->select('restaurants.id as restaurant_id')
+            ->first();
+
+        $id = $row->restaurant_id ?? null;
+        return $id ? (int) $id : -1;
+    }
+
     public function getChartData()
     {
         $user = Auth::user();
         $isAdmin = $user->role === 'admin';
-        $restaurantId = $isAdmin ? null : (session('userData')['users']->restaurant_id ?? -1);
+        $restaurantId = $isAdmin ? null : $this->resolveRestaurantId($user);
 
         $range = request('range', 'year');
         $endDate = Carbon::now();
